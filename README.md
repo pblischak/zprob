@@ -5,28 +5,52 @@ A Zig Library for Probability Distributions
 </i></h3>
 </div>
 
+The `zprob` library implements functionality for working with probability distributions in Zig,
+including generating random samples and calculating probabilities using mass/density functions.
+
+**Discrete Probability Distributions**
+
+ - [X] [Bernoulli](https://en.wikipedia.org/wiki/Bernoulli_distribution)
+ - [X] [Binomial](https://en.wikipedia.org/wiki/Binomial_distribution)
+ - [ ] [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution)
+ - [ ] [Multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution)
+ - [ ] [Poisson](https://en.wikipedia.org/wiki/Poisson_distribution)
+
+**Continuous Probability Distributions**
+
+ - [X] [Beta](https://en.wikipedia.org/wiki/Beta_distribution)
+ - [ ] [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution)
+ - [X] [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution)
+ - [ ] [Normal](https://en.wikipedia.org/wiki/Normal_distribution)
+ - [ ] [Multivariate Normal](https://en.wikipedia.org/wiki/Multivariate_normal_distribution)
+ - [ ] [Student's t](https://en.wikipedia.org/wiki/Student%27s_t-distribution)
+
+> **Note**
+> `zprob` was developed using the 0.11.0-dev.2324+64214b1ca version of Zig.
+> Using a version of Zig older than one of the 0.11-dev nightly versions will
+> likely not work.
+
 ## A Fresh Start
 
-To include `zprob` in a nice, fresh new Zig project, you can include it as
+To use `zprob` in a nice, fresh new Zig project, you can include it as
 a git submodule within a dedicated subfolder in you main project folder (e.g.,
 `libs/`). Below is a simple example for how you could start such a project:
 
 ```bash
-# Make new project folder with libs/ folder inside
+# Make new project folder with libs/ subfolder inside
 mkdir -p my_zig_proj/libs
 
-# Change into new project folder and initialize it as a git repo
+# Change into new project folder and initialize as a git repo
 cd my_zig_proj/ && git init
 
 # Initialize a new Zig command line application
 zig init-exe
 
-# Change into the libs folder and add zprob as a git submodule
-cd libs/
-git submodule add https://github.com/pblischak/zprob.git
+# Add zprob as a git submodule in the libs/ folder
+git submodule add https://github.com/pblischak/zprob.git libs/zprob
 ```
 
-To add `zprob` as a module to your new project, you'll only need to add two lines to
+To include `zprob` as a module to your new project, you'll only need to add two lines to
 the default build script:
 
 ```zig
@@ -75,10 +99,32 @@ pub fn build(b: *std.Build) void {
 }
 ```
 
+Now, inside the `src/main.zig` file in your project, you can import `zprob` like any other
+module:
+
+```zig
+const zprob = @import("zprob");
+```
+
+## Examples
+
+This repo contains a few simple examples of how to use the random sampling functionality
+implemented in `zprob`. To build the examples, clone the repo and run
+`zig build examples`:
+
+```bash
+git clone https://github.compblischak/zprob.git
+cd zprob/
+zig build examples
+```
+
+Each example file should compile into a binary executable with the same name in the `zig-out/bin`
+folder.
+
 ## Acknowledgements
 
 The `zprob` library is modeled after code from the following projects:
 
- - The [odin-lang rand libraries](https://github.com/odin-lang/Odin/tree/master/core/math/rand).
+ - The Odin-lang [rand libraries](https://github.com/odin-lang/Odin/tree/master/core/math/rand).
  - The [zig-gamedev](https://github.com/michal-z/zig-gamedev) Zig libraries.
  - The [rand_distr](https://github.com/rust-random/rand/tree/master/rand_distr) Rust library.
