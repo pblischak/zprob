@@ -21,7 +21,7 @@ including generating random samples and calculating probabilities using mass/den
  - [X] [Beta](https://en.wikipedia.org/wiki/Beta_distribution)
  - [X] [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution)
  - [X] [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution)
- - [ ] [Normal](https://en.wikipedia.org/wiki/Normal_distribution)
+ - [X] [Normal](https://en.wikipedia.org/wiki/Normal_distribution)
  - [ ] [Multivariate Normal](https://en.wikipedia.org/wiki/Multivariate_normal_distribution)
 
 > **Note**
