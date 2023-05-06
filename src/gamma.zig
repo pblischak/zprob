@@ -7,7 +7,7 @@ const DefaultPrng = std.rand.Xoshiro256;
 
 const spec_fn = @import("special_functions.zig");
 
-pub fn gammaSample(alpha: f64, beta: f64, rng: *Random) f64 {
+pub fn gammaSample(comptime T: type, alpha: T, beta: T, rng: *Random) T {
     const log4: f64 = 1.3862943611198906;
     const sg_magic_const: f64 = 2.5040773967762740;
 
@@ -28,7 +28,12 @@ pub fn gammaSample(alpha: f64, beta: f64, rng: *Random) f64 {
             var z: f64 = unif1 * unif1 * unif2;
             var t: f64 = b + c * v - x;
             if (t + sg_magic_const - 4.5 * z >= 0 or t >= @log(z)) {
-                return x * beta;
+                const value = x * beta;
+                switch (T) {
+                    f64 => return value,
+                    f32 => return @floatCast(f32, value),
+                    else => @compileError("Unrecognied float type..."),
+                }
             }
         }
     } else {
@@ -51,11 +56,16 @@ pub fn gammaSample(alpha: f64, beta: f64, rng: *Random) f64 {
                 break;
             }
         }
-        return x * beta;
+        const value = x * beta;
+        switch (T) {
+            f64 => return value,
+            f32 => return @floatCast(f32, value),
+            else => @compileError("Unrecognied float type..."),
+        }
     }
 }
 
-pub fn gammaPdf(x: f64, alpha: f64, beta: f64) f64 {
+pub fn gammaPdf(comptime T: type, x: T, alpha: T, beta: T) T {
     if (x <= 0) {
         @panic("Parameter `x` must be greater than 0.");
     }
@@ -64,10 +74,14 @@ pub fn gammaPdf(x: f64, alpha: f64, beta: f64) f64 {
     const value = math.pow(f64, x, alpha - 1.0) * @exp(-beta * x)
         * math.pow(f64, beta, alpha) / gamma_val;
     // zig fmt: on
-    return value;
+    switch (T) {
+        f64 => return value,
+        f32 => return @floatCast(f32, value),
+        else => @compileError("Unrecognied float type..."),
+    }
 }
 
-pub fn gammaLnPdf(x: f64, alpha: f64, beta: f64) f64 {
+pub fn gammaLnPdf(comptime T: type, x: T, alpha: T, beta: T) T {
     if (x <= 0) {
         @panic("Parameter `x` must be greater than 0.");
     }
@@ -76,5 +90,9 @@ pub fn gammaLnPdf(x: f64, alpha: f64, beta: f64) f64 {
     const value = (alpha - 1.0) * @log(x) - beta * x + alpha
         * @log(beta) - ln_gamma_val;
     // zig fmt: on
-    return value;
+    switch (T) {
+        f64 => return value,
+        f32 => return @floatCast(f32, value),
+        else => @compileError("Unrecognied float type..."),
+    }
 }
