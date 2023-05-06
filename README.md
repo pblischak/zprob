@@ -10,18 +10,24 @@ including generating random samples and calculating probabilities using mass/den
 
 **Discrete Probability Distributions**
 
- - [X] [Bernoulli](https://en.wikipedia.org/wiki/Bernoulli_distribution)
- - [X] [Binomial](https://en.wikipedia.org/wiki/Binomial_distribution)
+[Bernoulli](https://en.wikipedia.org/wiki/Bernoulli_distribution) ::
+[Binomial](https://en.wikipedia.org/wiki/Binomial_distribution)
+
+**TODO**:
+
  - [ ] [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution)
  - [ ] [Multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution)
  - [ ] [Poisson](https://en.wikipedia.org/wiki/Poisson_distribution)
 
 **Continuous Probability Distributions**
 
- - [X] [Beta](https://en.wikipedia.org/wiki/Beta_distribution)
- - [X] [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution)
- - [X] [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution)
- - [X] [Normal](https://en.wikipedia.org/wiki/Normal_distribution)
+[Beta](https://en.wikipedia.org/wiki/Beta_distribution) ::
+[Exponential](https://en.wikipedia.org/wiki/Exponential_distribution) ::
+[Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) ::
+[Normal](https://en.wikipedia.org/wiki/Normal_distribution)
+
+**TODO**:
+
  - [ ] [Multivariate Normal](https://en.wikipedia.org/wiki/Multivariate_normal_distribution)
 
 > **Note**
