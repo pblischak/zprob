@@ -7,7 +7,7 @@ const DefaultPrng = std.rand.Xoshiro256;
 
 const spec_fn = @import("special_functions.zig");
 
-pub fn betaSample(alpha: f64, beta: f64, rng: *Random) f64 {
+pub fn betaSample(comptime T: type, alpha: T, beta: T, rng: *Random) T {
     if (alpha <= 0) {
         @panic("Parameter `alpha` must be greater than 0.");
     }
@@ -122,10 +122,15 @@ pub fn betaSample(alpha: f64, beta: f64, rng: *Random) f64 {
     } else {
         value = b / (b + w);
     }
-    return value;
+
+    switch (T) {
+        f64 => return value,
+        f32 => return @floatCast(f32, value),
+        else => @compileError("Unrecognized float type..."),
+    }
 }
 
-pub fn betaPdf(alpha: f64, beta: f64, x: f64) f64 {
+pub fn betaPdf(comptime T: type, alpha: T, beta: T, x: T) T {
     if (alpha <= 0) {
         @panic("Parameter `alpha` must be greater than 0.");
     }
@@ -143,10 +148,15 @@ pub fn betaPdf(alpha: f64, beta: f64, x: f64) f64 {
             / spec_fn.beta(alpha, beta);
         // zig fmt: on
     }
-    return value;
+
+    switch (T) {
+        f64 => return value,
+        f32 => return @floatCast(f32, value),
+        else => @compileError("Unrecognized float type..."),
+    }
 }
 
-pub fn betaLnPdf(alpha: f64, beta: f64, x: f64) f64 {
+pub fn betaLnPdf(comptime T: type, alpha: T, beta: T, x: T) T {
     if (alpha <= 0) {
         @panic("Parameter `alpha` must be greater than 0.");
     }
@@ -164,5 +174,10 @@ pub fn betaLnPdf(alpha: f64, beta: f64, x: f64) f64 {
             - spec_fn.lnBeta(alpha, beta);
         // zog fmt: on
     }
-    return value;
+
+    switch (T) {
+        f64 => return value,
+        f32 => return @floatCast(f32, value),
+        else => @compileError("Unrecognized float type..."),
+    }
 }
