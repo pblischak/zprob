@@ -11,12 +11,12 @@ including generating random samples and calculating probabilities using mass/den
 **Discrete Probability Distributions**
 
 [Bernoulli](https://en.wikipedia.org/wiki/Bernoulli_distribution) ::
-[Binomial](https://en.wikipedia.org/wiki/Binomial_distribution)
+[Binomial](https://en.wikipedia.org/wiki/Binomial_distribution) ::
+[Multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution)
 
 **TODO**:
 
  - [ ] [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution)
- - [ ] [Multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution)
  - [ ] [Poisson](https://en.wikipedia.org/wiki/Poisson_distribution)
 
 **Continuous Probability Distributions**
