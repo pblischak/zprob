@@ -20,13 +20,13 @@ pub fn lnNChooseK(n: i32, k: i32) f64 {
 }
 
 /// Binomial coefficient for integers n and k.
-pub fn nChooseK(n: i32, k: i32) i32 {
-    check_n_k(n, k);
-    const res = lnNChooseK(n, k);
-    return @floatToInt(i32, math.exp(res));
+pub fn nChooseK(comptime I: type, n: I, k: I) I {
+    check_n_k(I, n, k);
+    const res = lnNChooseK(I, f64, n, k);
+    return @floatToInt(I, @exp(res));
 }
 
-fn check_n_k(n: i32, k: i32) void {
+fn check_n_k(comptime I: type, n: I, k: I) void {
     if (n < k) {
         @panic("Parameter `n` cannot be less than parameter `k`.");
     }
@@ -83,7 +83,7 @@ fn lnGammaLanczos(x: f64) f64 {
 }
 
 /// Calculate Gamma(x) using Spouge's approximation.
-pub fn gammaFn(x: f64) f64 {
+pub fn gammaFn(x: f64) !f64 {
     if (x < 0) {
         @panic("Parameter `x` cannot be less than 0.");
     }
@@ -100,7 +100,7 @@ pub fn gammaFn(x: f64) f64 {
     c[0] = math.sqrt(2.0 * math.pi);
     while (k < a) : (k += 1) {
         k_f = @intToFloat(f64, k);
-        c[k] = math.exp(a_f - k_f) * math.pow(f64, a_f - k_f, k_f - 0.5) / k1_factorial;
+        c[k] = @exp(a_f - k_f) * math.pow(f64, a_f - k_f, k_f - 0.5) / k1_factorial;
         k1_factorial *= -k_f;
     }
 
@@ -116,7 +116,7 @@ pub fn gammaFn(x: f64) f64 {
 
 /// Calculate Gamma(x) using the Sterling approximation.
 pub fn fastGammaFn(x: f64) f64 {
-    return math.sqrt(2.0 * math.pi / x) * math.pow(f64, x / math.e, x);
+    return @sqrt(2.0 * math.pi / x) * math.pow(f64, x / math.e, x);
 }
 
 test "Gamma function" {
@@ -135,26 +135,26 @@ pub fn betaFn(a: f64, b: f64) f64 {
     return math.exp(lnGammaFn(a) + lnGammaFn(b) - lnGammaFn(a + b));
 }
 
-pub fn lnFactorial(n: i32) f64 {
+pub fn lnFactorial(comptime I: type, comptime F: type, n: I) F {
     if (n < 0) {
         @panic("Cannot take the log factorial of a negative number.");
     }
 
     if (n < 1024) {
         if (n <= 1) return 0;
-        var sum: u32 = 0.0;
-        var i: u32 = 1;
-        while (1 < n) : (i += 1) {
-            sum += math.log(i);
+        var sum: F = 0.0;
+        var i: I = 1;
+        while (i < n) : (i += 1) {
+            sum += @log(@intToFloat(F, i));
         }
-        return @intToFloat(f64, sum);
+        return sum;
     }
 
     // Sterling approximation
-    const C0: f64 = 0.918938533204672722;
-    const C1: f64 = 1.0 / 12.0;
-    const C3: f64 = -1.0 / 360.0;
-    const n1: f64 = n;
-    const r: f64 = 1.0 / n1;
+    const C0: F = 0.918938533204672722;
+    const C1: F = 1.0 / 12.0;
+    const C3: F = -1.0 / 360.0;
+    const n1: F = @intToFloat(F, n);
+    const r: F = 1.0 / n1;
     return (n1 + 0.5) * @log(n1) - n1 + C0 + r * (C1 + r * r * C3);
 }

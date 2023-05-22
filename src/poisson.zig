@@ -68,7 +68,7 @@ fn poissonInversion(comptime I: type, comptime F: type, lambda: F, rng: *Random)
         }
         x += 1;
         f += lambda;
-        f += x;
+        f += @intToFloat(F, x);
 
         while (x <= bound) {
             r -= f;
@@ -82,7 +82,6 @@ fn poissonInversion(comptime I: type, comptime F: type, lambda: F, rng: *Random)
     }
 }
 
-
 fn poissonRatioUniforms(comptime I: type, comptime F: type, lambda: F, rng: *Random) I {
     var u: F = undefined;
     var lf: F = undefined;
@@ -92,7 +91,7 @@ fn poissonRatioUniforms(comptime I: type, comptime F: type, lambda: F, rng: *Ran
     var p_a = lambda + 0.5;
     var mode = @floatToInt(I, lambda);
     var p_g = @log(lambda);
-    var p_q = @intToFloat(F, mode) * p_g - spec_fn.lnFactorial(mode);
+    var p_q = @intToFloat(F, mode) * p_g - spec_fn.lnFactorial(I, F, mode);
     var p_h = @sqrt(2.943035529371538573 * (lambda + 0.5)) + 0.8989161620588987408;
     var p_bound = @floatToInt(I, p_a + 6.0 * p_h);
 
@@ -108,7 +107,7 @@ fn poissonRatioUniforms(comptime I: type, comptime F: type, lambda: F, rng: *Ran
         }
 
         k = @floatToInt(I, x);
-        lf = @intToFloat(F, k) * p_g - spec_fn.lnFactorial(k) - p_q;
+        lf = @intToFloat(F, k) * p_g - spec_fn.lnFactorial(I, F, k) - p_q;
         if (lf >= u * (4.0 - u) - 3.0) {
             break;
         }
@@ -135,7 +134,7 @@ test "Poisson API" {
     var prng = DefaultPrng.init(seed);
     var rng = prng.random();
     var sum: f64 = 0.0;
-    const lambda: f64 = 0.1;
+    const lambda: f64 = 20.0;
     for (0..10_000) |_| {
         const samp = poissonSample(u32, f64, lambda, &rng);
         sum += @intToFloat(f64, samp);
@@ -143,7 +142,6 @@ test "Poisson API" {
     const avg: f64 = sum / 10_000.0;
     const mean: f64 = lambda;
     const variance: f64 = lambda;
-    // zig fmt: off
     try std.testing.expectApproxEqAbs(
         mean, avg, variance
     );
