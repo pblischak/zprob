@@ -13,11 +13,12 @@ including generating random samples and calculating probabilities using mass/den
 [Bernoulli](https://en.wikipedia.org/wiki/Bernoulli_distribution) ::
 [Binomial](https://en.wikipedia.org/wiki/Binomial_distribution) ::
 [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution) ::
-[Multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution)
+[Multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution) ::
+[Poisson](https://en.wikipedia.org/wiki/Poisson_distribution)
 
 **TODO**:
 
- - [ ] [Poisson](https://en.wikipedia.org/wiki/Poisson_distribution)
+ - [ ] [Negative Binomial](https://en.wikipedia.org/wiki/Negative_binomial_distribution)
 
 **Continuous Probability Distributions**
 
@@ -28,6 +29,7 @@ including generating random samples and calculating probabilities using mass/den
 
 **TODO**:
 
+ - [ ] [Dirichlet](https://en.wikipedia.org/wiki/Dirichlet_distribution)
  - [ ] [Multivariate Normal](https://en.wikipedia.org/wiki/Multivariate_normal_distribution)
 
 > **Note**
