@@ -23,13 +23,13 @@ including generating random samples and calculating probabilities using mass/den
 **Continuous Probability Distributions**
 
 [Beta](https://en.wikipedia.org/wiki/Beta_distribution) ::
+[Dirichlet](https://en.wikipedia.org/wiki/Dirichlet_distribution) ::
 [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution) ::
 [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) ::
 [Normal](https://en.wikipedia.org/wiki/Normal_distribution)
 
 **TODO**:
 
- - [ ] [Dirichlet](https://en.wikipedia.org/wiki/Dirichlet_distribution)
  - [ ] [Multivariate Normal](https://en.wikipedia.org/wiki/Multivariate_normal_distribution)
 
 > **Note**
