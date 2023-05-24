@@ -20,6 +20,7 @@ including generating random samples and calculating probabilities using mass/den
 **Continuous Probability Distributions**
 
 [Beta](https://en.wikipedia.org/wiki/Beta_distribution) ::
+[Chi-squared](https://en.wikipedia.org/wiki/Chi-squared_distribution) ::
 [Dirichlet](https://en.wikipedia.org/wiki/Dirichlet_distribution) ::
 [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution) ::
 [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) ::
