@@ -147,7 +147,7 @@ test "Gamma function" {
     var x: f64 = 10.0;
     std.debug.print("\n", .{});
     while (x <= 100.0) : (x += 10.0) {
-        std.debug.print("{}\t{}\n", .{ try gammaFn(x / 3.0), fastGammaFn(x / 3.0) });
+        std.debug.print("{}\t{}\n", .{ try gammaFn(f64, x / 3.0), fastGammaFn(f64, x / 3.0) });
     }
 }
 

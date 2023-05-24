@@ -14,11 +14,8 @@ including generating random samples and calculating probabilities using mass/den
 [Binomial](https://en.wikipedia.org/wiki/Binomial_distribution) ::
 [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution) ::
 [Multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution) ::
+[Negative Binomial](https://en.wikipedia.org/wiki/Negative_binomial_distribution) ::
 [Poisson](https://en.wikipedia.org/wiki/Poisson_distribution)
-
-**TODO**:
-
- - [ ] [Negative Binomial](https://en.wikipedia.org/wiki/Negative_binomial_distribution)
 
 **Continuous Probability Distributions**
 
