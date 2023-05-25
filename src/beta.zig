@@ -130,7 +130,7 @@ pub fn betaSample(comptime F: type, alpha: F, beta: F, rng: *Random) F {
     }
 }
 
-pub fn betaPdf(comptime F: type, alpha: F, beta: F, x: F) F {
+pub fn betaPdf(comptime F: type, x: F, alpha: F, beta: F) F {
     if (alpha <= 0) {
         @panic("Parameter `alpha` must be greater than 0.");
     }
@@ -156,7 +156,7 @@ pub fn betaPdf(comptime F: type, alpha: F, beta: F, x: F) F {
     }
 }
 
-pub fn betaLnPdf(comptime F: type, alpha: F, beta: F, x: F) F {
+pub fn betaLnPdf(comptime F: type, x: F, alpha: F, beta: F) F {
     if (alpha <= 0) {
         @panic("Parameter `alpha` must be greater than 0.");
     }
