@@ -17,7 +17,7 @@ const spec_fn = @import("special_functions.zig");
 ///   Binomial Random Variate Generation,
 ///   Communications of the ACM,
 ///   Volume 31, Number 2, February 1988, pages 216-222.
-pub fn binomialSample(n: i32, p: f64, rng: *Random) i32 {
+pub fn binomialSample(comptime I: type, comptime F: type, n: I, p: F, rng: *Random) I {
     var al: f64 = 0.0;
     var alv: f64 = 0.0;
     var amaxp: f64 = 0.0;
@@ -62,7 +62,8 @@ pub fn binomialSample(n: i32, p: f64, rng: *Random) i32 {
     var z: f64 = 0.0;
     var z2: f64 = 0.0;
 
-    p0 = @min(p, 1.0 - p);
+    const p_f64 = @floatCast(f64, p);
+    p0 = @min(p_f64, 1.0 - p_f64);
     q = 1.0 - p0;
     xnp = @intToFloat(f64, n) * p0;
 
@@ -78,7 +79,7 @@ pub fn binomialSample(n: i32, p: f64, rng: *Random) i32 {
 
             while (true) {
                 if (u < f) {
-                    if (0.5 < p) {
+                    if (0.5 < p_f64) {
                         ix = n - ix;
                     }
                     value = ix;
@@ -121,7 +122,7 @@ pub fn binomialSample(n: i32, p: f64, rng: *Random) i32 {
         //
         if (u < p1) {
             ix = @floatToInt(i32, xm - p1 * v + u);
-            if (0.5 < p) {
+            if (0.5 < p_f64) {
                 ix = n - ix;
             }
             value = ix;
@@ -181,7 +182,7 @@ pub fn binomialSample(n: i32, p: f64, rng: *Random) i32 {
             }
 
             if (v <= f) {
-                if (0.5 < p) {
+                if (0.5 < p_f64) {
                     ix = n - ix;
                 }
                 value = ix;
@@ -194,7 +195,7 @@ pub fn binomialSample(n: i32, p: f64, rng: *Random) i32 {
             alv = @log(v);
 
             if (alv < ynorm - amaxp) {
-                if (0.5 < p) {
+                if (0.5 < p_f64) {
                     ix = n - ix;
                 }
                 value = ix;
@@ -226,7 +227,7 @@ pub fn binomialSample(n: i32, p: f64, rng: *Random) i32 {
             // zig fmt: on
 
             if (alv <= t) {
-                if (0.5 < p) {
+                if (0.5 < p_f64) {
                     ix = n - ix;
                 }
                 value = ix;
@@ -234,29 +235,36 @@ pub fn binomialSample(n: i32, p: f64, rng: *Random) i32 {
             }
         }
     }
-    return value;
+    switch (I) {
+        i32 => return value,
+        i16 => return @intCast(i16, value),
+        i8 => return @intCast(i8, value),
+        u32 => return @intCast(u32, value),
+        u16 => return @intCast(u16, value),
+        u8 => return @intCast(u8, value),
+    }
 }
 
-pub fn binomialPmf(n: i32, p: f64, k: i32) f64 {
+pub fn binomialPmf(comptime I: type, comptime F: type, k: I, n: I, p: F) F {
     if (k > n or k <= 0) {
         @panic("");
     }
-    const coeff = try spec_fn.nChooseK(n, k);
+    const coeff = try spec_fn.nChooseK(I, n, k);
     // zig fmt: off
-    return coeff
-        * math.pow(f64, p, @intToFloat(f64, k))
-        * math.pow(f64, 1.0 - p, @intToFloat(f64, n - k));
+    return @intToFloat(F, coeff)
+        * math.pow(F, p, @intToFloat(F, k))
+        * math.pow(F, 1.0 - p, @intToFloat(F, n - k));
     // zig fmt: on
 }
 
-pub fn binomialLnPmf(n: i32, p: f64, k: i32) f64 {
+pub fn binomialLnPmf(comptime I: type, comptime F: type, k: I, n: I, p: F) F {
     if (k > n or k <= 0) {
         @panic("");
     }
-    const ln_coeff = try spec_fn.lnNChooseK(n, k);
+    const ln_coeff = try spec_fn.lnNChooseK(I, F, n, k);
     // zig fmt: off
     return ln_coeff
-        + k * @log(p)
-        + (n - k) * @log(1.0 - p);
+        + @intToFloat(F, k) * @log(p)
+        + @intToFloat(F, n - k) * @log(1.0 - p);
     // zig fmt: on
 }
