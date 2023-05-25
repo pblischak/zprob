@@ -10,22 +10,16 @@ const DefaultPrng = std.rand.Xoshiro256;
 const bernoulliSample = @import("bernoulli.zig").bernoulliSample;
 
 pub fn geometricSample(comptime I: type, comptime F: type, p: F, rng: *Random) I {
-    var n_trials: I = 0;
-    var trial: I = bernoulliSample(p, rng);
-    while (trial == 0) {
-        trial = bernoulliSample(p, rng);
-        n_trials += 1;
-    }
-
-    return n_trials;
+    const u: F = rng.float(F);
+    return @floatToInt(I, @log(u) / @log(1.0 - p)) + 1;
 }
 
-pub fn geometricPmf(comptime I: type, comptime F: type, x: I, p: F) F {
-    return @exp(geometricLnPmf(I, F, x, p));
+pub fn geometricPmf(comptime I: type, comptime F: type, k: I, p: F) F {
+    return @exp(geometricLnPmf(I, F, k, p));
 }
 
-pub fn geometricLnPmf(comptime I: type, comptime F: type, x: I, p: F) F {
-    return @intToFloat(F, x) * @log(1.0 - p) + p;
+pub fn geometricLnPmf(comptime I: type, comptime F: type, k: I, p: F) F {
+    return @intToFloat(F, k) * @log(1.0 - p) + @log(p);
 }
 
 test "Geometric API" {
@@ -33,7 +27,7 @@ test "Geometric API" {
     var prng = DefaultPrng.init(seed);
     var rng = prng.random();
     var sum: f64 = 0.0;
-    const p: f64 = 0.1;
+    const p: f64 = 0.01;
     for (0..10_000) |_| {
         const samp = geometricSample(u32, f64, p, &rng);
         sum += @intToFloat(f64, samp);
