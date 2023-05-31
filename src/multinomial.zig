@@ -16,8 +16,8 @@ const spec_fn = @import("special_functions.zig");
 
 pub fn multinomialSample(
     comptime I: type, comptime F: type,
-    n: I, n_cat: I, p_vec: []F, rng: *Random, alloc: Allocator
-) !ArrayList(I) {
+    n: I, n_cat: I, p_vec: []F, rng: *Random, allocator: Allocator
+) ![]I {
     if (p_vec.len != n_cat) {
         @panic("Number of categories and length of probability vector are not the same...");
     }
@@ -39,23 +39,23 @@ pub fn multinomialSample(
     // Make a usize of n_cat to use in loops
     const n_cat_usize = @intCast(usize, n_cat);
 
-    var ix = ArrayList(I).init(alloc);
-    for (0..n_cat_usize) |_| {
-        try ix.append(0);
+    var ix = try allocator.alloc(I, n_cat_usize);
+    for (0..n_cat_usize) |i| {
+        ix[i] = 0;
     }
 
     for (0..(n_cat_usize - 1)) |icat| {
         prob = p_vec[icat] / p_tot;
-        ix.items[icat] = binomialSample(n_tot, prob, rng);
-        n_tot -= ix.items[icat];
+        ix[icat] = binomialSample(I, F, n_tot, prob, rng);
+        n_tot -= ix[icat];
         if (n_tot <= 0) {
             return ix;
         }
         p_tot -= p_vec[icat];
     }
-    ix.items[n_cat_usize - 1] = n_tot;
+    ix[n_cat_usize - 1] = n_tot;
 
-    return ix;
+    return ix[0..];
 }
 
 pub fn multinomialPmf(comptime I: type, comptime F: type, x_vec: []I, p_vec: []F) F {
@@ -83,6 +83,6 @@ test "Multinomial API" {
     var rng = prng.random();
     var p_vec = [3]f64{ 0.1, 0.25, 0.65 };
     const res = try multinomialSample(i32, f64, 10, 3, p_vec[0..], &rng, test_allocator);
-    defer res.deinit();
+    defer test_allocator.free(res);
     std.debug.print("\n{any}\n", .{res});
 }
