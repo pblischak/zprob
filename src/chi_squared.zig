@@ -29,7 +29,7 @@ pub fn chiSquaredSample(comptime I: type, comptime F: type, k: I, rng: *Random) 
     return x2;
 }
 
-pub fn chiSquaredPdf(comptime I: type, comptime F: type, k: I, x: F) F {
+pub fn chiSquaredPdf(comptime I: type, comptime F: type, x: F, k: I) F {
     if (x < 0.0) {
         return 0.0;
     }
@@ -37,7 +37,7 @@ pub fn chiSquaredPdf(comptime I: type, comptime F: type, k: I, x: F) F {
     return @exp(chiSquaredLnPdf(I, F, k, x));
 }
 
-pub fn chiSquaredLnPdf(comptime I: type, comptime F: type, k: I, x: F) F {
+pub fn chiSquaredLnPdf(comptime I: type, comptime F: type, x: F, k: I) F {
     var b: F = @intToFloat(F, k) / 2.0;
     return -(b * @log(2.0) + lnGammaFn(F, b)) - b + (b - 1.0) * @log(x);
 }

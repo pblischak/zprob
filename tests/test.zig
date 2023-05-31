@@ -12,7 +12,7 @@ const TestingState = struct {
         return .{
             .reps = reps orelse 10_000,
             .seed = seed orelse @intCast(u64, std.time.microTimestamp()),
-            .tol = tol orelse 0.1,
+            .tolerance = tol orelse 0.1,
         };
     }
 };
@@ -25,7 +25,7 @@ test "Bernoulli" {
     var rng = prng.random();
     var sum: f64 = 0.0;
     for (0..ts.reps) |_| {
-        const samp = zprob.bernoulliSample(0.4, &rng);
+        const samp = zprob.bernoulliSample(u8, f64, 0.4, &rng);
         sum += @intToFloat(f64, samp);
     }
     const avg: f64 = sum / 10000.0;
@@ -42,7 +42,7 @@ test "Binomial" {
     var rng = prng.random();
     var sum: f64 = 0.0;
     for (0..ts.reps) |_| {
-        const samp = zprob.binomialSample(10, 0.2, &rng);
+        const samp = zprob.binomialSample(i32, f64, 10, 0.2, &rng);
         sum += @intToFloat(f64, samp);
     }
     const avg: f64 = sum / 10000.0;
