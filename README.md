@@ -31,7 +31,7 @@ including generating random samples and calculating probabilities using mass/den
  - [ ] [Multivariate Normal](https://en.wikipedia.org/wiki/Multivariate_normal_distribution)
 
 > **Note**
-> `zprob` was developed using the 0.11.0-dev.2324+64214b1ca version of Zig.
+> `zprob` was developed using a 0.11.0-dev version of Zig and is still a work in progress.
 > Using a version of Zig older than one of the 0.11-dev nightly versions will
 > likely not work due to changes in the build system (among other things).
 
@@ -128,8 +128,10 @@ folder.
 
 ## Acknowledgements
 
-The `zprob` library is modeled after code from the following projects:
+Code from the following repositories helped guide the development of `zprob`:
 
+ - Some of the sampling algorithms are translated to Zig from
+   [`ranlib.c`](https://people.sc.fsu.edu/~jburkardt/c_src/ranlib/ranlib.html).
  - The Odin-lang [rand libraries](https://github.com/odin-lang/Odin/tree/master/core/math/rand).
  - The [zig-gamedev](https://github.com/michal-z/zig-gamedev) Zig libraries.
  - The [rand_distr](https://github.com/rust-random/rand/tree/master/rand_distr) Rust library.
