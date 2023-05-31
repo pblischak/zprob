@@ -9,7 +9,7 @@ pub fn main() void {
 
     var sample: i32 = 0;
     for (0..100) |_| {
-        sample = zprob.binomialSample(50, 0.5, &rng);
+        sample = zprob.binomialSample(i32, f64, 50, 0.5, &rng);
         std.debug.print("{}\n", .{sample});
     }
 }
