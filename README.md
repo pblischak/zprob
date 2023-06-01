@@ -24,11 +24,12 @@ including generating random samples and calculating probabilities using mass/den
 [Dirichlet](https://en.wikipedia.org/wiki/Dirichlet_distribution) ::
 [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution) ::
 [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) ::
+[Multivariate Normal](https://en.wikipedia.org/wiki/Multivariate_normal_distribution) (sampling only) ::
 [Normal](https://en.wikipedia.org/wiki/Normal_distribution)
 
 **TODO**:
 
- - [ ] [Multivariate Normal](https://en.wikipedia.org/wiki/Multivariate_normal_distribution)
+ - [ ] [Multivariate Normal](https://en.wikipedia.org/wiki/Multivariate_normal_distribution) (PDF + log-PDF)
 
 > **Note**
 > `zprob` was developed using a 0.11.0-dev version of Zig and is still a work in progress.
