@@ -5,7 +5,6 @@
 
 const std = @import("std");
 const math = std.math;
-const ArrayList = std.ArrayList;
 const Allocator = std.mem.Allocator;
 const Random = std.rand.Random;
 const DefaultPrng = std.rand.Xoshiro256;
