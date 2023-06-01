@@ -5,14 +5,15 @@
 
 const std = @import("std");
 const math = std.math;
+const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 const Random = std.rand.Random;
 const DefaultPrng = std.rand.Xoshiro256;
 const test_allocator = std.testing.allocator;
 
 pub fn mvNormalSample(
-    comptime T: type, mu_vec: []T, sigma_mat: []T, rng: *Random, alloc: std.mem.Allocator
-) !ArrayList(T) {
+    comptime F: type, mu_vec: []F, sigma_mat: []F, rng: *Random, allocator: std.mem.Allocator
+) ![]F {
     if (sigma_mat.len != (mu_vec.len * mu_vec.len)) {
         @panic(
             \\ Mean vector and variance covariance matrix are incorrectly sized.
@@ -20,21 +21,21 @@ pub fn mvNormalSample(
         );
     }
     const n = mu_vec.len;
-    var ae: T = undefined;
+    var ae: F = undefined;
     var icount: usize = undefined;
 
-    var work = ArrayList(T).init(alloc);
-    for (0..n) |_| {
-        try work.append(rng.floatNorm(T));
+    var work = try allocator.alloc(F, n);
+    for (0..n) |i| {
+        work[i] = rng.floatNorm(F);
     }
-    defer work.deinit();
-    var result = ArrayList(T).init(alloc);
+    defer allocator.free(work);
+    var result = try allocator.alloc(F, n);
 
     // Get Cholesky deomposition of sigma_mat
     cholesky(sigma_mat, n);
 
     // Store L from Cholesky decomp as an upper triangular matrix
-    var upper = ArrayList(T).init(alloc);
+    var upper = ArrayList(F).init(allocator);
     defer upper.deinit();
     for (0..n) |i| {
         for (i..n) |j| {
@@ -47,17 +48,17 @@ pub fn mvNormalSample(
         ae = 0.0;
         for (0..(i + 1)) |j| {
             icount += j;
-            ae += upper.items[i + n * j - icount] * work.items[j];
+            ae += upper.items[i + n * j - icount] * work[j];
         }
-        try result.append(ae + mu_vec[i]);
+        result[i] = ae + mu_vec[i];
     }
 
-    return result;
+    return result[0..];
 }
 
 pub fn mvNormalLnPdf(
-    comptime T: type, x_vec: []T, mu_vec: []T, sigma_mat: []T, alloc: std.mem.Allocator
-) !T {
+    comptime F: type, x_vec: []F, mu_vec: []F, sigma_mat: []F, allocator: std.mem.Allocator
+) !F {
     if (
         sigma_mat.len != (mu_vec.len * mu_vec.len)
         and sigma_mat.len != (x_vec.len * x_vec.len)
@@ -67,7 +68,7 @@ pub fn mvNormalLnPdf(
             \\ Must be N, N, and N x N, respectively.
         );
     }
-    _ = ArrayList(T).init(alloc);
+    _ = ArrayList(F).init(allocator);
     @panic("Not implemented yet...");
 }
 
@@ -102,7 +103,7 @@ test "Cholesky–Banachiewicz algorithm" {
         -16, -43, 98,
     };
 
-    std.debug.print("\n{any}", .{arr});
+    std.debug.print("\n{any}\n", .{arr});
     cholesky(arr[0..], 3);
     for (0..3) |i| {
         for (0..3) |j| {
@@ -121,6 +122,6 @@ test "Multivariate Normal API" {
     var prng = DefaultPrng.init(seed);
     var rng = prng.random();
     const tt = try mvNormalSample(f64, mu[0..], sm[0..], &rng, test_allocator);
-    defer tt.deinit();
-    std.debug.print("\n{any}", .{tt});
+    defer test_allocator.free(tt);
+    std.debug.print("\n{any}\n", .{tt});
 }
