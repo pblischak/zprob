@@ -127,6 +127,37 @@ zig build examples
 Each example file should compile into a binary executable with the same name in the `zig-out/bin`
 folder.
 
+### Pseudo-Random Number Generators
+
+**Using the current time in microseconds**
+
+- [How to use the random number generator in Zig]("https://zig.news/gowind/how-to-use-the-random-number-generator-in-zig-ef6")
+
+```zig
+const std = @import("std");
+
+const seed = @intCast(u64, std.time.microTimestamp());
+var prng = std.rand.Xoshiro256.init(seed);
+const rand = prng.random();
+```
+
+**Using `/dev/urandom`**
+
+- [Random Numbers on Zig Learn](https://ziglearn.org/chapter-2/#random-numbers)
+
+```zig
+const std = @import("std");
+
+var prng = std.rand.Xoshiro256.init(blk: {
+    var seed: u64 = undefined;
+    try std.os.getrandom(std.mem.asBytes(&seed));
+    break :blk seed;
+});
+
+const rand = prng.random();
+```
+
+
 ## Acknowledgements
 
 Code from the following repositories helped guide the development of `zprob`:
