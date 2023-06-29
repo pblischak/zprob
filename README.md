@@ -157,7 +157,6 @@ var prng = std.rand.Xoshiro256.init(blk: {
 const rand = prng.random();
 ```
 
-
 ## Acknowledgements
 
 Code from the following repositories helped guide the development of `zprob`:
