@@ -1,5 +1,8 @@
 name: Continuous Integration
 
+env:
+  ZIG_VERSION: 0.11.0-dev.2324+64214b1ca
+
 on:
   pull_request:
   push:
@@ -17,9 +20,10 @@ jobs:
           submodules: recursive
       
       - name: Install Zig
-        uses: goto-bus-stop/setup-zig@v2
-        with:
-          version: 0.11.0+64214b1ca
+        run: |
+          curl https://ziglang.org/builds/zig-linux-x86_64-${{env.ZIG_VERSION}}.tar.xz -L -o zig.tar.xz
+          tar -xf zig.tar.xz
+          echo "$(pwd)/zig-linux-x86_64-${{env.ZIG_VERSION}}" >> $GITHUB_PATH
 
       - name: Test
         run: zig build test
