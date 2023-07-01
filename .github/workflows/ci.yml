@@ -1,0 +1,29 @@
+name: Continuous Integration
+
+env:
+  ZIG_VERSION: 0.11.0-dev.2324+64214b1ca
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      
+      - name: Install Zig
+        run: |
+          curl https://ziglang.org/builds/zig-linux-x86_64-${{env.ZIG_VERSION}}.tar.xz -L -o zig.tar.xz
+          tar -xf zig.tar.xz
+          echo "$(pwd)/zig-linux-x86_64-${{env.ZIG_VERSION}}" >> $GITHUB_PATH
+
+      - name: Test
+        run: zig build test
