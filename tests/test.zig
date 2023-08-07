@@ -11,7 +11,7 @@ const TestingState = struct {
     pub fn init(reps: ?usize, seed: ?u64, tol: ?f64) TestingState {
         return .{
             .reps = reps orelse 10_000,
-            .seed = seed orelse @intCast(u64, std.time.microTimestamp()),
+            .seed = seed orelse @intCast(std.time.microTimestamp()),
             .tolerance = tol orelse 0.1,
         };
     }
@@ -26,7 +26,7 @@ test "Bernoulli" {
     var sum: f64 = 0.0;
     for (0..ts.reps) |_| {
         const samp = zprob.bernoulliSample(u8, f64, 0.4, &rng);
-        sum += @intToFloat(f64, samp);
+        sum += @as(f64, @floatFromInt(samp));
     }
     const avg: f64 = sum / 10000.0;
     // zig fmt: off
@@ -43,7 +43,7 @@ test "Binomial" {
     var sum: f64 = 0.0;
     for (0..ts.reps) |_| {
         const samp = zprob.binomialSample(i32, f64, 10, 0.2, &rng);
-        sum += @intToFloat(f64, samp);
+        sum += @as(f64, @floatFromInt(samp));
     }
     const avg: f64 = sum / 10000.0;
     // zig fmt: off
@@ -64,7 +64,7 @@ test "Exponential" {
         samp = zprob.exponentialSample(f64, lambda, &rng);
         sum += samp;
     }
-    const avg: f64 = sum / @intToFloat(f64, ts.reps);
+    const avg: f64 = sum / @as(f64, @floatFromInt(ts.reps));
     // zig fmt: off
     try std.testing.expectApproxEqAbs(
         1.0 / lambda, avg, ts.tolerance
@@ -86,6 +86,6 @@ test "Normal Sample f64" {
         samp = zprob.normalSample(f64, mu, sigma, &rng);
         sum += samp;
     }
-    const avg: f64 = sum / @intToFloat(f64, ts.reps);
+    const avg: f64 = sum / @as(f64, @floatFromInt(ts.reps));
     try std.testing.expectApproxEqAbs(mu, avg, ts.tolerance);
 }

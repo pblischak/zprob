@@ -11,8 +11,8 @@ const gammaSample = @import("gamma.zig").gammaSample;
 const lnGammaFn = @import("special_functions.zig").lnGammaFn;
 
 pub fn chiSquaredSample(comptime I: type, comptime F: type, k: I, rng: *Random) F {
-    const b = @intToFloat(F, k) / 2.0;
-    const k_usize = @intCast(usize, k);
+    const b: F = @as(F, k) / 2.0;
+    const k_usize: usize = @intCast(k);
 
     var x2: F = undefined;
     var x: F = undefined;
@@ -38,12 +38,12 @@ pub fn chiSquaredPdf(comptime I: type, comptime F: type, x: F, k: I) F {
 }
 
 pub fn chiSquaredLnPdf(comptime I: type, comptime F: type, x: F, k: I) F {
-    var b: F = @intToFloat(F, k) / 2.0;
+    var b: F = @as(F, k) / 2.0;
     return -(b * @log(2.0) + lnGammaFn(F, b)) - b + (b - 1.0) * @log(x);
 }
 
 test "Chi-squared API" {
-    const seed = @intCast(u64, std.time.microTimestamp());
+    const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = DefaultPrng.init(seed);
     var rng = prng.random();
     var sum: f64 = 0.0;

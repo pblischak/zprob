@@ -68,7 +68,7 @@ fn poissonInversion(comptime I: type, comptime F: type, lambda: F, rng: *Random)
         }
         x += 1;
         f += lambda;
-        f += @intToFloat(F, x);
+        f += @as(F, x);
 
         while (x <= bound) {
             r -= f;
@@ -77,7 +77,7 @@ fn poissonInversion(comptime I: type, comptime F: type, lambda: F, rng: *Random)
             }
             x += 1;
             f += lambda;
-            f += @intToFloat(F, x);
+            f += @as(F, x);
         }
     }
 }
@@ -89,11 +89,11 @@ fn poissonRatioUniforms(comptime I: type, comptime F: type, lambda: F, rng: *Ran
     var k: I = undefined;
 
     var p_a = lambda + 0.5;
-    var mode = @floatToInt(I, lambda);
+    var mode = @as(I, lambda);
     var p_g = @log(lambda);
-    var p_q = @intToFloat(F, mode) * p_g - spec_fn.lnFactorial(I, F, mode);
+    var p_q = @as(F, mode) * p_g - spec_fn.lnFactorial(I, F, mode);
     var p_h = @sqrt(2.943035529371538573 * (lambda + 0.5)) + 0.8989161620588987408;
-    var p_bound = @floatToInt(I, p_a + 6.0 * p_h);
+    var p_bound = @as(I, p_a + 6.0 * p_h);
 
     while (true) {
         u = rng.float(F);
@@ -102,12 +102,12 @@ fn poissonRatioUniforms(comptime I: type, comptime F: type, lambda: F, rng: *Ran
         }
 
         x = p_a + p_h * (rng.float(F) - 0.5) / u;
-        if (x < 0.0 or x >= @intToFloat(F, p_bound)) {
+        if (x < 0.0 or x >= @as(F, p_bound)) {
             continue;
         }
 
-        k = @floatToInt(I, x);
-        lf = @intToFloat(F, k) * p_g - spec_fn.lnFactorial(I, F, k) - p_q;
+        k = @as(I, x);
+        lf = @as(F, k) * p_g - spec_fn.lnFactorial(I, F, k) - p_q;
         if (lf >= u * (4.0 - u) - 3.0) {
             break;
         }
@@ -126,18 +126,18 @@ pub fn poissonPmf(comptime I: type, comptime F: type, k: I, lambda: F) I {
 }
 
 pub fn poissonLnPmf(comptime I: type, comptime F: type, k: I, lambda: F) I {
-    return @intToFloat(F, k) * @log(lambda) - lambda + spec_fn.lnFactorial(k);
+    return @as(F, k) * @log(lambda) - lambda + spec_fn.lnFactorial(k);
 }
 
 test "Poisson API" {
-    const seed = @intCast(usize, std.time.milliTimestamp());
+    const seed: u64 = @intCast(std.time.milliTimestamp());
     var prng = DefaultPrng.init(seed);
     var rng = prng.random();
     var sum: f64 = 0.0;
     const lambda: f64 = 20.0;
     for (0..10_000) |_| {
         const samp = poissonSample(u32, f64, lambda, &rng);
-        sum += @intToFloat(f64, samp);
+        sum += @as(f64, samp);
     }
     const avg: f64 = sum / 10_000.0;
     const mean: f64 = lambda;

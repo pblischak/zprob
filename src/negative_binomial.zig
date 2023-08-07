@@ -27,7 +27,7 @@ pub fn negBinomialSample(comptime I: type, comptime F: type, n: I, p: F, rng: *R
         @panic("Probability of success cannot be greater than or equal to 1...");
     }
 
-    r = @intToFloat(F, n);
+    r = @as(F, n);
     a = (1.0 - p) / p;
     y = gammaSample(F, a, r, rng);
     value = poissonSample(I, F, y, rng);
@@ -40,19 +40,19 @@ pub fn negBinomialPmf(comptime I: type, comptime F: type, k: I, r: I, p: F) F {
 }
 
 pub fn negBinomialLnPmf(comptime I: type, comptime F: type, k: I, r: I, p: F) F {
-    const k_f = @intToFloat(F, k);
-    const r_f = @intToFloat(F, r);
+    const k_f = @as(F, k);
+    const r_f = @as(F, r);
     return lnNChooseK(I, F, k + r - 1, k) + k_f * @log(1.0 - p) + r_f * @log(p);
 }
 
 test "Negative Binomial API" {
-    const seed = @intCast(u64, std.time.microTimestamp());
+    const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = DefaultPrng.init(seed);
     var rng = prng.random();
     var sum: i32 = 0.0;
     for (0..10_000) |_| {
         sum += negBinomialSample(i32, f64, 10, 0.9, &rng);
     }
-    const avg = @intToFloat(f64, sum) / 10_000.0;
+    const avg = @as(f64, sum) / 10_000.0;
     std.debug.print("{}\n", .{avg});
 }

@@ -62,15 +62,16 @@ pub fn binomialSample(comptime I: type, comptime F: type, n: I, p: F, rng: *Rand
     var z: f64 = 0.0;
     var z2: f64 = 0.0;
 
-    const p_f64 = @floatCast(f64, p);
+    const p_f64: f64 = @floatCast(p);
     p0 = @min(p_f64, 1.0 - p_f64);
     q = 1.0 - p0;
-    xnp = @intToFloat(f64, n) * p0;
+    // xnp = @intToFloat(f64, n) * p0;
+    xnp = @as(f64, @floatFromInt(n)) * p0;
 
     if (xnp < 30.0) {
-        qn = math.pow(f64, q, @intToFloat(f64, n));
+        qn = math.pow(f64, q, @as(f64, @floatFromInt(n)));
         r = p0 / q;
-        g = r * @intToFloat(f64, n + 1);
+        g = r * @as(f64, @floatFromInt(n + 1));
 
         while (true) {
             ix = 0;
@@ -91,15 +92,15 @@ pub fn binomialSample(comptime I: type, comptime F: type, n: I, p: F, rng: *Rand
                 }
                 u = u - f;
                 ix = ix + 1;
-                f = f * (g / @intToFloat(f64, ix) - r);
+                f = f * (g / @as(f64, @floatFromInt(ix)) - r);
             }
         }
     }
     ffm = xnp + p0;
-    m = @floatToInt(i32, ffm);
-    fm = @intToFloat(f64, m);
+    m = @as(i32, @intFromFloat(ffm));
+    fm = @as(f64, @floatFromInt(m));
     xnpq = xnp * q;
-    p1 = @intToFloat(f64, @floatToInt(i32, (2.195 * @sqrt(xnpq) - 4.6 * q))) + 0.5;
+    p1 = @as(f64, @floatFromInt(@as(i32, @intFromFloat(2.195 * @sqrt(xnpq) - 4.6 * q)))) + 0.5;
     xm = fm + 0.5;
     xl = xm - p1;
     xr = xm + p1;
@@ -121,7 +122,7 @@ pub fn binomialSample(comptime I: type, comptime F: type, n: I, p: F, rng: *Rand
         //  Triangle
         //
         if (u < p1) {
-            ix = @floatToInt(i32, xm - p1 * v + u);
+            ix = @as(i32, @intFromFloat(xm - p1 * v + u));
             if (0.5 < p_f64) {
                 ix = n - ix;
             }
@@ -138,15 +139,15 @@ pub fn binomialSample(comptime I: type, comptime F: type, n: I, p: F, rng: *Rand
             if (v <= 0.0 or 1.0 < v) {
                 continue;
             }
-            ix = @floatToInt(i32, x);
+            ix = @as(i32, @intFromFloat(x));
         } else if (u <= p3) {
-            ix = @floatToInt(i32, xl + @log(v) / xll);
+            ix = @as(i32, @intFromFloat(xl + @log(v) / xll));
             if (ix < 0) {
                 continue;
             }
             v = v * (u - p2) * xll;
         } else {
-            ix = @floatToInt(i32, xr - @log(v) / xlr);
+            ix = @as(i32, @intFromFloat(xr - @log(v) / xlr));
             if (n < ix) {
                 continue;
             }
@@ -154,30 +155,30 @@ pub fn binomialSample(comptime I: type, comptime F: type, n: I, p: F, rng: *Rand
         }
         k = math.absInt(ix - m) catch blk: {
             // zig fmt: off
-            break :blk @floatToInt(
+            break :blk @as(
                 i32,
-                @fabs(@intToFloat(f64, ix)
-                    - @intToFloat(f64, m))
+                @intFromFloat(@fabs(@as(f64, @floatFromInt(ix))
+                    - @as(f64, @floatFromInt(m))))
             );
             // zig fmt: on
         };
 
-        if (k <= 20 or xnpq / 2.0 - 1.0 <= @intToFloat(f64, k)) {
+        if (k <= 20 or xnpq / 2.0 - 1.0 <= @as(f64, @floatFromInt(k))) {
             f = 1.0;
             r = p0 / q;
-            g = @intToFloat(f64, n + 1) * r;
+            g = @as(f64, @floatFromInt(n + 1)) * r;
 
             if (m < ix) {
                 mp = m + 1;
                 i = mp;
                 while (i < ix) : (i += 1) {
-                    f = f * (g / @intToFloat(f64, i) - r);
+                    f = f * (g / @as(f64, @floatFromInt(i)) - r);
                 }
             } else if (ix < m) {
                 ix1 = ix + 1;
                 i = ix1;
                 while (i <= m) : (i += 1) {
-                    f = f / (g / @intToFloat(f64, i) - r);
+                    f = f / (g / @as(f64, @floatFromInt(i)) - r);
                 }
             }
 
@@ -189,7 +190,7 @@ pub fn binomialSample(comptime I: type, comptime F: type, n: I, p: F, rng: *Rand
                 return value;
             }
         } else {
-            const k_f = @intToFloat(f64, k);
+            const k_f = @as(f64, @floatFromInt(k));
             amaxp = (k_f / xnpq) * ((k_f * (k_f / 3.0 + 0.625) + 0.1666666666666) / xnpq + 0.5);
             ynorm = -(k_f * k_f) / (2.0 * xnpq);
             alv = @log(v);
@@ -206,20 +207,20 @@ pub fn binomialSample(comptime I: type, comptime F: type, n: I, p: F, rng: *Rand
                 continue;
             }
 
-            x1 = @intToFloat(f64, ix + 1);
+            x1 = @as(f64, @floatFromInt(ix + 1));
             f1 = fm + 1.0;
-            z = @intToFloat(f64, n + 1) - fm;
-            w = @intToFloat(f64, n - ix + 1);
+            z = @as(f64, @floatFromInt(n + 1)) - fm;
+            w = @as(f64, @floatFromInt(n - ix + 1));
             z2 = z * z;
             x2 = x1 * x1;
             f2 = f1 * f1;
             w2 = w * w;
 
             // zig fmt: off
-            const n_f = @intToFloat(f64, n);
-            const m_f = @intToFloat(f64, m);
+            const n_f = @as(f64, @floatFromInt(n));
+            const m_f = @as(f64, @floatFromInt(m));
             t = xm * @log(f1 / x1) + (n_f - m_f + 0.5) * @log(z / w)
-                + @intToFloat(f64, ix - m) * @log(w * p0 / (x1 * q))
+                + @as(f64, @floatFromInt(ix - m)) * @log(w * p0 / (x1 * q))
                 + (13860.0 - (462.0 - (132.0 - (99.0 - 140.0 / f2) / f2) / f2) / f2) / f1 / 166320.0
                 + (13860.0 - (462.0 - (132.0 - (99.0 - 140.0 / z2) / z2) / z2) / z2) / z / 166320.0
                 + (13860.0 - (462.0 - (132.0 - (99.0 - 140.0 / x2) / x2) / x2) / x2) / x1 / 166320.0 
@@ -237,34 +238,34 @@ pub fn binomialSample(comptime I: type, comptime F: type, n: I, p: F, rng: *Rand
     }
     switch (I) {
         i32 => return value,
-        i16 => return @intCast(i16, value),
-        i8 => return @intCast(i8, value),
-        u32 => return @intCast(u32, value),
-        u16 => return @intCast(u16, value),
-        u8 => return @intCast(u8, value),
+        i16 => return @as(i16, value),
+        i8 => return @as(i8, value),
+        u32 => return @as(u32, value),
+        u16 => return @as(u16, value),
+        u8 => return @as(u8, value),
     }
 }
 
 pub fn binomialPmf(comptime I: type, comptime F: type, k: I, n: I, p: F) F {
     if (k > n or k <= 0) {
-        @panic("");
+        @panic("`k` must be between 0 and `n`");
     }
     const coeff = try spec_fn.nChooseK(I, n, k);
     // zig fmt: off
-    return @intToFloat(F, coeff)
-        * math.pow(F, p, @intToFloat(F, k))
-        * math.pow(F, 1.0 - p, @intToFloat(F, n - k));
+    return @as(F, @floatFromInt(coeff))
+        * math.pow(F, p, @as(F, @floatFromInt(k)))
+        * math.pow(F, 1.0 - p, @as(F, @floatFromInt(n - k)));
     // zig fmt: on
 }
 
 pub fn binomialLnPmf(comptime I: type, comptime F: type, k: I, n: I, p: F) F {
     if (k > n or k <= 0) {
-        @panic("");
+        @panic("`k` must be between 0 and `n`");
     }
     const ln_coeff = try spec_fn.lnNChooseK(I, F, n, k);
     // zig fmt: off
     return ln_coeff
-        + @intToFloat(F, k) * @log(p)
-        + @intToFloat(F, n - k) * @log(1.0 - p);
+        + @as(F, @floatFromInt(k)) * @log(p)
+        + @as(F, @floatFromInt(n - k)) * @log(1.0 - p);
     // zig fmt: on
 }
