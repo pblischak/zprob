@@ -5,3 +5,6 @@ rm -rf zig-cache zig-out
 
 echo "Building and running module tests..."
 zig build test
+
+echo "Check formatting..."
+zig fmt --check .

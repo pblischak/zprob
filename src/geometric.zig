@@ -7,30 +7,43 @@ const math = std.math;
 const Random = std.rand.Random;
 const DefaultPrng = std.rand.Xoshiro256;
 
-const bernoulliSample = @import("bernoulli.zig").bernoulliSample;
+pub fn Geometric(comptime I: type, comptime F: type) type {
+    return struct {
+        const Self = @This();
+        prng: *Random,
 
-pub fn geometricSample(comptime I: type, comptime F: type, p: F, rng: *Random) I {
-    const u: F = rng.float(F);
-    return @as(I, @log(u) / @log(1.0 - p)) + 1;
-}
+        pub fn init(prng: *Random) Self {
+            return Self{
+                .prng = prng,
+            };
+        }
 
-pub fn geometricPmf(comptime I: type, comptime F: type, k: I, p: F) F {
-    return @exp(geometricLnPmf(I, F, k, p));
-}
+        pub fn sample(self: Self, p: F) I {
+            const u: F = self.prng.float(F);
+            return @as(I, @intFromFloat(@log(u) / @log(1.0 - p))) + 1;
+        }
 
-pub fn geometricLnPmf(comptime I: type, comptime F: type, k: I, p: F) F {
-    return @as(F, k) * @log(1.0 - p) + @log(p);
+        pub fn pmf(k: I, p: F) F {
+            return @exp(lnPmf(I, F, k, p));
+        }
+
+        pub fn lnPmf(k: I, p: F) F {
+            return @as(F, k) * @log(1.0 - p) + @log(p);
+        }
+    };
 }
 
 test "Geometric API" {
     const seed: u64 = @intCast(std.time.milliTimestamp());
     var prng = DefaultPrng.init(seed);
     var rng = prng.random();
+    var geometric = Geometric(u32, f64).init(&rng);
     var sum: f64 = 0.0;
     const p: f64 = 0.01;
+    var samp: u32 = undefined;
     for (0..10_000) |_| {
-        const samp = geometricSample(u32, f64, p, &rng);
-        sum += @as(f64, samp);
+        samp = geometric.sample(p);
+        sum += @as(f64, @floatFromInt(samp));
     }
     const avg: f64 = sum / 10_000.0;
     const mean: f64 = (1.0 - p) / p;

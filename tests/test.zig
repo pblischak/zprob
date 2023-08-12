@@ -62,6 +62,27 @@ test "Binomial" {
     // zig fmt: on
 }
 
+test "Geometric" {
+    const ts = TestingState.init(null, null, null);
+    var prng = DefaultPrng.init(ts.seed);
+    var rng = prng.random();
+    var geometric = zprob.Geometric(i32, f64).init(&rng);
+    var sum: f64 = 0.0;
+    const p: f64 = 0.2;
+    var samp: i32 = undefined;
+    for (0..ts.reps) |_| {
+        samp = geometric.sample(p);
+        sum += @as(f64, @floatFromInt(samp));
+    }
+    const avg: f64 = sum / ts.denom;
+    const mean: f64 = (1.0 - p) / p;
+    const variance: f64 = (1.0 - p) / (p * p);
+    // zig fmt: off
+    try std.testing.expectApproxEqAbs(
+        mean, avg, variance
+    );
+}
+
 test "Exponential" {
     const ts = TestingState.init(null, null, null);
     var prng = DefaultPrng.init(ts.seed);
