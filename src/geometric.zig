@@ -11,7 +11,7 @@ const bernoulliSample = @import("bernoulli.zig").bernoulliSample;
 
 pub fn geometricSample(comptime I: type, comptime F: type, p: F, rng: *Random) I {
     const u: F = rng.float(F);
-    return @floatToInt(I, @log(u) / @log(1.0 - p)) + 1;
+    return @as(I, @log(u) / @log(1.0 - p)) + 1;
 }
 
 pub fn geometricPmf(comptime I: type, comptime F: type, k: I, p: F) F {
@@ -19,18 +19,18 @@ pub fn geometricPmf(comptime I: type, comptime F: type, k: I, p: F) F {
 }
 
 pub fn geometricLnPmf(comptime I: type, comptime F: type, k: I, p: F) F {
-    return @intToFloat(F, k) * @log(1.0 - p) + @log(p);
+    return @as(F, k) * @log(1.0 - p) + @log(p);
 }
 
 test "Geometric API" {
-    const seed = @intCast(usize, std.time.milliTimestamp());
+    const seed: u64 = @intCast(std.time.milliTimestamp());
     var prng = DefaultPrng.init(seed);
     var rng = prng.random();
     var sum: f64 = 0.0;
     const p: f64 = 0.01;
     for (0..10_000) |_| {
         const samp = geometricSample(u32, f64, p, &rng);
-        sum += @intToFloat(f64, samp);
+        sum += @as(f64, samp);
     }
     const avg: f64 = sum / 10_000.0;
     const mean: f64 = (1.0 - p) / p;

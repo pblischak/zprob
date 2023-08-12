@@ -125,7 +125,7 @@ pub fn betaSample(comptime F: type, alpha: F, beta: F, rng: *Random) F {
 
     switch (F) {
         f64 => return value,
-        f32 => return @floatCast(f32, value),
+        f32 => return @floatCast(value),
         else => @compileError("Unrecognized float type..."),
     }
 }
@@ -151,7 +151,7 @@ pub fn betaPdf(comptime F: type, x: F, alpha: F, beta: F) F {
 
     switch (F) {
         f64 => return value,
-        f32 => return @floatCast(f32, value),
+        f32 => return @floatCast(value),
         else => @compileError("Unrecognized float type..."),
     }
 }
@@ -177,7 +177,7 @@ pub fn betaLnPdf(comptime F: type, x: F, alpha: F, beta: F) F {
 
     switch (F) {
         f64 => return value,
-        f32 => return @floatCast(f32, value),
+        f32 => return @floatCast(value),
         else => @compileError("Unrecognized float type..."),
     }
 }

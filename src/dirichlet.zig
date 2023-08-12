@@ -60,7 +60,7 @@ fn multivariateBeta(comptime F: type, alpha_vec: []F) F {
 }
 
 test "Dirichlet API" {
-    const seed = @intCast(u64, std.time.microTimestamp());
+    const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = DefaultPrng.init(seed);
     var rng = prng.random();
     var alpha_vec = [3]f64{ 0.1, 0.1, 0.1 };

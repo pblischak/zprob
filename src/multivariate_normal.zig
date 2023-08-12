@@ -118,7 +118,7 @@ test "Multivariate Normal API" {
     // var mu = [3]f64{ 5.0, 9.5, 2.0 };
     var sm = [4]f64{ 2.0, -1.0, -1.0, 4.0};
     var mu = [2]f64{ 5.0, 9.5 };
-    const seed = @intCast(u64, std.time.microTimestamp());
+    const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = DefaultPrng.init(seed);
     var rng = prng.random();
     const tt = try mvNormalSample(f64, mu[0..], sm[0..], &rng, test_allocator);

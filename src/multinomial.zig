@@ -36,7 +36,7 @@ pub fn multinomialSample(
     var prob: F = undefined;
 
     // Make a usize of n_cat to use in loops
-    const n_cat_usize = @intCast(usize, n_cat);
+    const n_cat_usize: usize = @intCast(n_cat);
 
     var ix = try allocator.alloc(I, n_cat_usize);
     for (0..n_cat_usize) |i| {
@@ -77,7 +77,7 @@ pub fn multinomialLnPmf(comptime I: type, comptime F: type, x_vec: []I, p_vec: [
 }
 
 test "Multinomial API" {
-    const seed = @intCast(u64, std.time.microTimestamp());
+    const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = DefaultPrng.init(seed);
     var rng = prng.random();
     var p_vec = [3]f64{ 0.1, 0.25, 0.65 };

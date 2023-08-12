@@ -25,7 +25,7 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
         });
-        const install_example = b.addInstallArtifact(example);
+        const install_example = b.addInstallArtifact(example, .{});
         example.addModule("zprob", zprob_module);
         example_step.dependOn(&example.step);
         example_step.dependOn(&install_example.step);
