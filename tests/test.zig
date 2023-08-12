@@ -1,6 +1,5 @@
 const std = @import("std");
 const zprob = @import("zprob");
-const Random = std.rand.Random;
 const DefaultPrng = std.rand.Xoshiro256;
 
 const TestingState = struct {
@@ -24,8 +23,9 @@ test "Bernoulli" {
     var prng = DefaultPrng.init(ts.seed);
     var rng = prng.random();
     var sum: f64 = 0.0;
+    var samp: u8 = undefined;
     for (0..ts.reps) |_| {
-        const samp = zprob.bernoulliSample(u8, f64, 0.4, &rng);
+        samp = zprob.bernoulliSample(u8, f64, 0.4, &rng);
         sum += @as(f64, @floatFromInt(samp));
     }
     const avg: f64 = sum / 10000.0;
