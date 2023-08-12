@@ -47,9 +47,11 @@ test "Binomial" {
     const ts = TestingState.init(null, null, null);
     var prng = DefaultPrng.init(ts.seed);
     var rng = prng.random();
+    var binomial = zprob.Binomial(i32, f64).init(&rng);
     var sum: f64 = 0.0;
+    var samp: i32 = undefined;
     for (0..ts.reps) |_| {
-        const samp = zprob.binomialSample(i32, f64, 10, 0.2, &rng);
+        samp = binomial.sample(10, 0.2);
         sum += @as(f64, @floatFromInt(samp));
     }
     const avg: f64 = sum / ts.denom;

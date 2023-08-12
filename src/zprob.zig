@@ -2,7 +2,7 @@
 
 /// Discrete Probability Distributions
 pub const Bernoulli = @import("bernoulli.zig").Bernoulli;
-pub usingnamespace @import("binomial.zig");
+pub const Binomial = @import("binomial.zig").Binomial;
 pub usingnamespace @import("geometric.zig");
 pub usingnamespace @import("multinomial.zig");
 pub usingnamespace @import("negative_binomial.zig");
