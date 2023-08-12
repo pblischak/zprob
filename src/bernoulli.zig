@@ -9,9 +9,9 @@ pub fn Bernoulli(comptime I: type, comptime F: type) type {
 
         prng: *Random,
 
-        pub fn init(rng: *Random) Self {
+        pub fn init(prng: *Random) Self {
             return Self{
-                .prng = rng,
+                .prng = prng,
             };
         }
 
