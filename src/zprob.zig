@@ -1,7 +1,7 @@
 //! zprob: A Zig Library for Probability Distributions
 
 /// Discrete Probability Distributions
-pub usingnamespace @import("bernoulli.zig");
+pub const Bernoulli = @import("bernoulli.zig").Bernoulli;
 pub usingnamespace @import("binomial.zig");
 pub usingnamespace @import("geometric.zig");
 pub usingnamespace @import("multinomial.zig");
