@@ -10,7 +10,7 @@ pub fn Bernoulli(comptime I: type, comptime F: type) type {
         prng: *Random,
 
         pub fn init(rng: *Random) Self {
-            return Self {
+            return Self{
                 .prng = rng,
             };
         }
@@ -21,7 +21,7 @@ pub fn Bernoulli(comptime I: type, comptime F: type) type {
         /// probability of success `p`.
         pub fn sample(self: Self, p: F) I {
             if (p <= 0.0 or 1.0 <= p) {
-                 @panic("Parameter `p` must be within the range 0 < p < 1.");
+                @panic("Parameter `p` must be within the range 0 < p < 1.");
             }
             const random_val = self.prng.float(F);
             if (p < random_val) {
@@ -30,7 +30,6 @@ pub fn Bernoulli(comptime I: type, comptime F: type) type {
                 return 1;
             }
         }
-
     };
 }
 
