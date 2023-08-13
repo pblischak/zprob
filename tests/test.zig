@@ -2,6 +2,8 @@ const std = @import("std");
 const zprob = @import("zprob");
 const DefaultPrng = std.rand.Xoshiro256;
 
+var test_allocator = std.testing.allocator;
+
 const TestingState = struct {
     reps: usize,
     seed: u64,
@@ -81,6 +83,38 @@ test "Geometric" {
     try std.testing.expectApproxEqAbs(
         mean, avg, variance
     );
+}
+
+test "Multinomial" {
+    const ts = TestingState.init(null, null, null);
+    var prng = DefaultPrng.init(ts.seed);
+    var rng = prng.random();
+    var multinomial = zprob.Multinomial(i32, f64).init(&rng);
+    var p_vec = [3]f64{ 0.1, 0.25, 0.65 };
+    var out_vec = [3]i32{ 0, 0, 0 };
+    var sum_vec = [3]i32{ 0, 0, 0 };
+    // zig fmt: off
+    var mean_vec = [3]f64{ 1.0, 2.5, 6.5 };
+    var variance_vec = [3]f64{
+        10.0 * 0.1 * 0.9,
+        10.0 * 0.25 * 0.75,
+        10.0 * 0.65 * 0.35,
+    };
+    for (0..ts.reps) |_| {
+        multinomial.sample(10, 3, p_vec[0..], out_vec[0..]);
+        sum_vec[0] += out_vec[0];
+        sum_vec[1] += out_vec[1];
+        sum_vec[2] += out_vec[2];
+    }
+    const avg_vec = [3]f64{
+        @as(f64, @floatFromInt(sum_vec[0])) / ts.denom,
+        @as(f64, @floatFromInt(sum_vec[1])) / ts.denom,
+        @as(f64, @floatFromInt(sum_vec[2])) / ts.denom,
+    };
+    // zig fmt: on
+    try std.testing.expectApproxEqAbs(mean_vec[0], avg_vec[0], variance_vec[0]);
+    try std.testing.expectApproxEqAbs(mean_vec[1], avg_vec[1], variance_vec[1]);
+    try std.testing.expectApproxEqAbs(mean_vec[2], avg_vec[2], variance_vec[2]);
 }
 
 test "Exponential" {

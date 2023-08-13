@@ -4,7 +4,7 @@
 pub const Bernoulli = @import("bernoulli.zig").Bernoulli;
 pub const Binomial = @import("binomial.zig").Binomial;
 pub const Geometric = @import("geometric.zig").Geometric;
-pub usingnamespace @import("multinomial.zig");
+pub const Multinomial = @import("multinomial.zig").Multinomial;
 pub usingnamespace @import("negative_binomial.zig");
 pub usingnamespace @import("poisson.zig");
 
