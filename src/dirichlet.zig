@@ -9,38 +9,49 @@ const Random = std.rand.Random;
 const DefaultPrng = std.rand.Xoshiro256;
 const test_allocator = std.testing.allocator;
 
-const gammaSample = @import("gamma.zig").gammaSample;
-const lnGammaFn = @import("special_functions.zig").lnGammaFn;
+const Gamma = @import("gamma.zig").Gamma;
+const spec_fn = @import("special_functions.zig");
 
-pub fn dirichletSample(
-    comptime F: type, alpha_vec: []F, rng: *Random, allocator: Allocator
-) ![]F {
-    var x_vec = try allocator.alloc(F, alpha_vec.len);
-    var sum: F = 0.0;
-    for (alpha_vec, 0..) |alpha, i| {
-        x_vec[i] = gammaSample(F, alpha, 1.0, rng);
-        sum += x_vec[i];
-    }
+pub fn Dirichlet(comptime F: type) type {
+    return struct{
+        const Self = @This();
 
-    for (x_vec) |*x| {
-        x.* /= sum;
-    }
+        prng: *Random,
+        gamma: Gamma(F),
 
-    return x_vec[0..];
-}
+        pub fn init(prng: *Random) Self {
+            return Self{
+                .prng = prng,
+                .gamma = Gamma(F).init(prng),
+            };
+        }
 
-pub fn dirichletPdf(comptime F: type, x_vec: []F, alpha_vec: []F) F {
-    return @exp(lnDirichletPdf(F, x_vec, alpha_vec));
-}
+        pub fn sample(self: Self, alpha_vec: []const F, out_vec: []F) void {
+            var sum: F = 0.0;
+            for (alpha_vec, 0..) |alpha, i| {
+                out_vec[i] = self.gamma.sample(alpha, 1.0);
+                sum += out_vec[i];
+            }
 
-pub fn lnDirichletPdf(comptime F: type, x_vec: []F, alpha_vec: []F) F {
-    var numerator: F = 0.0;
+            for (out_vec) |*x| {
+                x.* /= sum;
+            }
+        }
 
-    for (x_vec, 0..) |x, i| {
-        numerator += (alpha_vec[i] - 1.0) * @log(x);
-    }
+        pub fn pdf(self: Self, x_vec: []F, alpha_vec: []F) F {
+            return @exp(self.lnPdf(x_vec, alpha_vec));
+        }
 
-    return numerator - lnMultivariateBeta(F, alpha_vec);
+        pub fn lnPdf(x_vec: []F, alpha_vec: []F) F {
+            var numerator: F = 0.0;
+
+            for (x_vec, 0..) |x, i| {
+                numerator += (alpha_vec[i] - 1.0) * @log(x);
+            }
+
+            return numerator - lnMultivariateBeta(F, alpha_vec);
+        }
+    };
 }
 
 fn lnMultivariateBeta(comptime F: type, alpha_vec: []F) F {
@@ -48,11 +59,11 @@ fn lnMultivariateBeta(comptime F: type, alpha_vec: []F) F {
     var alpha_sum: F = 0.0;
 
     for (alpha_vec) |alpha| {
-        numerator += lnGammaFn(F, alpha);
+        numerator += spec_fn.lnGammaFn(F, alpha);
         alpha_sum += alpha;
     }
 
-    return numerator - lnGammaFn(F, alpha_sum);
+    return numerator - spec_fn.lnGammaFn(F, alpha_sum);
 }
 
 fn multivariateBeta(comptime F: type, alpha_vec: []F) F {
@@ -63,12 +74,13 @@ test "Dirichlet API" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = DefaultPrng.init(seed);
     var rng = prng.random();
+    var dirichlet = Dirichlet(f64).init(*rng);
     var alpha_vec = [3]f64{ 0.1, 0.1, 0.1 };
     // const alpha_sum = 0.3;
-    var tmp: []f64 = undefined;
+    var tmp: [3]f64 = [3]f64{ 0.0, 0.0, 0.0 };
     var res: [3]f64 = [3]f64{ 0.0, 0.0, 0.0 };
     for (0..10_000) |_| {
-        tmp = try dirichletSample(f64, alpha_vec[0..], &rng, test_allocator);
+        tmp = dirichlet.sample(alpha_vec[0..], tmp[0..]);
         defer test_allocator.free(tmp);
         res[0] += tmp[0];
         res[1] += tmp[1];

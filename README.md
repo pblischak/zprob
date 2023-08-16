@@ -1,12 +1,17 @@
 <div align="center">
 <h1><tt>zprob</tt></h1>
 <h3><i>
-A Zig Library for Probability Distributions
+A Zig Module for Probability Distributions
 </i></h3>
 </div>
 
-The `zprob` library implements functionality for working with probability distributions in Zig,
+
+The `zprob` module implements functionality for working with probability distributions in Zig,
 including generating random samples and calculating probabilities using mass/density functions.
+
+<img src="https://github.com/pblischak/zprob/actions/workflows/ci.yml/badge.svg" alt="CI Status">
+
+----
 
 **Discrete Probability Distributions**
 
@@ -27,14 +32,14 @@ including generating random samples and calculating probabilities using mass/den
 [Multivariate Normal](https://en.wikipedia.org/wiki/Multivariate_normal_distribution) (sampling only) ::
 [Normal](https://en.wikipedia.org/wiki/Normal_distribution)
 
+> **Note**
+> `zprob` was developed and tested using v0.11.0 of Zig and is still a work in progress.
+> Using a version of Zig other than 0.11.0 may lead to the code not compiling.
+
 **TODO**:
 
  - [ ] [Multivariate Normal](https://en.wikipedia.org/wiki/Multivariate_normal_distribution) (PDF + log-PDF)
-
-> **Note**
-> `zprob` was developed using a 0.11.0-dev version of Zig and is still a work in progress.
-> Using a version of Zig older than one of the 0.11-dev nightly versions will
-> likely not work due to changes in the build system (among other things).
+ - [ ] Integrate with new module system in Zig v0.11.0
 
 ## A Fresh Start
 

@@ -36,7 +36,7 @@ pub fn lnFactorial(comptime I: type, comptime F: type, n: I) F {
         var sum: F = 0.0;
         var i: I = 1;
         while (i < n) : (i += 1) {
-            sum += @log(@as(F, i));
+            sum += @log(@as(F, @floatFromInt(i)));
         }
         return sum;
     }
@@ -45,7 +45,7 @@ pub fn lnFactorial(comptime I: type, comptime F: type, n: I) F {
     const C0: F = 0.918938533204672722;
     const C1: F = 1.0 / 12.0;
     const C3: F = -1.0 / 360.0;
-    const n1: F = @as(F, n);
+    const n1: F = @as(F, @floatFromInt(n));
     const r: F = 1.0 / n1;
     return (n1 + 0.5) * @log(n1) - n1 + C0 + r * (C1 + r * r * C3);
 }
@@ -114,7 +114,7 @@ pub fn gammaFn(comptime F: type, x: F) !F {
 
     // TODO(paul): make the calculation of `c` happen at comptime
     const a: i32 = 12;
-    const a_f: F = @as(F, a);
+    const a_f: F = @as(F, @floatFromInt(a));
     var c = std.mem.zeroes([12]F);
     var k1_factorial: F = 1.0;
     var k: usize = 1;
@@ -123,7 +123,7 @@ pub fn gammaFn(comptime F: type, x: F) !F {
 
     c[0] = math.sqrt(2.0 * math.pi);
     while (k < a) : (k += 1) {
-        k_f = @as(F, k);
+        k_f = @as(F, @floatFromInt(k));
         c[k] = @exp(a_f - k_f) * math.pow(F, a_f - k_f, k_f - 0.5) / k1_factorial;
         k1_factorial *= -k_f;
     }
@@ -131,7 +131,7 @@ pub fn gammaFn(comptime F: type, x: F) !F {
     accum = c[0];
     k = 1;
     while (k < a) : (k += 1) {
-        k_f = @as(F, k);
+        k_f = @as(F, @floatFromInt(k));
         accum += c[k] / (x + k_f);
     }
     accum *= math.exp(-(x + a_f)) * math.pow(F, x + a_f, x + 0.5);

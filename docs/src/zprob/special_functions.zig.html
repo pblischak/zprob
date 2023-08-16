@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>special_functions.zig - source view</title>
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAPNJREFUeNpi/P//PwMlgOXHUjly9E0G4hwgZmQiQZMqEK8H4v9QzUEgQSaoADK+zhH9iAGL+C0gDoAaNg9mGLoLfgA1awK9hS9gzgJxA9RQBmQDrgMxJzRMGKE4HYj/Ial5A8QmQLwCJoBsgBYW2+TR1ChDaWt4LOBxKsi/VUh8XiD+gq4IVyzwQAMJBoKwacZlAB8Qf0bi96IZhtOAe1D6LpqaEiz6rmEzQAeIzwGxCJpieFqApo/vQKyJboAaEBsAsSEupwI1MwKjGBTVHOhegMX5UajYRqiBjMgYmj400cVh0XgTiKdC0zhJgJHS7AwQYABm9EAdCKrEfAAAAABJRU5ErkJggg=="/>
+    <style>
+      body{
+        font-family: system-ui, -apple-system, Roboto, "Segoe UI", sans-serif;
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      pre > code {
+        display: block;
+        overflow: auto;
+        line-height: normal;
+        margin: 0em;
+      }
+      .tok-kw {
+          color: #333;
+          font-weight: bold;
+      }
+      .tok-str {
+          color: #d14;
+      }
+      .tok-builtin {
+          color: #005C7A;
+      }
+      .tok-comment {
+          color: #545454;
+          font-style: italic;
+      }
+      .tok-fn {
+          color: #900;
+          font-weight: bold;
+      }
+      .tok-null {
+          color: #005C5C;
+      }
+      .tok-number {
+          color: #005C5C;
+      }
+      .tok-type {
+          color: #458;
+          font-weight: bold;
+      }
+      pre {
+        counter-reset: line;
+      }
+      pre .line:before {
+        counter-increment: line;
+        content: counter(line);
+        display: inline-block;
+        padding-right: 1em;
+        width: 2em;
+        text-align: right;
+        color: #999;
+      }
+      
+      .line {
+        width: 100%;
+        display: inline-block;
+      }
+      .line:target {
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        background: #fafafa;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body{
+            background:#222;
+            color: #ccc;
+        }
+        pre > code {
+            color: #ccc;
+            background: #222;
+            border: unset;
+        }
+        .line:target {
+            border-top: 1px solid #444;
+            border-bottom: 1px solid #444;
+            background: #333;
+        }
+        .tok-kw {
+            color: #eee;
+        }
+        .tok-str {
+            color: #2e5;
+        }
+        .tok-builtin {
+            color: #ff894c;
+        }
+        .tok-comment {
+            color: #aa7;
+        }
+        .tok-fn {
+            color: #B1A0F8;
+        }
+        .tok-null {
+            color: #ff8080;
+        }
+        .tok-number {
+            color: #ff8080;
+        }
+        .tok-type {
+            color: #68f;
+        }
+      }
+    </style>
+</head>
+<body>
+<pre><code><span class="line" id="L1"><span class="tok-comment">//! Special functions used for implementing probability distributions.</span></span>
+<span class="line" id="L2"></span>
+<span class="line" id="L3"><span class="tok-kw">const</span> std = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;std&quot;</span>);</span>
+<span class="line" id="L4"><span class="tok-kw">const</span> math = std.math;</span>
+<span class="line" id="L5"></span>
+<span class="line" id="L6"><span class="tok-kw">const</span> log_root_2_pi: <span class="tok-type">f64</span> = <span class="tok-builtin">@log</span>(<span class="tok-builtin">@sqrt</span>(<span class="tok-number">2.0</span> * math.pi));</span>
+<span class="line" id="L7"></span>
+<span class="line" id="L8"><span class="tok-comment">/// Natural log-converted binomial coefficient for integers n and k.</span></span>
+<span class="line" id="L9"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">lnNChooseK</span>(<span class="tok-kw">comptime</span> I: <span class="tok-type">type</span>, <span class="tok-kw">comptime</span> F: <span class="tok-type">type</span>, n: I, k: I) F {</span>
+<span class="line" id="L10">    check_n_k(I, n, k);</span>
+<span class="line" id="L11"></span>
+<span class="line" id="L12">    <span class="tok-comment">// Handle simple cases when n == 0, n == 1, or n == k</span>
+</span>
+<span class="line" id="L13">    <span class="tok-kw">if</span> (n == <span class="tok-number">0</span>) <span class="tok-kw">return</span> <span class="tok-number">0</span>;</span>
+<span class="line" id="L14">    <span class="tok-kw">if</span> (n == <span class="tok-number">1</span>) <span class="tok-kw">return</span> k;</span>
+<span class="line" id="L15">    <span class="tok-kw">if</span> (n == k) <span class="tok-kw">return</span> <span class="tok-number">1</span>;</span>
+<span class="line" id="L16"></span>
+<span class="line" id="L17">    <span class="tok-kw">const</span> res = lnFactorial(I, F, n) - (lnFactorial(I, F, k) + lnFactorial(I, F, n - k));</span>
+<span class="line" id="L18"></span>
+<span class="line" id="L19">    <span class="tok-kw">return</span> res;</span>
+<span class="line" id="L20">}</span>
+<span class="line" id="L21"></span>
+<span class="line" id="L22"><span class="tok-comment">/// Binomial coefficient for integers n and k.</span></span>
+<span class="line" id="L23"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">nChooseK</span>(<span class="tok-kw">comptime</span> I: <span class="tok-type">type</span>, n: I, k: I) I {</span>
+<span class="line" id="L24">    check_n_k(I, n, k);</span>
+<span class="line" id="L25">    <span class="tok-kw">const</span> res = lnNChooseK(I, <span class="tok-type">f64</span>, n, k);</span>
+<span class="line" id="L26">    <span class="tok-kw">return</span> <span class="tok-builtin">@as</span>(I, <span class="tok-builtin">@exp</span>(res));</span>
+<span class="line" id="L27">}</span>
+<span class="line" id="L28"></span>
+<span class="line" id="L29"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">lnFactorial</span>(<span class="tok-kw">comptime</span> I: <span class="tok-type">type</span>, <span class="tok-kw">comptime</span> F: <span class="tok-type">type</span>, n: I) F {</span>
+<span class="line" id="L30">    <span class="tok-kw">if</span> (n &lt; <span class="tok-number">0</span>) {</span>
+<span class="line" id="L31">        <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Cannot take the log factorial of a negative number.&quot;</span>);</span>
+<span class="line" id="L32">    }</span>
+<span class="line" id="L33"></span>
+<span class="line" id="L34">    <span class="tok-kw">if</span> (n &lt; <span class="tok-number">1024</span>) {</span>
+<span class="line" id="L35">        <span class="tok-kw">if</span> (n &lt;= <span class="tok-number">1</span>) <span class="tok-kw">return</span> <span class="tok-number">0</span>;</span>
+<span class="line" id="L36">        <span class="tok-kw">var</span> sum: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L37">        <span class="tok-kw">var</span> i: I = <span class="tok-number">1</span>;</span>
+<span class="line" id="L38">        <span class="tok-kw">while</span> (i &lt; n) : (i += <span class="tok-number">1</span>) {</span>
+<span class="line" id="L39">            sum += <span class="tok-builtin">@log</span>(<span class="tok-builtin">@as</span>(F, <span class="tok-builtin">@floatFromInt</span>(i)));</span>
+<span class="line" id="L40">        }</span>
+<span class="line" id="L41">        <span class="tok-kw">return</span> sum;</span>
+<span class="line" id="L42">    }</span>
+<span class="line" id="L43"></span>
+<span class="line" id="L44">    <span class="tok-comment">// Sterling approximation</span>
+</span>
+<span class="line" id="L45">    <span class="tok-kw">const</span> C0: F = <span class="tok-number">0.918938533204672722</span>;</span>
+<span class="line" id="L46">    <span class="tok-kw">const</span> C1: F = <span class="tok-number">1.0</span> / <span class="tok-number">12.0</span>;</span>
+<span class="line" id="L47">    <span class="tok-kw">const</span> C3: F = -<span class="tok-number">1.0</span> / <span class="tok-number">360.0</span>;</span>
+<span class="line" id="L48">    <span class="tok-kw">const</span> n1: F = <span class="tok-builtin">@as</span>(F, <span class="tok-builtin">@floatFromInt</span>(n));</span>
+<span class="line" id="L49">    <span class="tok-kw">const</span> r: F = <span class="tok-number">1.0</span> / n1;</span>
+<span class="line" id="L50">    <span class="tok-kw">return</span> (n1 + <span class="tok-number">0.5</span>) * <span class="tok-builtin">@log</span>(n1) - n1 + C0 + r * (C1 + r * r * C3);</span>
+<span class="line" id="L51">}</span>
+<span class="line" id="L52"></span>
+<span class="line" id="L53"><span class="tok-kw">fn</span> <span class="tok-fn">check_n_k</span>(<span class="tok-kw">comptime</span> I: <span class="tok-type">type</span>, n: I, k: I) <span class="tok-type">void</span> {</span>
+<span class="line" id="L54">    <span class="tok-kw">if</span> (n &lt; k) {</span>
+<span class="line" id="L55">        <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Parameter `n` cannot be less than parameter `k`.&quot;</span>);</span>
+<span class="line" id="L56">    }</span>
+<span class="line" id="L57">    <span class="tok-kw">if</span> (n &lt;= <span class="tok-number">0</span>) {</span>
+<span class="line" id="L58">        <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Parameter `n` cannot be less than or equal to 0&quot;</span>);</span>
+<span class="line" id="L59">    }</span>
+<span class="line" id="L60">    <span class="tok-kw">if</span> (k &lt; <span class="tok-number">0</span>) {</span>
+<span class="line" id="L61">        <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Parameter `k` cannot be less than 0.&quot;</span>);</span>
+<span class="line" id="L62">    }</span>
+<span class="line" id="L63">}</span>
+<span class="line" id="L64"></span>
+<span class="line" id="L65"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">lnGammaFn</span>(<span class="tok-kw">comptime</span> F: <span class="tok-type">type</span>, x: F) F {</span>
+<span class="line" id="L66">    <span class="tok-kw">if</span> (x &lt; <span class="tok-number">0</span>) {</span>
+<span class="line" id="L67">        <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Parameter `x` cannot be less than 0.&quot;</span>);</span>
+<span class="line" id="L68">    }</span>
+<span class="line" id="L69"></span>
+<span class="line" id="L70">    <span class="tok-kw">if</span> (x &lt; <span class="tok-number">10</span>) {</span>
+<span class="line" id="L71">        <span class="tok-kw">return</span> <span class="tok-builtin">@log</span>(gammaFn(F, x));</span>
+<span class="line" id="L72">    }</span>
+<span class="line" id="L73"></span>
+<span class="line" id="L74">    <span class="tok-kw">return</span> lnGammaLanczos(F, x);</span>
+<span class="line" id="L75">}</span>
+<span class="line" id="L76"></span>
+<span class="line" id="L77"><span class="tok-kw">fn</span> <span class="tok-fn">lnGammaLanczos</span>(<span class="tok-kw">comptime</span> F: <span class="tok-type">type</span>, x: F) F {</span>
+<span class="line" id="L78">    <span class="tok-comment">// zig fmt: off</span>
+</span>
+<span class="line" id="L79">    <span class="tok-kw">const</span> lanczos_coeff = [<span class="tok-number">9</span>]F{</span>
+<span class="line" id="L80">        <span class="tok-number">0.99999999999980993227684700473478</span>,</span>
+<span class="line" id="L81">        <span class="tok-number">676.520368121885098567009190444019</span>,</span>
+<span class="line" id="L82">        -<span class="tok-number">1259.13921672240287047156078755283</span>,</span>
+<span class="line" id="L83">        <span class="tok-number">771.3234287776530788486528258894</span>,</span>
+<span class="line" id="L84">        -<span class="tok-number">176.61502916214059906584551354</span>,</span>
+<span class="line" id="L85">        <span class="tok-number">12.507343278686904814458936853</span>,</span>
+<span class="line" id="L86">        -<span class="tok-number">0.13857109526572011689554707</span>,</span>
+<span class="line" id="L87">        <span class="tok-number">9.984369578019570859563e-6</span>,</span>
+<span class="line" id="L88">        <span class="tok-number">1.50563273514931155834e-7</span></span>
+<span class="line" id="L89">    };</span>
+<span class="line" id="L90">    <span class="tok-comment">// zig fmt: on</span>
+</span>
+<span class="line" id="L91"></span>
+<span class="line" id="L92">    <span class="tok-kw">var</span> k: <span class="tok-type">usize</span> = <span class="tok-number">1</span>;</span>
+<span class="line" id="L93">    <span class="tok-kw">var</span> accum: F = lanczos_coeff[<span class="tok-number">0</span>];</span>
+<span class="line" id="L94">    <span class="tok-kw">var</span> term1: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L95">    <span class="tok-kw">var</span> term2: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L96"></span>
+<span class="line" id="L97">    x -= <span class="tok-number">1.0</span>;</span>
+<span class="line" id="L98"></span>
+<span class="line" id="L99">    <span class="tok-kw">while</span> (k &lt;= <span class="tok-number">8</span>) : (k += <span class="tok-number">1</span>) {</span>
+<span class="line" id="L100">        accum += lanczos_coeff[k] / (x + <span class="tok-builtin">@as</span>(F, k));</span>
+<span class="line" id="L101">    }</span>
+<span class="line" id="L102"></span>
+<span class="line" id="L103">    term1 = (x + <span class="tok-number">0.5</span>) * <span class="tok-builtin">@log</span>((x + <span class="tok-number">7.5</span>) / math.e);</span>
+<span class="line" id="L104">    term2 = log_root_2_pi + <span class="tok-builtin">@log</span>(accum);</span>
+<span class="line" id="L105"></span>
+<span class="line" id="L106">    <span class="tok-kw">return</span> term1 + (term2 - <span class="tok-number">7.0</span>);</span>
+<span class="line" id="L107">}</span>
+<span class="line" id="L108"></span>
+<span class="line" id="L109"><span class="tok-comment">/// Calculate Gamma(x) using Spouge's approximation.</span></span>
+<span class="line" id="L110"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">gammaFn</span>(<span class="tok-kw">comptime</span> F: <span class="tok-type">type</span>, x: F) !F {</span>
+<span class="line" id="L111">    <span class="tok-kw">if</span> (x &lt; <span class="tok-number">0</span>) {</span>
+<span class="line" id="L112">        <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Parameter `x` cannot be less than 0.&quot;</span>);</span>
+<span class="line" id="L113">    }</span>
+<span class="line" id="L114"></span>
+<span class="line" id="L115">    <span class="tok-comment">// TODO(paul): make the calculation of `c` happen at comptime</span>
+</span>
+<span class="line" id="L116">    <span class="tok-kw">const</span> a: <span class="tok-type">i32</span> = <span class="tok-number">12</span>;</span>
+<span class="line" id="L117">    <span class="tok-kw">const</span> a_f: F = <span class="tok-builtin">@as</span>(F, <span class="tok-builtin">@floatFromInt</span>(a));</span>
+<span class="line" id="L118">    <span class="tok-kw">var</span> c = std.mem.zeroes([<span class="tok-number">12</span>]F);</span>
+<span class="line" id="L119">    <span class="tok-kw">var</span> k1_factorial: F = <span class="tok-number">1.0</span>;</span>
+<span class="line" id="L120">    <span class="tok-kw">var</span> k: <span class="tok-type">usize</span> = <span class="tok-number">1</span>;</span>
+<span class="line" id="L121">    <span class="tok-kw">var</span> k_f: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L122">    <span class="tok-kw">var</span> accum: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L123"></span>
+<span class="line" id="L124">    c[<span class="tok-number">0</span>] = math.sqrt(<span class="tok-number">2.0</span> * math.pi);</span>
+<span class="line" id="L125">    <span class="tok-kw">while</span> (k &lt; a) : (k += <span class="tok-number">1</span>) {</span>
+<span class="line" id="L126">        k_f = <span class="tok-builtin">@as</span>(F, <span class="tok-builtin">@floatFromInt</span>(k));</span>
+<span class="line" id="L127">        c[k] = <span class="tok-builtin">@exp</span>(a_f - k_f) * math.pow(F, a_f - k_f, k_f - <span class="tok-number">0.5</span>) / k1_factorial;</span>
+<span class="line" id="L128">        k1_factorial *= -k_f;</span>
+<span class="line" id="L129">    }</span>
+<span class="line" id="L130"></span>
+<span class="line" id="L131">    accum = c[<span class="tok-number">0</span>];</span>
+<span class="line" id="L132">    k = <span class="tok-number">1</span>;</span>
+<span class="line" id="L133">    <span class="tok-kw">while</span> (k &lt; a) : (k += <span class="tok-number">1</span>) {</span>
+<span class="line" id="L134">        k_f = <span class="tok-builtin">@as</span>(F, <span class="tok-builtin">@floatFromInt</span>(k));</span>
+<span class="line" id="L135">        accum += c[k] / (x + k_f);</span>
+<span class="line" id="L136">    }</span>
+<span class="line" id="L137">    accum *= math.exp(-(x + a_f)) * math.pow(F, x + a_f, x + <span class="tok-number">0.5</span>);</span>
+<span class="line" id="L138">    <span class="tok-kw">return</span> accum / x;</span>
+<span class="line" id="L139">}</span>
+<span class="line" id="L140"></span>
+<span class="line" id="L141"><span class="tok-comment">/// Calculate Gamma(x) using the Sterling approximation.</span></span>
+<span class="line" id="L142"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">fastGammaFn</span>(<span class="tok-kw">comptime</span> F: <span class="tok-type">type</span>, x: F) F {</span>
+<span class="line" id="L143">    <span class="tok-kw">return</span> <span class="tok-builtin">@sqrt</span>(<span class="tok-number">2.0</span> * math.pi / x) * math.pow(F, x / math.e, x);</span>
+<span class="line" id="L144">}</span>
+<span class="line" id="L145"></span>
+<span class="line" id="L146"><span class="tok-kw">test</span> <span class="tok-str">&quot;Gamma function&quot;</span> {</span>
+<span class="line" id="L147">    <span class="tok-kw">var</span> x: <span class="tok-type">f64</span> = <span class="tok-number">10.0</span>;</span>
+<span class="line" id="L148">    std.debug.print(<span class="tok-str">&quot;\n&quot;</span>, .{});</span>
+<span class="line" id="L149">    <span class="tok-kw">while</span> (x &lt;= <span class="tok-number">100.0</span>) : (x += <span class="tok-number">10.0</span>) {</span>
+<span class="line" id="L150">        std.debug.print(<span class="tok-str">&quot;{}\t{}\n&quot;</span>, .{ <span class="tok-kw">try</span> gammaFn(<span class="tok-type">f64</span>, x / <span class="tok-number">3.0</span>), fastGammaFn(<span class="tok-type">f64</span>, x / <span class="tok-number">3.0</span>) });</span>
+<span class="line" id="L151">    }</span>
+<span class="line" id="L152">}</span>
+<span class="line" id="L153"></span>
+<span class="line" id="L154"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">lnBetaFn</span>(<span class="tok-kw">comptime</span> F: <span class="tok-type">type</span>, a: F, b: F) F {</span>
+<span class="line" id="L155">    <span class="tok-kw">return</span> lnGammaFn(F, a) + lnGammaFn(F, b) - lnGammaFn(F, a + b);</span>
+<span class="line" id="L156">}</span>
+<span class="line" id="L157"></span>
+<span class="line" id="L158"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">betaFn</span>(<span class="tok-kw">comptime</span> F: <span class="tok-type">type</span>, a: F, b: F) F {</span>
+<span class="line" id="L159">    <span class="tok-kw">return</span> math.exp(lnGammaFn(F, a) + lnGammaFn(F, b) - lnGammaFn(F, a + b));</span>
+<span class="line" id="L160">}</span>
+<span class="line" id="L161"></span>
+</code></pre></body>
+</html>

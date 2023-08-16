@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>beta.zig - source view</title>
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAPNJREFUeNpi/P//PwMlgOXHUjly9E0G4hwgZmQiQZMqEK8H4v9QzUEgQSaoADK+zhH9iAGL+C0gDoAaNg9mGLoLfgA1awK9hS9gzgJxA9RQBmQDrgMxJzRMGKE4HYj/Ial5A8QmQLwCJoBsgBYW2+TR1ChDaWt4LOBxKsi/VUh8XiD+gq4IVyzwQAMJBoKwacZlAB8Qf0bi96IZhtOAe1D6LpqaEiz6rmEzQAeIzwGxCJpieFqApo/vQKyJboAaEBsAsSEupwI1MwKjGBTVHOhegMX5UajYRqiBjMgYmj400cVh0XgTiKdC0zhJgJHS7AwQYABm9EAdCKrEfAAAAABJRU5ErkJggg=="/>
+    <style>
+      body{
+        font-family: system-ui, -apple-system, Roboto, "Segoe UI", sans-serif;
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      pre > code {
+        display: block;
+        overflow: auto;
+        line-height: normal;
+        margin: 0em;
+      }
+      .tok-kw {
+          color: #333;
+          font-weight: bold;
+      }
+      .tok-str {
+          color: #d14;
+      }
+      .tok-builtin {
+          color: #005C7A;
+      }
+      .tok-comment {
+          color: #545454;
+          font-style: italic;
+      }
+      .tok-fn {
+          color: #900;
+          font-weight: bold;
+      }
+      .tok-null {
+          color: #005C5C;
+      }
+      .tok-number {
+          color: #005C5C;
+      }
+      .tok-type {
+          color: #458;
+          font-weight: bold;
+      }
+      pre {
+        counter-reset: line;
+      }
+      pre .line:before {
+        counter-increment: line;
+        content: counter(line);
+        display: inline-block;
+        padding-right: 1em;
+        width: 2em;
+        text-align: right;
+        color: #999;
+      }
+      
+      .line {
+        width: 100%;
+        display: inline-block;
+      }
+      .line:target {
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        background: #fafafa;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body{
+            background:#222;
+            color: #ccc;
+        }
+        pre > code {
+            color: #ccc;
+            background: #222;
+            border: unset;
+        }
+        .line:target {
+            border-top: 1px solid #444;
+            border-bottom: 1px solid #444;
+            background: #333;
+        }
+        .tok-kw {
+            color: #eee;
+        }
+        .tok-str {
+            color: #2e5;
+        }
+        .tok-builtin {
+            color: #ff894c;
+        }
+        .tok-comment {
+            color: #aa7;
+        }
+        .tok-fn {
+            color: #B1A0F8;
+        }
+        .tok-null {
+            color: #ff8080;
+        }
+        .tok-number {
+            color: #ff8080;
+        }
+        .tok-type {
+            color: #68f;
+        }
+      }
+    </style>
+</head>
+<body>
+<pre><code><span class="line" id="L1"><span class="tok-comment">//! Beta distribution with parameters `alpha` and `beta`.</span></span>
+<span class="line" id="L2"></span>
+<span class="line" id="L3"><span class="tok-kw">const</span> std = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;std&quot;</span>);</span>
+<span class="line" id="L4"><span class="tok-kw">const</span> math = std.math;</span>
+<span class="line" id="L5"><span class="tok-kw">const</span> Random = std.rand.Random;</span>
+<span class="line" id="L6"></span>
+<span class="line" id="L7"><span class="tok-kw">const</span> spec_fn = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;special_functions.zig&quot;</span>);</span>
+<span class="line" id="L8"></span>
+<span class="line" id="L9"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">Beta</span>(<span class="tok-kw">comptime</span> F: <span class="tok-type">type</span>) <span class="tok-type">type</span> {</span>
+<span class="line" id="L10">    <span class="tok-kw">return</span> <span class="tok-kw">struct</span> {</span>
+<span class="line" id="L11">        <span class="tok-kw">const</span> Self = <span class="tok-builtin">@This</span>();</span>
+<span class="line" id="L12"></span>
+<span class="line" id="L13">        prng: *Random,</span>
+<span class="line" id="L14"></span>
+<span class="line" id="L15">        <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">init</span>(prng: *Random) Self {</span>
+<span class="line" id="L16">            <span class="tok-kw">return</span> Self{</span>
+<span class="line" id="L17">                .prng = prng,</span>
+<span class="line" id="L18">            };</span>
+<span class="line" id="L19">        }</span>
+<span class="line" id="L20"></span>
+<span class="line" id="L21">        <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">sample</span>(self: Self, alpha: F, beta: F) F {</span>
+<span class="line" id="L22">            <span class="tok-kw">if</span> (alpha &lt;= <span class="tok-number">0</span>) {</span>
+<span class="line" id="L23">                <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Parameter `alpha` must be greater than 0.&quot;</span>);</span>
+<span class="line" id="L24">            }</span>
+<span class="line" id="L25">            <span class="tok-kw">if</span> (beta &lt;= <span class="tok-number">0</span>) {</span>
+<span class="line" id="L26">                <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Parameter `beta` must be greater than 0.&quot;</span>);</span>
+<span class="line" id="L27">            }</span>
+<span class="line" id="L28"></span>
+<span class="line" id="L29">            <span class="tok-kw">var</span> a: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L30">            <span class="tok-kw">var</span> a2: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L31">            <span class="tok-kw">var</span> b: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L32">            <span class="tok-kw">var</span> b2: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L33">            <span class="tok-kw">var</span> delta: F = <span class="tok-number">0</span>;</span>
+<span class="line" id="L34">            <span class="tok-kw">var</span> gamma: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L35">            <span class="tok-kw">var</span> k1: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L36">            <span class="tok-kw">var</span> k2: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L37">            <span class="tok-kw">const</span> log4: F = <span class="tok-number">1.3862943611198906188</span>;</span>
+<span class="line" id="L38">            <span class="tok-kw">const</span> log5: F = <span class="tok-number">1.6094379124341003746</span>;</span>
+<span class="line" id="L39">            <span class="tok-kw">var</span> r: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L40">            <span class="tok-kw">var</span> s: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L41">            <span class="tok-kw">var</span> t: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L42">            <span class="tok-kw">var</span> u_1: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L43">            <span class="tok-kw">var</span> u_2: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L44">            <span class="tok-kw">var</span> v: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L45">            <span class="tok-kw">var</span> value: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L46">            <span class="tok-kw">var</span> w: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L47">            <span class="tok-kw">var</span> y: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L48">            <span class="tok-kw">var</span> z: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L49"></span>
+<span class="line" id="L50">            <span class="tok-comment">// Algorithm BB.</span>
+</span>
+<span class="line" id="L51">            <span class="tok-kw">if</span> (alpha &gt; <span class="tok-number">1.0</span> <span class="tok-kw">and</span> beta &gt; <span class="tok-number">1.0</span>) {</span>
+<span class="line" id="L52">                a = <span class="tok-builtin">@min</span>(alpha, beta);</span>
+<span class="line" id="L53">                b = <span class="tok-builtin">@max</span>(alpha, beta);</span>
+<span class="line" id="L54">                a2 = a + b;</span>
+<span class="line" id="L55">                b2 = <span class="tok-builtin">@sqrt</span>((a2 - <span class="tok-number">2.0</span>) / (<span class="tok-number">2.0</span> * a * b - a2));</span>
+<span class="line" id="L56">                gamma = a + <span class="tok-number">1.0</span> / b2;</span>
+<span class="line" id="L57"></span>
+<span class="line" id="L58">                <span class="tok-kw">while</span> (<span class="tok-null">true</span>) {</span>
+<span class="line" id="L59">                    u_1 = self.prng.float(F);</span>
+<span class="line" id="L60">                    u_2 = self.prng.float(F);</span>
+<span class="line" id="L61">                    v = b2 * <span class="tok-builtin">@log</span>(u_1 / (<span class="tok-number">1.0</span> - u_1));</span>
+<span class="line" id="L62"></span>
+<span class="line" id="L63">                    w = a * <span class="tok-builtin">@exp</span>(v);</span>
+<span class="line" id="L64"></span>
+<span class="line" id="L65">                    z = u_1 * u_1 * u_2;</span>
+<span class="line" id="L66">                    z = gamma * v - log4;</span>
+<span class="line" id="L67">                    s = a + r - w;</span>
+<span class="line" id="L68"></span>
+<span class="line" id="L69">                    <span class="tok-kw">if</span> (<span class="tok-number">5.0</span> * z &lt;= s + <span class="tok-number">1.0</span> + log5) {</span>
+<span class="line" id="L70">                        <span class="tok-kw">break</span>;</span>
+<span class="line" id="L71">                    }</span>
+<span class="line" id="L72"></span>
+<span class="line" id="L73">                    t = <span class="tok-builtin">@log</span>(z);</span>
+<span class="line" id="L74">                    <span class="tok-kw">if</span> (t &lt;= s) {</span>
+<span class="line" id="L75">                        <span class="tok-kw">break</span>;</span>
+<span class="line" id="L76">                    }</span>
+<span class="line" id="L77"></span>
+<span class="line" id="L78">                    <span class="tok-kw">if</span> (t &lt;= (r + a2(<span class="tok-builtin">@log</span>(a2 / (b + w))))) {</span>
+<span class="line" id="L79">                        <span class="tok-kw">break</span>;</span>
+<span class="line" id="L80">                    }</span>
+<span class="line" id="L81">                }</span>
+<span class="line" id="L82">                <span class="tok-comment">// Algorithm BC.</span>
+</span>
+<span class="line" id="L83">            } <span class="tok-kw">else</span> {</span>
+<span class="line" id="L84">                a = <span class="tok-builtin">@min</span>(alpha, beta);</span>
+<span class="line" id="L85">                b = <span class="tok-builtin">@max</span>(alpha, beta);</span>
+<span class="line" id="L86">                a2 = a + b;</span>
+<span class="line" id="L87">                b2 = <span class="tok-number">1.0</span> / b;</span>
+<span class="line" id="L88">                delta = <span class="tok-number">1.0</span> + a - b;</span>
+<span class="line" id="L89">                k1 = delta * (<span class="tok-number">1.0</span> / <span class="tok-number">72.0</span> + b / <span class="tok-number">24.0</span>) / (a / b - <span class="tok-number">7.0</span> / <span class="tok-number">9.0</span>);</span>
+<span class="line" id="L90">                k2 = <span class="tok-number">0.25</span> + (<span class="tok-number">0.5</span> + <span class="tok-number">0.25</span> / delta) * b;</span>
+<span class="line" id="L91"></span>
+<span class="line" id="L92">                <span class="tok-kw">while</span> (<span class="tok-null">true</span>) {</span>
+<span class="line" id="L93">                    u_1 = self.prng.float(F);</span>
+<span class="line" id="L94">                    u_2 = self.prng.float(F);</span>
+<span class="line" id="L95"></span>
+<span class="line" id="L96">                    <span class="tok-kw">if</span> (u_1 &lt; <span class="tok-number">0.5</span>) {</span>
+<span class="line" id="L97">                        y = u_1 * u_2;</span>
+<span class="line" id="L98">                        z = u_1 * y;</span>
+<span class="line" id="L99"></span>
+<span class="line" id="L100">                        <span class="tok-kw">if</span> (k1 &lt; <span class="tok-number">0.25</span> * u_2 + z - y) {</span>
+<span class="line" id="L101">                            <span class="tok-kw">continue</span>;</span>
+<span class="line" id="L102">                        }</span>
+<span class="line" id="L103">                    } <span class="tok-kw">else</span> {</span>
+<span class="line" id="L104">                        z = u_1 * u_1 * u_2;</span>
+<span class="line" id="L105"></span>
+<span class="line" id="L106">                        <span class="tok-kw">if</span> (z &lt;= <span class="tok-number">0.25</span>) {</span>
+<span class="line" id="L107">                            v = b2 * <span class="tok-builtin">@log</span>(u_1 / (<span class="tok-number">1.0</span> - u_2));</span>
+<span class="line" id="L108">                            w = a * <span class="tok-builtin">@exp</span>(v);</span>
+<span class="line" id="L109"></span>
+<span class="line" id="L110">                            <span class="tok-kw">if</span> (alpha == a) {</span>
+<span class="line" id="L111">                                value = w / (b + w);</span>
+<span class="line" id="L112">                            } <span class="tok-kw">else</span> {</span>
+<span class="line" id="L113">                                value = b / (b + <span class="tok-number">2</span>);</span>
+<span class="line" id="L114">                            }</span>
+<span class="line" id="L115">                            <span class="tok-kw">return</span> value;</span>
+<span class="line" id="L116">                        }</span>
+<span class="line" id="L117"></span>
+<span class="line" id="L118">                        <span class="tok-kw">if</span> (k2 &lt; z) {</span>
+<span class="line" id="L119">                            <span class="tok-kw">continue</span>;</span>
+<span class="line" id="L120">                        }</span>
+<span class="line" id="L121">                    }</span>
+<span class="line" id="L122">                    v = b2 * <span class="tok-builtin">@log</span>(u_1 / (<span class="tok-number">1.0</span> - u_1));</span>
+<span class="line" id="L123">                    w = a * <span class="tok-builtin">@exp</span>(v);</span>
+<span class="line" id="L124"></span>
+<span class="line" id="L125">                    <span class="tok-kw">if</span> (<span class="tok-builtin">@log</span>(z) &lt;= a2 * (<span class="tok-builtin">@log</span>(a2 / (b + <span class="tok-number">2</span>)) + v) - log4) {</span>
+<span class="line" id="L126">                        <span class="tok-kw">break</span>;</span>
+<span class="line" id="L127">                    }</span>
+<span class="line" id="L128">                }</span>
+<span class="line" id="L129">            }</span>
+<span class="line" id="L130"></span>
+<span class="line" id="L131">            <span class="tok-kw">if</span> (alpha == a) {</span>
+<span class="line" id="L132">                value = w / (b + w);</span>
+<span class="line" id="L133">            } <span class="tok-kw">else</span> {</span>
+<span class="line" id="L134">                value = b / (b + w);</span>
+<span class="line" id="L135">            }</span>
+<span class="line" id="L136"></span>
+<span class="line" id="L137">            <span class="tok-kw">return</span> value;</span>
+<span class="line" id="L138">        }</span>
+<span class="line" id="L139"></span>
+<span class="line" id="L140">        <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">pdf</span>(x: F, alpha: F, beta: F) F {</span>
+<span class="line" id="L141">            <span class="tok-kw">if</span> (alpha &lt;= <span class="tok-number">0</span>) {</span>
+<span class="line" id="L142">                <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Parameter `alpha` must be greater than 0.&quot;</span>);</span>
+<span class="line" id="L143">            }</span>
+<span class="line" id="L144">            <span class="tok-kw">if</span> (beta &lt;= <span class="tok-number">0</span>) {</span>
+<span class="line" id="L145">                <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Parameter `beta` must be greater than 0.&quot;</span>);</span>
+<span class="line" id="L146">            }</span>
+<span class="line" id="L147"></span>
+<span class="line" id="L148">            <span class="tok-kw">var</span> value: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L149">            <span class="tok-kw">if</span> (x &lt; <span class="tok-number">0.0</span> <span class="tok-kw">or</span> x &gt; <span class="tok-number">1.0</span>) {</span>
+<span class="line" id="L150">                value = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L151">            } <span class="tok-kw">else</span> {</span>
+<span class="line" id="L152">                <span class="tok-comment">// zig fmt: off</span>
+</span>
+<span class="line" id="L153">                value = math.pow(<span class="tok-type">f64</span>, x, alpha - <span class="tok-number">1.0</span>)</span>
+<span class="line" id="L154">                    * math.pow(<span class="tok-type">f64</span>, <span class="tok-number">1.0</span> - x, beta - <span class="tok-number">1.0</span>)</span>
+<span class="line" id="L155">                    / spec_fn.beta(alpha, beta);</span>
+<span class="line" id="L156">                <span class="tok-comment">// zig fmt: on</span>
+</span>
+<span class="line" id="L157">            }</span>
+<span class="line" id="L158"></span>
+<span class="line" id="L159">            <span class="tok-kw">return</span> value;</span>
+<span class="line" id="L160">        }</span>
+<span class="line" id="L161"></span>
+<span class="line" id="L162">        <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">lnPdf</span>(x: F, alpha: F, beta: F) F {</span>
+<span class="line" id="L163">            <span class="tok-kw">if</span> (alpha &lt;= <span class="tok-number">0</span>) {</span>
+<span class="line" id="L164">                <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Parameter `alpha` must be greater than 0.&quot;</span>);</span>
+<span class="line" id="L165">            }</span>
+<span class="line" id="L166">            <span class="tok-kw">if</span> (beta &lt;= <span class="tok-number">0</span>) {</span>
+<span class="line" id="L167">                <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Parameter `beta` must be greater than 0.&quot;</span>);</span>
+<span class="line" id="L168">            }</span>
+<span class="line" id="L169"></span>
+<span class="line" id="L170">            <span class="tok-kw">var</span> value: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L171">            <span class="tok-kw">if</span> (x &lt; <span class="tok-number">0.0</span> <span class="tok-kw">or</span> x &gt; <span class="tok-number">1.0</span>) {</span>
+<span class="line" id="L172">                value = math.inf_f64;</span>
+<span class="line" id="L173">            } <span class="tok-kw">else</span> {</span>
+<span class="line" id="L174">                <span class="tok-comment">// zig fmt: off</span>
+</span>
+<span class="line" id="L175">                value = (alpha - <span class="tok-number">1.0</span>) * <span class="tok-builtin">@log</span>(x)</span>
+<span class="line" id="L176">                    + (beta - <span class="tok-number">1.0</span>) * <span class="tok-builtin">@log</span>(<span class="tok-number">1.0</span> - x)</span>
+<span class="line" id="L177">                    - spec_fn.lnBeta(alpha, beta);</span>
+<span class="line" id="L178">                <span class="tok-comment">// zog fmt: on</span>
+</span>
+<span class="line" id="L179">            }</span>
+<span class="line" id="L180"></span>
+<span class="line" id="L181">            <span class="tok-kw">return</span> value;</span>
+<span class="line" id="L182">        }</span>
+<span class="line" id="L183">    };</span>
+<span class="line" id="L184">}</span>
+<span class="line" id="L185"></span>
+</code></pre></body>
+</html>
