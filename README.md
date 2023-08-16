@@ -9,7 +9,7 @@ A Zig Module for Probability Distributions
 The `zprob` module implements functionality for working with probability distributions in Zig,
 including generating random samples and calculating probabilities using mass/density functions.
 
-<img src="https://github.com/pblischak/zprob/actions/workflows/ci.yml/badge.svg" alt="CI Status">
+<img src="https://github.com/pblischak/zprob/actions/workflows/ci.yml/badge.svg" alt="CI Status"> [![pages-build-deployment](https://github.com/pblischak/zprob/actions/workflows/pages/pages-build-deployment/badge.svg)](https://pblischak.github.io/zprob/)
 
 ----
 
