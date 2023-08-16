@@ -121,11 +121,12 @@ test "Exponential" {
     const ts = TestingState.init(null, null, null);
     var prng = DefaultPrng.init(ts.seed);
     var rng = prng.random();
+    var exponential = zprob.Exponential(f64).init(&rng);
     const lambda: f64 = 500.0;
     var sum: f64 = 0.0;
     var samp: f64 = undefined;
     for (0..ts.reps) |_| {
-        samp = zprob.exponentialSample(f64, lambda, &rng);
+        samp = exponential.sample(lambda);
         sum += samp;
     }
     const avg: f64 = sum / ts.denom;
