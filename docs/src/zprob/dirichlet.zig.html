@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>dirichlet.zig - source view</title>
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAPNJREFUeNpi/P//PwMlgOXHUjly9E0G4hwgZmQiQZMqEK8H4v9QzUEgQSaoADK+zhH9iAGL+C0gDoAaNg9mGLoLfgA1awK9hS9gzgJxA9RQBmQDrgMxJzRMGKE4HYj/Ial5A8QmQLwCJoBsgBYW2+TR1ChDaWt4LOBxKsi/VUh8XiD+gq4IVyzwQAMJBoKwacZlAB8Qf0bi96IZhtOAe1D6LpqaEiz6rmEzQAeIzwGxCJpieFqApo/vQKyJboAaEBsAsSEupwI1MwKjGBTVHOhegMX5UajYRqiBjMgYmj400cVh0XgTiKdC0zhJgJHS7AwQYABm9EAdCKrEfAAAAABJRU5ErkJggg=="/>
+    <style>
+      body{
+        font-family: system-ui, -apple-system, Roboto, "Segoe UI", sans-serif;
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      pre > code {
+        display: block;
+        overflow: auto;
+        line-height: normal;
+        margin: 0em;
+      }
+      .tok-kw {
+          color: #333;
+          font-weight: bold;
+      }
+      .tok-str {
+          color: #d14;
+      }
+      .tok-builtin {
+          color: #005C7A;
+      }
+      .tok-comment {
+          color: #545454;
+          font-style: italic;
+      }
+      .tok-fn {
+          color: #900;
+          font-weight: bold;
+      }
+      .tok-null {
+          color: #005C5C;
+      }
+      .tok-number {
+          color: #005C5C;
+      }
+      .tok-type {
+          color: #458;
+          font-weight: bold;
+      }
+      pre {
+        counter-reset: line;
+      }
+      pre .line:before {
+        counter-increment: line;
+        content: counter(line);
+        display: inline-block;
+        padding-right: 1em;
+        width: 2em;
+        text-align: right;
+        color: #999;
+      }
+      
+      .line {
+        width: 100%;
+        display: inline-block;
+      }
+      .line:target {
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        background: #fafafa;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body{
+            background:#222;
+            color: #ccc;
+        }
+        pre > code {
+            color: #ccc;
+            background: #222;
+            border: unset;
+        }
+        .line:target {
+            border-top: 1px solid #444;
+            border-bottom: 1px solid #444;
+            background: #333;
+        }
+        .tok-kw {
+            color: #eee;
+        }
+        .tok-str {
+            color: #2e5;
+        }
+        .tok-builtin {
+            color: #ff894c;
+        }
+        .tok-comment {
+            color: #aa7;
+        }
+        .tok-fn {
+            color: #B1A0F8;
+        }
+        .tok-null {
+            color: #ff8080;
+        }
+        .tok-number {
+            color: #ff8080;
+        }
+        .tok-type {
+            color: #68f;
+        }
+      }
+    </style>
+</head>
+<body>
+<pre><code><span class="line" id="L1"><span class="tok-comment">//! Dirichlet distribution with parameter `alpha_vec`.</span></span>
+<span class="line" id="L2"></span>
+<span class="line" id="L3"><span class="tok-comment">// zig fmt: off</span>
+</span>
+<span class="line" id="L4"></span>
+<span class="line" id="L5"><span class="tok-kw">const</span> std = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;std&quot;</span>);</span>
+<span class="line" id="L6"><span class="tok-kw">const</span> math = std.math;</span>
+<span class="line" id="L7"><span class="tok-kw">const</span> Allocator = std.mem.Allocator;</span>
+<span class="line" id="L8"><span class="tok-kw">const</span> Random = std.rand.Random;</span>
+<span class="line" id="L9"><span class="tok-kw">const</span> DefaultPrng = std.rand.Xoshiro256;</span>
+<span class="line" id="L10"><span class="tok-kw">const</span> test_allocator = std.testing.allocator;</span>
+<span class="line" id="L11"></span>
+<span class="line" id="L12"><span class="tok-kw">const</span> Gamma = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;gamma.zig&quot;</span>).Gamma;</span>
+<span class="line" id="L13"><span class="tok-kw">const</span> spec_fn = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;special_functions.zig&quot;</span>);</span>
+<span class="line" id="L14"></span>
+<span class="line" id="L15"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">Dirichlet</span>(<span class="tok-kw">comptime</span> F: <span class="tok-type">type</span>) <span class="tok-type">type</span> {</span>
+<span class="line" id="L16">    <span class="tok-kw">return</span> <span class="tok-kw">struct</span>{</span>
+<span class="line" id="L17">        <span class="tok-kw">const</span> Self = <span class="tok-builtin">@This</span>();</span>
+<span class="line" id="L18"></span>
+<span class="line" id="L19">        prng: *Random,</span>
+<span class="line" id="L20">        gamma: Gamma(F),</span>
+<span class="line" id="L21"></span>
+<span class="line" id="L22">        <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">init</span>(prng: *Random) Self {</span>
+<span class="line" id="L23">            <span class="tok-kw">return</span> Self{</span>
+<span class="line" id="L24">                .prng = prng,</span>
+<span class="line" id="L25">                .gamma = Gamma(F).init(prng),</span>
+<span class="line" id="L26">            };</span>
+<span class="line" id="L27">        }</span>
+<span class="line" id="L28"></span>
+<span class="line" id="L29">        <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">sample</span>(self: Self, alpha_vec: []<span class="tok-kw">const</span> F, out_vec: []F) <span class="tok-type">void</span> {</span>
+<span class="line" id="L30">            <span class="tok-kw">var</span> sum: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L31">            <span class="tok-kw">for</span> (alpha_vec, <span class="tok-number">0</span>..) |alpha, i| {</span>
+<span class="line" id="L32">                out_vec[i] = self.gamma.sample(alpha, <span class="tok-number">1.0</span>);</span>
+<span class="line" id="L33">                sum += out_vec[i];</span>
+<span class="line" id="L34">            }</span>
+<span class="line" id="L35"></span>
+<span class="line" id="L36">            <span class="tok-kw">for</span> (out_vec) |*x| {</span>
+<span class="line" id="L37">                x.* /= sum;</span>
+<span class="line" id="L38">            }</span>
+<span class="line" id="L39">        }</span>
+<span class="line" id="L40"></span>
+<span class="line" id="L41">        <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">pdf</span>(self: Self, x_vec: []F, alpha_vec: []F) F {</span>
+<span class="line" id="L42">            <span class="tok-kw">return</span> <span class="tok-builtin">@exp</span>(self.lnPdf(x_vec, alpha_vec));</span>
+<span class="line" id="L43">        }</span>
+<span class="line" id="L44"></span>
+<span class="line" id="L45">        <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">lnPdf</span>(x_vec: []F, alpha_vec: []F) F {</span>
+<span class="line" id="L46">            <span class="tok-kw">var</span> numerator: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L47"></span>
+<span class="line" id="L48">            <span class="tok-kw">for</span> (x_vec, <span class="tok-number">0</span>..) |x, i| {</span>
+<span class="line" id="L49">                numerator += (alpha_vec[i] - <span class="tok-number">1.0</span>) * <span class="tok-builtin">@log</span>(x);</span>
+<span class="line" id="L50">            }</span>
+<span class="line" id="L51"></span>
+<span class="line" id="L52">            <span class="tok-kw">return</span> numerator - lnMultivariateBeta(F, alpha_vec);</span>
+<span class="line" id="L53">        }</span>
+<span class="line" id="L54">    };</span>
+<span class="line" id="L55">}</span>
+<span class="line" id="L56"></span>
+<span class="line" id="L57"><span class="tok-kw">fn</span> <span class="tok-fn">lnMultivariateBeta</span>(<span class="tok-kw">comptime</span> F: <span class="tok-type">type</span>, alpha_vec: []F) F {</span>
+<span class="line" id="L58">    <span class="tok-kw">var</span> numerator: F = <span class="tok-null">undefined</span>;</span>
+<span class="line" id="L59">    <span class="tok-kw">var</span> alpha_sum: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L60"></span>
+<span class="line" id="L61">    <span class="tok-kw">for</span> (alpha_vec) |alpha| {</span>
+<span class="line" id="L62">        numerator += spec_fn.lnGammaFn(F, alpha);</span>
+<span class="line" id="L63">        alpha_sum += alpha;</span>
+<span class="line" id="L64">    }</span>
+<span class="line" id="L65"></span>
+<span class="line" id="L66">    <span class="tok-kw">return</span> numerator - spec_fn.lnGammaFn(F, alpha_sum);</span>
+<span class="line" id="L67">}</span>
+<span class="line" id="L68"></span>
+<span class="line" id="L69"><span class="tok-kw">fn</span> <span class="tok-fn">multivariateBeta</span>(<span class="tok-kw">comptime</span> F: <span class="tok-type">type</span>, alpha_vec: []F) F {</span>
+<span class="line" id="L70">    <span class="tok-kw">return</span> <span class="tok-builtin">@exp</span>(lnMultivariateBeta(F, alpha_vec));</span>
+<span class="line" id="L71">}</span>
+<span class="line" id="L72"></span>
+<span class="line" id="L73"><span class="tok-kw">test</span> <span class="tok-str">&quot;Dirichlet API&quot;</span> {</span>
+<span class="line" id="L74">    <span class="tok-kw">const</span> seed: <span class="tok-type">u64</span> = <span class="tok-builtin">@intCast</span>(std.time.microTimestamp());</span>
+<span class="line" id="L75">    <span class="tok-kw">var</span> prng = DefaultPrng.init(seed);</span>
+<span class="line" id="L76">    <span class="tok-kw">var</span> rng = prng.random();</span>
+<span class="line" id="L77">    <span class="tok-kw">var</span> dirichlet = Dirichlet(<span class="tok-type">f64</span>).init(*rng);</span>
+<span class="line" id="L78">    <span class="tok-kw">var</span> alpha_vec = [<span class="tok-number">3</span>]<span class="tok-type">f64</span>{ <span class="tok-number">0.1</span>, <span class="tok-number">0.1</span>, <span class="tok-number">0.1</span> };</span>
+<span class="line" id="L79">    <span class="tok-comment">// const alpha_sum = 0.3;</span>
+</span>
+<span class="line" id="L80">    <span class="tok-kw">var</span> tmp: [<span class="tok-number">3</span>]<span class="tok-type">f64</span> = [<span class="tok-number">3</span>]<span class="tok-type">f64</span>{ <span class="tok-number">0.0</span>, <span class="tok-number">0.0</span>, <span class="tok-number">0.0</span> };</span>
+<span class="line" id="L81">    <span class="tok-kw">var</span> res: [<span class="tok-number">3</span>]<span class="tok-type">f64</span> = [<span class="tok-number">3</span>]<span class="tok-type">f64</span>{ <span class="tok-number">0.0</span>, <span class="tok-number">0.0</span>, <span class="tok-number">0.0</span> };</span>
+<span class="line" id="L82">    <span class="tok-kw">for</span> (<span class="tok-number">0</span>..<span class="tok-number">10_000</span>) |_| {</span>
+<span class="line" id="L83">        tmp = dirichlet.sample(alpha_vec[<span class="tok-number">0</span>..], tmp[<span class="tok-number">0</span>..]);</span>
+<span class="line" id="L84">        <span class="tok-kw">defer</span> test_allocator.free(tmp);</span>
+<span class="line" id="L85">        res[<span class="tok-number">0</span>] += tmp[<span class="tok-number">0</span>];</span>
+<span class="line" id="L86">        res[<span class="tok-number">1</span>] += tmp[<span class="tok-number">1</span>];</span>
+<span class="line" id="L87">        res[<span class="tok-number">2</span>] += tmp[<span class="tok-number">2</span>];</span>
+<span class="line" id="L88">    }</span>
+<span class="line" id="L89">    res[<span class="tok-number">0</span>] /= <span class="tok-number">10_000.0</span>;</span>
+<span class="line" id="L90">    res[<span class="tok-number">1</span>] /= <span class="tok-number">10_000.0</span>;</span>
+<span class="line" id="L91">    res[<span class="tok-number">2</span>] /= <span class="tok-number">10_000.0</span>;</span>
+<span class="line" id="L92">    std.debug.print(<span class="tok-str">&quot;\n{any}\n&quot;</span>, .{res});</span>
+<span class="line" id="L93">}</span>
+</code></pre></body>
+</html>

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>gamma.zig - source view</title>
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAPNJREFUeNpi/P//PwMlgOXHUjly9E0G4hwgZmQiQZMqEK8H4v9QzUEgQSaoADK+zhH9iAGL+C0gDoAaNg9mGLoLfgA1awK9hS9gzgJxA9RQBmQDrgMxJzRMGKE4HYj/Ial5A8QmQLwCJoBsgBYW2+TR1ChDaWt4LOBxKsi/VUh8XiD+gq4IVyzwQAMJBoKwacZlAB8Qf0bi96IZhtOAe1D6LpqaEiz6rmEzQAeIzwGxCJpieFqApo/vQKyJboAaEBsAsSEupwI1MwKjGBTVHOhegMX5UajYRqiBjMgYmj400cVh0XgTiKdC0zhJgJHS7AwQYABm9EAdCKrEfAAAAABJRU5ErkJggg=="/>
+    <style>
+      body{
+        font-family: system-ui, -apple-system, Roboto, "Segoe UI", sans-serif;
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      pre > code {
+        display: block;
+        overflow: auto;
+        line-height: normal;
+        margin: 0em;
+      }
+      .tok-kw {
+          color: #333;
+          font-weight: bold;
+      }
+      .tok-str {
+          color: #d14;
+      }
+      .tok-builtin {
+          color: #005C7A;
+      }
+      .tok-comment {
+          color: #545454;
+          font-style: italic;
+      }
+      .tok-fn {
+          color: #900;
+          font-weight: bold;
+      }
+      .tok-null {
+          color: #005C5C;
+      }
+      .tok-number {
+          color: #005C5C;
+      }
+      .tok-type {
+          color: #458;
+          font-weight: bold;
+      }
+      pre {
+        counter-reset: line;
+      }
+      pre .line:before {
+        counter-increment: line;
+        content: counter(line);
+        display: inline-block;
+        padding-right: 1em;
+        width: 2em;
+        text-align: right;
+        color: #999;
+      }
+      
+      .line {
+        width: 100%;
+        display: inline-block;
+      }
+      .line:target {
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        background: #fafafa;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body{
+            background:#222;
+            color: #ccc;
+        }
+        pre > code {
+            color: #ccc;
+            background: #222;
+            border: unset;
+        }
+        .line:target {
+            border-top: 1px solid #444;
+            border-bottom: 1px solid #444;
+            background: #333;
+        }
+        .tok-kw {
+            color: #eee;
+        }
+        .tok-str {
+            color: #2e5;
+        }
+        .tok-builtin {
+            color: #ff894c;
+        }
+        .tok-comment {
+            color: #aa7;
+        }
+        .tok-fn {
+            color: #B1A0F8;
+        }
+        .tok-null {
+            color: #ff8080;
+        }
+        .tok-number {
+            color: #ff8080;
+        }
+        .tok-type {
+            color: #68f;
+        }
+      }
+    </style>
+</head>
+<body>
+<pre><code><span class="line" id="L1"><span class="tok-comment">//! Gamma distribution with parameters `alpha` and `beta`.</span></span>
+<span class="line" id="L2"></span>
+<span class="line" id="L3"><span class="tok-kw">const</span> std = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;std&quot;</span>);</span>
+<span class="line" id="L4"><span class="tok-kw">const</span> math = std.math;</span>
+<span class="line" id="L5"><span class="tok-kw">const</span> Random = std.rand.Random;</span>
+<span class="line" id="L6"></span>
+<span class="line" id="L7"><span class="tok-kw">const</span> spec_fn = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;special_functions.zig&quot;</span>);</span>
+<span class="line" id="L8"></span>
+<span class="line" id="L9"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">Gamma</span>(<span class="tok-kw">comptime</span> F: <span class="tok-type">type</span>) <span class="tok-type">type</span> {</span>
+<span class="line" id="L10">    <span class="tok-kw">return</span> <span class="tok-kw">struct</span> {</span>
+<span class="line" id="L11">        <span class="tok-kw">const</span> Self = <span class="tok-builtin">@This</span>();</span>
+<span class="line" id="L12"></span>
+<span class="line" id="L13">        prng: *Random,</span>
+<span class="line" id="L14"></span>
+<span class="line" id="L15">        <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">init</span>(prng: *Random) Self {</span>
+<span class="line" id="L16">            <span class="tok-kw">return</span> Self{</span>
+<span class="line" id="L17">                .prng = prng,</span>
+<span class="line" id="L18">            };</span>
+<span class="line" id="L19">        }</span>
+<span class="line" id="L20"></span>
+<span class="line" id="L21">        <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">sample</span>(self: Self, alpha: F, beta: F) F {</span>
+<span class="line" id="L22">            <span class="tok-kw">const</span> log4: F = <span class="tok-builtin">@as</span>(F, <span class="tok-number">1.3862943611198906</span>);</span>
+<span class="line" id="L23">            <span class="tok-kw">const</span> sg_magic_const: F = <span class="tok-builtin">@as</span>(F, <span class="tok-number">2.5040773967762740</span>);</span>
+<span class="line" id="L24"></span>
+<span class="line" id="L25">            <span class="tok-kw">if</span> (alpha &gt; <span class="tok-number">1.0</span>) {</span>
+<span class="line" id="L26">                <span class="tok-comment">// R.C.H. Cheng, &quot;The generation of Gamma variables</span>
+</span>
+<span class="line" id="L27">                <span class="tok-comment">// with non-integral shape parameters&quot;,</span>
+</span>
+<span class="line" id="L28">                <span class="tok-comment">// Applied Statistics, (1977), 26, No. 1, p71-74.</span>
+</span>
+<span class="line" id="L29">                <span class="tok-kw">const</span> ainv: F = <span class="tok-builtin">@sqrt</span>(<span class="tok-number">2.0</span> * alpha - <span class="tok-number">1.0</span>);</span>
+<span class="line" id="L30">                <span class="tok-kw">const</span> b: F = alpha - log4;</span>
+<span class="line" id="L31">                <span class="tok-kw">const</span> c: F = alpha + ainv;</span>
+<span class="line" id="L32">                <span class="tok-kw">while</span> (<span class="tok-null">true</span>) {</span>
+<span class="line" id="L33">                    <span class="tok-kw">var</span> unif1: F = self.prng.float(F);</span>
+<span class="line" id="L34">                    <span class="tok-kw">if</span> (!(<span class="tok-number">1.0e-7</span> &lt; unif1 <span class="tok-kw">and</span> unif1 &lt; <span class="tok-number">0.9999999</span>)) {</span>
+<span class="line" id="L35">                        <span class="tok-kw">continue</span>;</span>
+<span class="line" id="L36">                    }</span>
+<span class="line" id="L37">                    <span class="tok-kw">var</span> unif2: F = <span class="tok-number">1.0</span> - self.prng.float(F);</span>
+<span class="line" id="L38">                    <span class="tok-kw">var</span> v: F = <span class="tok-builtin">@log</span>(unif1 / (<span class="tok-number">1.0</span> - unif1)) / ainv;</span>
+<span class="line" id="L39">                    <span class="tok-kw">var</span> x: F = alpha * <span class="tok-builtin">@exp</span>(v);</span>
+<span class="line" id="L40">                    <span class="tok-kw">var</span> z: F = unif1 * unif1 * unif2;</span>
+<span class="line" id="L41">                    <span class="tok-kw">var</span> t: F = b + c * v - x;</span>
+<span class="line" id="L42">                    <span class="tok-kw">if</span> (t + sg_magic_const - <span class="tok-number">4.5</span> * z &gt;= <span class="tok-number">0</span> <span class="tok-kw">or</span> t &gt;= <span class="tok-builtin">@log</span>(z)) {</span>
+<span class="line" id="L43">                        <span class="tok-kw">const</span> value = x * beta;</span>
+<span class="line" id="L44">                        <span class="tok-kw">return</span> value;</span>
+<span class="line" id="L45">                    }</span>
+<span class="line" id="L46">                }</span>
+<span class="line" id="L47">            } <span class="tok-kw">else</span> {</span>
+<span class="line" id="L48">                <span class="tok-kw">var</span> x: F = <span class="tok-number">0.0</span>;</span>
+<span class="line" id="L49">                <span class="tok-kw">while</span> (<span class="tok-null">true</span>) {</span>
+<span class="line" id="L50">                    <span class="tok-kw">var</span> unif1: F = self.prng.float(F);</span>
+<span class="line" id="L51">                    <span class="tok-kw">var</span> b: F = (math.e + alpha) / math.e;</span>
+<span class="line" id="L52">                    <span class="tok-kw">var</span> p: F = b * unif1;</span>
+<span class="line" id="L53">                    <span class="tok-kw">if</span> (p &lt;= <span class="tok-number">1.0</span>) {</span>
+<span class="line" id="L54">                        x = math.pow(F, p, <span class="tok-number">1.0</span> / alpha);</span>
+<span class="line" id="L55">                    } <span class="tok-kw">else</span> {</span>
+<span class="line" id="L56">                        x = -<span class="tok-builtin">@log</span>((b - p) / alpha);</span>
+<span class="line" id="L57">                    }</span>
+<span class="line" id="L58">                    <span class="tok-kw">var</span> unif2: F = self.prng.float(F);</span>
+<span class="line" id="L59">                    <span class="tok-kw">if</span> (p &gt; <span class="tok-number">1.0</span>) {</span>
+<span class="line" id="L60">                        <span class="tok-kw">if</span> (unif2 &lt;= math.pow(F, x, alpha - <span class="tok-number">1.0</span>)) {</span>
+<span class="line" id="L61">                            <span class="tok-kw">break</span>;</span>
+<span class="line" id="L62">                        }</span>
+<span class="line" id="L63">                    } <span class="tok-kw">else</span> <span class="tok-kw">if</span> (unif2 &lt;= <span class="tok-builtin">@exp</span>(-x)) {</span>
+<span class="line" id="L64">                        <span class="tok-kw">break</span>;</span>
+<span class="line" id="L65">                    }</span>
+<span class="line" id="L66">                }</span>
+<span class="line" id="L67">                <span class="tok-kw">const</span> value = x * beta;</span>
+<span class="line" id="L68">                <span class="tok-kw">return</span> value;</span>
+<span class="line" id="L69">            }</span>
+<span class="line" id="L70">        }</span>
+<span class="line" id="L71"></span>
+<span class="line" id="L72">        <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">pdf</span>(x: F, alpha: F, beta: F) F {</span>
+<span class="line" id="L73">            <span class="tok-kw">if</span> (x &lt;= <span class="tok-number">0</span>) {</span>
+<span class="line" id="L74">                <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Parameter `x` must be greater than 0.&quot;</span>);</span>
+<span class="line" id="L75">            }</span>
+<span class="line" id="L76">            <span class="tok-kw">const</span> gamma_val = <span class="tok-kw">try</span> spec_fn.gammaFn(F, alpha);</span>
+<span class="line" id="L77">            <span class="tok-comment">// zig fmt: off</span>
+</span>
+<span class="line" id="L78">            <span class="tok-kw">const</span> value = math.pow(F, x, alpha - <span class="tok-number">1.0</span>) * <span class="tok-builtin">@exp</span>(-beta * x)</span>
+<span class="line" id="L79">                * math.pow(F, beta, alpha) / gamma_val;</span>
+<span class="line" id="L80">            <span class="tok-comment">// zig fmt: on</span>
+</span>
+<span class="line" id="L81"></span>
+<span class="line" id="L82">            <span class="tok-kw">return</span> value;</span>
+<span class="line" id="L83">        }</span>
+<span class="line" id="L84">        <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">lnPdf</span>(x: F, alpha: F, beta: F) F {</span>
+<span class="line" id="L85">            <span class="tok-kw">if</span> (x &lt;= <span class="tok-number">0</span>) {</span>
+<span class="line" id="L86">                <span class="tok-builtin">@panic</span>(<span class="tok-str">&quot;Parameter `x` must be greater than 0.&quot;</span>);</span>
+<span class="line" id="L87">            }</span>
+<span class="line" id="L88">            <span class="tok-kw">const</span> ln_gamma_val = <span class="tok-kw">try</span> spec_fn.lnGammaFn(F, alpha);</span>
+<span class="line" id="L89">            <span class="tok-comment">// zig fmt: off</span>
+</span>
+<span class="line" id="L90">            <span class="tok-kw">const</span> value = (alpha - <span class="tok-number">1.0</span>) * <span class="tok-builtin">@log</span>(x) - beta * x + alpha</span>
+<span class="line" id="L91">                * <span class="tok-builtin">@log</span>(beta) - ln_gamma_val;</span>
+<span class="line" id="L92">            <span class="tok-comment">// zig fmt: on</span>
+</span>
+<span class="line" id="L93">            <span class="tok-kw">return</span> value;</span>
+<span class="line" id="L94">        }</span>
+<span class="line" id="L95">    };</span>
+<span class="line" id="L96">}</span>
+<span class="line" id="L97"></span>
+</code></pre></body>
+</html>

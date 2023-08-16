@@ -1,4 +1,4 @@
-//! zprob: A Zig Library for Probability Distributions
+//! zprob: A Zig Module for Probability Distributions
 
 /// Discrete Probability Distributions
 pub const Bernoulli = @import("bernoulli.zig").Bernoulli;
