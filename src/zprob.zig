@@ -9,13 +9,10 @@ pub const NegativeBinomial = @import("negative_binomial.zig").NegativeBinomial;
 pub const Poisson = @import("poisson.zig").Poisson;
 
 /// Continuous Probability Distributions
-pub usingnamespace @import("beta.zig");
-pub usingnamespace @import("chi_squared.zig");
-pub usingnamespace @import("dirichlet.zig");
-pub usingnamespace @import("exponential.zig");
+pub const Beta = @import("beta.zig").Beta;
+pub const ChiSquared = @import("chi_squared.zig").ChiSquared;
+pub const Dirichlet = @import("dirichlet.zig").Dirichlet;
+pub const Exponential = @import("exponential.zig").Exponential;
 pub const Gamma = @import("gamma.zig").Gamma;
-pub usingnamespace @import("multivariate_normal.zig");
-pub usingnamespace @import("normal.zig");
-
-/// Special Functions
-pub usingnamespace @import("special_functions.zig");
+pub const MultivariateNormal = @import("multivariate_normal.zig").MultivariateNormal;
+pub const Normal = @import("normal.zig").Normal;
