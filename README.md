@@ -3,7 +3,6 @@
 <h3><i>
 A Zig Module for Probability Distributions
 </i></h3>
-<img src="https://github.com/pblischak/zprob/actions/workflows/ci.yml/badge.svg" alt="CI Status"> [![docs](https://github.com/pblischak/zprob/actions/workflows/pages/pages-build-deployment/badge.svg)](https://pblischak.github.io/zprob/)
 </div>
 
 The `zprob` module implements functionality for working with probability distributions in pure Zig,
@@ -67,14 +66,16 @@ complete sample code projects.
 
 ## Getting Started
 
-Below we show a brief "Hello, World!" program for using `zprob`. 
+Below we show a brief "Hello, World!" program using the `RandomEnvironment` struct, which takes
+in an `Allocator`. It automatically generates and stores everything needed to begin generating
+random numbers (seed + random generator).
 
 ```zig
 const std = @import("std");
 const zprob = @import("zprob");
 
 pub fn main() !void {
-    // Set up main memory allocator
+    // Set up main memory allocator and defer deinitilization
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer {
@@ -84,11 +85,13 @@ pub fn main() !void {
         };
     }
 
-    // Set up random environment
+    // Set up random environment and defer deinitialization
     var env = try zprob.RandomEnvironment.init(allocator);
+    env.deinit()
 
     // Generate random samples
     const binomial_sample = env.rBinomial(10, 0.8);
+    const geometric_sample = env.rGeometric(3.0);
 
 
     // Generate slices of random samples. The caller is responsible for cleaning up
@@ -100,13 +103,25 @@ pub fn main() !void {
 
 ## Example Projects
 
+As mentioned briefly above, there are several projects in the
+[examples/](https://github.com/pblischak/zprob/tree/main/examples) folder that demonstrate the
+usage of `zprob` for different applications:
 
+- **approximate_bayes:** Uses approximate Bayesian computation to estimate the posterior mean
+  and variance of a normal distribution using a small sample of observations.
+- **compound_distributions:** Illustrates how to generate samples from compound probability
+  distributions such as the Beta-Binomial.
+- **distribution_sampling:** Shows the basics of the "Distributions API" through the construction
+  of distribution structs with different underlying types.
+- **enemy_spawner:** Shows a gamedev motivated use case where distinct enemy types are sampled
+  with different frequencies, are given different stats based on their type, and are placed randomly
+  on the level map.
 
 ## Low-Level Distributions API
 
-
-
-
+While the easiest way to get started using `zprob` is with the `RandomEnvironment` struct,
+for users wanting more fine-grained control over the construction and usage of different probability
+distributions, `zprob` provides a lower-level "Distributions API".
 
 ## Available Distributions
 
@@ -128,6 +143,15 @@ pub fn main() !void {
 [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) ::
 [Normal](https://en.wikipedia.org/wiki/Normal_distribution)
 
+## Issues
+
+If you run into any problems while using `zprob`, please consider filing an issue describing the
+problem, as well as any steps that may be required to reproduce the problem.
+
+## Contributing
+
+We are open for contributions! Please see our contributing guide for more information on how you
+can help build new features for `zprob`.
 
 ## Other Useful Links
 
