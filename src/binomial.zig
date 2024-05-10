@@ -1,26 +1,33 @@
-//! Binomial distribution with parameters `p` and `n`.
+//! Binomial distribution
+//!
+//! [https://en.wikipedia.org/wiki/Binomial_distribution](https://en.wikipedia.org/wiki/Binomial_distribution)
 
 const std = @import("std");
 const math = std.math;
-const Random = std.rand.Random;
-const DefaultPrng = std.rand.Xoshiro256;
+const Allocator = std.mem.Allocator;
+const Random = std.Random;
 
 const spec_fn = @import("special_functions.zig");
+const utils = @import("utils.zig");
 
+/// Binomial distribution with parameters `p` and `n`.
 pub fn Binomial(comptime I: type, comptime F: type) type {
+    _ = utils.ensureIntegerType(I);
+    _ = utils.ensureFloatType(F);
+
     return struct {
         const Self = @This();
-        prng: *Random,
+        rand: *Random,
 
-        pub fn init(prng: *Random) Self {
+        pub fn init(rand: *Random) Self {
             return Self{
-                .prng = prng,
+                .rand = rand,
             };
         }
 
         /// Generate a single random sample from a binomial
         /// distribution whose number of trials is `n` and whose
-        /// probability of an event in each trial is `p`.
+        /// probability of success in each trial is `p`.
         ///
         /// Reference:
         ///
@@ -80,14 +87,20 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             xnp = @as(F, @floatFromInt(n)) * p0;
 
             if (xnp < 30.0) {
-                qn = math.pow(F, q, @as(F, @floatFromInt(n)));
+                // qn = math.pow(F, q, @as(F, @floatFromInt(n)));
+                qn = @floatCast(math.pow(
+                    f64,
+                    @floatCast(q),
+                    @as(f64, @floatFromInt(n)),
+                ));
                 r = p0 / q;
                 g = r * @as(F, @floatFromInt(n + 1));
 
                 while (true) {
                     ix = 0;
                     f = qn;
-                    u = self.prng.float(F);
+                    // u = @as(F, self.rand.float(f64));
+                    u = @floatCast(self.rand.float(f64));
 
                     while (true) {
                         if (u < f) {
@@ -127,8 +140,11 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             //  Generate a variate.
             //
             while (true) {
-                u = self.prng.float(F) * p4;
-                v = self.prng.float(F);
+                // u = @as(F, self.rand.float(f64)) * p4;
+                u = @floatCast(self.rand.float(f64));
+                u *= p4;
+                // v = @as(F, self.rand.float(f64));
+                v = @floatCast(self.rand.float(f64));
                 //
                 //  Triangle
                 //
@@ -145,7 +161,7 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
                 //
                 if (u <= p2) {
                     x = xl + (u - p1) / c;
-                    v = v * c + 1.0 - math.fabs(xm - x) / p1;
+                    v = v * c + 1.0 - @abs(xm - x) / p1;
 
                     if (v <= 0.0 or 1.0 < v) {
                         continue;
@@ -164,15 +180,13 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
                     }
                     v = v * (u - p3) * xlr;
                 }
-                k = math.absInt(ix - m) catch blk: {
-                    // zig fmt: off
-                    break :blk @as(
-                        I,
-                        @intFromFloat(@fabs(@as(F, @floatFromInt(ix))
-                            - @as(F, @floatFromInt(m))))
-                    );
-                    // zig fmt: on
-                };
+                // Required for safely handling signed and unsigned integer casting,
+                // which throws a compile error because you cannot safely cast between,
+                // e.g., u32 and i32.
+                k = @as(
+                    I,
+                    @intFromFloat(@abs(@as(F, @floatFromInt(ix)) - @as(F, @floatFromInt(m)))),
+                );
 
                 if (k <= 20 or xnpq / 2.0 - 1.0 <= @as(F, @floatFromInt(k))) {
                     f = 1.0;
@@ -250,11 +264,26 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             return value;
         }
 
-        pub fn pmf(k: I, n: I, p: F) F {
+        pub fn sampleSlice(
+            self: Self,
+            size: usize,
+            n: I,
+            p: F,
+            allocator: Allocator,
+        ) ![]I {
+            var res = try allocator.alloc(I, size);
+            for (0..size) |i| {
+                res[i] = self.sample(n, p);
+            }
+            return res;
+        }
+
+        pub fn pmf(self: *Self, k: I, n: I, p: F) F {
+            _ = self;
             if (k > n or k <= 0) {
                 @panic("`k` must be between 0 and `n`");
             }
-            const coeff = try spec_fn.nChooseK(I, n, k);
+            const coeff = spec_fn.nChooseK(I, n, k);
             // zig fmt: off
             return @as(F, @floatFromInt(coeff))
                 * math.pow(F, p, @as(F, @floatFromInt(k)))
@@ -262,11 +291,12 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             // zig fmt: on
         }
 
-        pub fn lnPmf(k: I, n: I, p: F) F {
+        pub fn lnPmf(self: *Self, k: I, n: I, p: F) F {
+            _ = self;
             if (k > n or k <= 0) {
                 @panic("`k` must be between 0 and `n`");
             }
-            const ln_coeff = try spec_fn.lnNChooseK(I, F, n, k);
+            const ln_coeff = spec_fn.lnNChooseK(I, F, n, k);
             // zig fmt: off
             return ln_coeff
                 + @as(F, @floatFromInt(k)) * @log(p)
@@ -274,4 +304,75 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             // zig fmt: on
         }
     };
+}
+
+test "Sample Binomial" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+
+    var binomial = Binomial(u32, f64).init(&rand);
+    const val = binomial.sample(10, 0.2);
+    std.debug.print("\n{}\n", .{val});
+}
+
+test "Sample Binomial Slice" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+    const allocator = std.testing.allocator;
+
+    var binomial = Binomial(u32, f64).init(&rand);
+    const sample = try binomial.sampleSlice(100, 10, 0.2, allocator);
+    defer allocator.free(sample);
+    std.debug.print("\n{any}\n", .{sample});
+}
+
+test "Binomial Mean" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+    var binomial = Binomial(u32, f64).init(&rand);
+
+    const n_vec = [_]u32{ 2, 5, 10, 25, 50 };
+    const p_vec = [_]f64{ 0.05, 0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 0.9, 0.95 };
+
+    std.debug.print("\n", .{});
+    for (n_vec) |n| {
+        for (p_vec) |p| {
+            var samp: f64 = undefined;
+            var sum: f64 = 0.0;
+            for (0..10_000) |_| {
+                samp = @as(f64, @floatFromInt(binomial.sample(n, p)));
+                sum += samp;
+            }
+
+            const mean: f64 = @as(f64, @floatFromInt(n)) * p;
+            const avg: f64 = sum / 10_000;
+            const variance: f64 = @as(f64, @floatFromInt(n)) * p * (1.0 - p);
+            std.debug.print(
+                "Mean: {}\tAvg: {}\tStdDev {}\n",
+                .{ mean, avg, @sqrt(variance) },
+            );
+            try std.testing.expectApproxEqAbs(mean, avg, @sqrt(variance));
+        }
+    }
+}
+
+test "Binomial with Different Types" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+
+    const int_types = [_]type{ u8, u16, u32, u64, u128, i8, i16, i32, i64, i128 };
+    const float_types = [_]type{ f16, f32, f64, f128 };
+
+    std.debug.print("\n", .{});
+    inline for (int_types) |i| {
+        inline for (float_types) |f| {
+            var binomial = Binomial(i, f).init(&rand);
+            const val = binomial.sample(10, 0.25);
+            std.debug.print("Binomial({any}, {any}):\t{}\n", .{ i, f, val });
+        }
+    }
 }
