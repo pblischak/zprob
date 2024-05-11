@@ -1,96 +1,185 @@
-//! Gamma distribution with parameters `alpha` and `beta`.
+//! Gamma distribution
+//!
+//! [https://en.wikipedia.org/wiki/Gamma_distribution](https://en.wikipedia.org/wiki/Gamma_distribution)
 
 const std = @import("std");
 const math = std.math;
-const Random = std.rand.Random;
+const Allocator = std.mem.Allocator;
+const Random = std.Random;
 
 const spec_fn = @import("special_functions.zig");
+const utils = @import("utils.zig");
 
+/// Gamma distribution with parameters `shape` and `scale` (`1 / rate`).
 pub fn Gamma(comptime F: type) type {
+    _ = utils.ensureFloatType(F);
+
     return struct {
         const Self = @This();
 
-        prng: *Random,
+        rand: *Random,
 
-        pub fn init(prng: *Random) Self {
+        pub fn init(rand: *Random) Self {
             return Self{
-                .prng = prng,
+                .rand = rand,
             };
         }
 
-        pub fn sample(self: Self, alpha: F, beta: F) F {
-            const log4: F = @as(F, 1.3862943611198906);
-            const sg_magic_const: F = @as(F, 2.5040773967762740);
+        // GEORGE MARSAGLIA and WAI WAN TSANG. A Simple Method for Generating Gamma Variables.
+        // ACM Transactions on Mathematical Software, Vol. 26, September 2000, Pages 363–37.
+        pub fn sample(self: Self, shape: F, scale: F) F {
+            std.debug.assert(shape > 0);
 
-            if (alpha > 1.0) {
-                // R.C.H. Cheng, "The generation of Gamma variables
-                // with non-integral shape parameters",
-                // Applied Statistics, (1977), 26, No. 1, p71-74.
-                const ainv: F = @sqrt(2.0 * alpha - 1.0);
-                const b: F = alpha - log4;
-                const c: F = alpha + ainv;
-                while (true) {
-                    var unif1: F = self.prng.float(F);
-                    if (!(1.0e-7 < unif1 and unif1 < 0.9999999)) {
-                        continue;
-                    }
-                    var unif2: F = 1.0 - self.prng.float(F);
-                    var v: F = @log(unif1 / (1.0 - unif1)) / ainv;
-                    var x: F = alpha * @exp(v);
-                    var z: F = unif1 * unif1 * unif2;
-                    var t: F = b + c * v - x;
-                    if (t + sg_magic_const - 4.5 * z >= 0 or t >= @log(z)) {
-                        const value = x * beta;
-                        return value;
-                    }
-                }
-            } else {
-                var x: F = 0.0;
-                while (true) {
-                    var unif1: F = self.prng.float(F);
-                    var b: F = (math.e + alpha) / math.e;
-                    var p: F = b * unif1;
-                    if (p <= 1.0) {
-                        x = math.pow(F, p, 1.0 / alpha);
-                    } else {
-                        x = -@log((b - p) / alpha);
-                    }
-                    var unif2: F = self.prng.float(F);
-                    if (p > 1.0) {
-                        if (unif2 <= math.pow(F, x, alpha - 1.0)) {
-                            break;
-                        }
-                    } else if (unif2 <= @exp(-x)) {
-                        break;
-                    }
-                }
-                const value = x * beta;
-                return value;
+            if (shape < 1) {
+                const u: F = @floatCast(self.rand.float(f64));
+                return self.sample(
+                    1.0 + shape,
+                    scale,
+                ) * @as(F, @floatCast(math.pow(
+                    f64,
+                    @floatCast(u),
+                    @floatCast(1.0 / shape),
+                )));
             }
+
+            var x: F = undefined;
+            var v: F = undefined;
+            var u: F = undefined;
+            const d: F = shape - (1.0 / 3.0);
+            const c: F = (1.0 / 3.0) / @sqrt(d);
+
+            while (true) {
+                x = @floatCast(self.rand.floatNorm(f64));
+                v = 1.0 + c * x;
+                while (v <= 0) {
+                    x = @floatCast(self.rand.floatNorm(f64));
+                    v = 1.0 + c * x;
+                }
+
+                v = v * v * v;
+                u = @floatCast(self.rand.float(f64));
+
+                if (u < 1.0 - (0.0331 * x * x * x * x)) {
+                    break;
+                }
+
+                if (@log(u) < (0.5 * x * x) + d * (1.0 - v + @log(v))) {
+                    break;
+                }
+            }
+
+            return scale * d * v;
         }
 
-        pub fn pdf(x: F, alpha: F, beta: F) F {
+        pub fn sampleSlice(
+            self: Self,
+            size: usize,
+            shape: F,
+            scale: F,
+            allocator: Allocator,
+        ) ![]F {
+            var res = try allocator.alloc(F, size);
+            for (0..size) |i| {
+                res[i] = self.sample(shape, scale);
+            }
+            return res;
+        }
+
+        pub fn pdf(self: Self, x: F, shape: F, scale: F) !F {
+            _ = self;
             if (x <= 0) {
                 @panic("Parameter `x` must be greater than 0.");
             }
-            const gamma_val = try spec_fn.gammaFn(F, alpha);
-            // zig fmt: off
-            const value = math.pow(F, x, alpha - 1.0) * @exp(-beta * x)
-                * math.pow(F, beta, alpha) / gamma_val;
-            // zig fmt: on
+            const gamma_val: F = try spec_fn.gammaFn(F, shape);
+            const value: F = @as(F, @floatCast(math.pow(
+                f64,
+                @floatCast(x),
+                @floatCast(shape - 1.0),
+            ))) * @exp(x / scale) / @as(F, @floatCast(math.pow(
+                f64,
+                @floatCast(scale),
+                @floatCast(shape),
+            ))) / gamma_val;
 
             return value;
         }
-        pub fn lnPdf(x: F, alpha: F, beta: F) F {
+
+        pub fn lnPdf(self: Self, x: F, shape: F, scale: F) !F {
+            _ = self;
             if (x <= 0) {
                 @panic("Parameter `x` must be greater than 0.");
             }
-            const ln_gamma_val = try spec_fn.lnGammaFn(F, alpha);
+            const ln_gamma_val: F = try spec_fn.lnGammaFn(F, shape);
             // zig fmt: off
-            const value = (alpha - 1.0) * @log(x) - beta * x + alpha
-                * @log(beta) - ln_gamma_val;
+            const value: F = (shape - 1.0) * @log(x) - x / scale
+                - shape * @log(scale) - ln_gamma_val;
             // zig fmt: on
             return value;
         }
     };
+}
+
+test "Sample Gamma" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+
+    var gamma = Gamma(f64).init(&rand);
+    const val = gamma.sample(2.0, 5.0);
+    std.debug.print("\n{}\n", .{val});
+}
+
+test "Sample Gamma Slice" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+
+    var gamma = Gamma(f64).init(&rand);
+    const allocator = std.testing.allocator;
+    const sample = try gamma.sampleSlice(100, 2.0, 5.0, allocator);
+    defer allocator.free(sample);
+    std.debug.print("\n{any}\n", .{sample});
+}
+
+test "Gamma Mean" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+    var gamma = Gamma(f64).init(&rand);
+
+    const shape_vec = [_]f64{ 0.1, 0.5, 2.0, 5.0, 10.0, 20.0, 50.0 };
+    const scale_vec = [_]f64{ 0.1, 0.5, 2.0, 5.0, 10.0, 20.0, 50.0 };
+
+    std.debug.print("\n", .{});
+    for (shape_vec) |shape| {
+        for (scale_vec) |scale| {
+            var sum: f64 = 0.0;
+            for (0..10_000) |_| {
+                sum += gamma.sample(shape, scale);
+            }
+            const mean = shape * scale;
+            const avg = sum / 10_000.0;
+            const variance = shape * scale * scale;
+            std.debug.print(
+                "Mean: {}\tAvg: {}\tStdDev: {}\n",
+                .{ mean, avg, @sqrt(variance) },
+            );
+            try std.testing.expectApproxEqAbs(mean, avg, @sqrt(variance));
+        }
+    }
+}
+
+test "Gamma with Different Types" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.rand.Xoroshiro128.init(seed);
+    var rand = prng.random();
+
+    const float_types = [_]type{ f16, f32, f64, f128 };
+
+    std.debug.print("\n", .{});
+    inline for (float_types) |f| {
+        var gamma = Gamma(f).init(&rand);
+        const val = gamma.sample(5.0, 2.0);
+        std.debug.print("Gamma({any}):\t{}\n", .{ f, val });
+    }
 }
