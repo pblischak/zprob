@@ -1,4 +1,4 @@
-//! Negative binomial distribution with parameters `p`, `n`, and `r`.
+//! Negative binomial distribution
 //!
 //! [https://en.wikipedia.org/wiki/Negative_binomial_distribution](https://en.wikipedia.org/wiki/Negative_binomial_distribution)
 
