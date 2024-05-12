@@ -1,4 +1,6 @@
 //! Negative binomial distribution with parameters `p`, `n`, and `r`.
+//!
+//! [https://en.wikipedia.org/wiki/Negative_binomial_distribution](https://en.wikipedia.org/wiki/Negative_binomial_distribution)
 
 const std = @import("std");
 const math = std.math;
@@ -10,6 +12,8 @@ const Poisson = @import("poisson.zig").Poisson;
 const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
 
+/// Negative binomial distribution with parameters `p` (probability of success)
+///  and `r` (number of successes).
 pub fn NegativeBinomial(comptime I: type, comptime F: type) type {
     _ = utils.ensureIntegerType(I);
     _ = utils.ensureFloatType(F);
