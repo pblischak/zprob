@@ -1,0 +1,17 @@
+---
+title: "zprob docs"
+author: "Paul Blischak"
+format:
+  html:
+    theme: darkly
+    standalone: true
+    toc: true
+    toc-depth: 3
+    toc-location: left
+---
+
+{{< include 01_intro.md >}}
+
+{{< include 02_guide.md >}}
+
+{{< include 03_distributions.md >}}
