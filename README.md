@@ -1,7 +1,7 @@
 <div align="center">
 <h1><tt>zprob</tt></h1>
 <h3><i>
-A Zig Module for Probability Distributions
+A Zig Module for Random Number Distributions
 </i></h3>
 </div>
 
@@ -9,7 +9,7 @@ The `zprob` module implements functionality for working with probability distrib
 including generating random samples and calculating probabilities using mass/density functions.
 The instructions below will get you started with integrating `zprob` into your project, as well as
 introducing some basic use cases. For more detailed information on the different APIs that `zprob`
-offers, please refer to the [docs site](https://github.com/pblischak/zprob).
+implements, please refer to the [docs site](https://github.com/pblischak/zprob).
 
 ## Installation
 
@@ -61,14 +61,16 @@ pub fn build(b: *std.Build) void {
 }
 ```
 
-Check out the [examples/](https://github.com/pblischak/zprob/tree/main/examples) folder for
-complete sample code projects.
+Check out the build files in the [examples/](https://github.com/pblischak/zprob/tree/main/examples)
+folder for some demos of complete sample code projects.
 
 ## Getting Started
 
-Below we show a brief "Hello, World!" program using the `RandomEnvironment` struct, which takes
-in an `Allocator`. It automatically generates and stores everything needed to begin generating
-random numbers (seed + random generator).
+Below we show a brief "Hello, World!" program that introduces the `RandomEnvironment` struct, which
+provides a high-level interface for sampling from distributions and calculating probabilities. It
+automatically generates and stores everything needed to begin generating random numbers
+(seed + random generator), and follows the standard Zig convention of initialization with an
+`Allocator` that handles memory allocation.
 
 ```zig
 const std = @import("std");
@@ -108,7 +110,7 @@ As mentioned briefly above, there are several projects in the
 usage of `zprob` for different applications:
 
 - **approximate_bayes:** Uses approximate Bayesian computation to estimate the posterior mean
-  and variance of a normal distribution using a small sample of observations.
+  and standard deviation of a normal distribution using a small sample of observations.
 - **compound_distributions:** Illustrates how to generate samples from compound probability
   distributions such as the Beta-Binomial.
 - **distribution_sampling:** Shows the basics of the "Distributions API" through the construction
@@ -132,16 +134,20 @@ distributions, `zprob` provides a lower-level "Distributions API".
 [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution) ::
 [Multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution) ::
 [Negative Binomial](https://en.wikipedia.org/wiki/Negative_binomial_distribution) ::
-[Poisson](https://en.wikipedia.org/wiki/Poisson_distribution)
+[Poisson](https://en.wikipedia.org/wiki/Poisson_distribution) ::
+[Uniform](https://en.wikipedia.org/wiki/Discrete_uniform_distribution)
 
 **Continuous Probability Distributions**
 
 [Beta](https://en.wikipedia.org/wiki/Beta_distribution) ::
+[Cauchy](https://en.wikipedia.org/wiki/Cauchy_distribution) ::
 [Chi-squared](https://en.wikipedia.org/wiki/Chi-squared_distribution) ::
 [Dirichlet](https://en.wikipedia.org/wiki/Dirichlet_distribution) ::
 [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution) ::
 [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) ::
-[Normal](https://en.wikipedia.org/wiki/Normal_distribution)
+[Normal](https://en.wikipedia.org/wiki/Normal_distribution) ::
+[Uniform](https://en.wikipedia.org/wiki/Continuous_uniform_distribution) ::
+[Weibull](https://en.wikipedia.org/wiki/Weibull_distribution)
 
 ## Issues
 
@@ -155,4 +161,5 @@ can help build new features for `zprob`.
 
 ## Other Useful Links
 
+- [https://ziglang.org/documentation/master/std/#std.Random](https://ziglang.org/documentation/master/std/#std.Random)
 - [https://zig.guide/standard-library/random-numbers](https://zig.guide/standard-library/random-numbers)
