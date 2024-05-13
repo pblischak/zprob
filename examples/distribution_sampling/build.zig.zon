@@ -1,0 +1,15 @@
+.{
+    .name = "distribution_sampling",
+    .version = "0.2.0",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "README.md",
+        "src",
+    },
+    .dependencies = .{
+        .zprob = .{
+            .path = "../../",
+        },
+    },
+}
