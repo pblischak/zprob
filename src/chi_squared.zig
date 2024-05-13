@@ -66,7 +66,8 @@ pub fn ChiSquared(comptime I: type, comptime F: type) type {
                 return 0.0;
             }
 
-            return @exp(self.lnPdf(x, k));
+            const val = try self.lnPdf(x, k);
+            return @exp(val);
         }
 
         pub fn lnPdf(self: Self, x: F, k: I) !F {

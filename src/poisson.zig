@@ -80,7 +80,7 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
         }
 
         fn inversion(self: Self, lambda: F) I {
-            const bound: I = 130;
+            const bound: I = 127;
             const p_f0 = @exp(-lambda);
             var x: I = undefined;
             var r: F = undefined;
@@ -213,7 +213,7 @@ test "Poisson with Different Types" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    const int_types = [_]type{ u8, u16, u32, u64, u128, i16, i32, i64, i128 };
+    const int_types = [_]type{ u8, u16, u32, u64, u128, i8, i16, i32, i64, i128 };
     const float_types = [_]type{ f16, f32, f64, f128 };
 
     std.debug.print("\n", .{});
