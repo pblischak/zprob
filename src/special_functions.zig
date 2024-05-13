@@ -3,16 +3,20 @@
 const std = @import("std");
 const math = std.math;
 
+const utils = @import("utils.zig");
+
 const log_root_2_pi: f64 = @log(@sqrt(2.0 * math.pi));
 
 /// Natural log-converted binomial coefficient for integers n and k.
 pub fn lnNChooseK(comptime I: type, comptime F: type, n: I, k: I) F {
+    _ = utils.ensureFloatType(F);
+    _ = utils.ensureIntegerType(I);
     check_n_k(I, n, k);
 
     // Handle simple cases when n == 0, n == 1, or n == k
-    if (n == 0) return 0;
-    if (n == 1) return k;
-    if (n == k) return 1;
+    if (n == 0) return 0.0;
+    if (n == 1) return @as(F, @floatFromInt(k));
+    if (n == k) return 1.0;
 
     const res = lnFactorial(I, F, n) - (lnFactorial(I, F, k) + lnFactorial(I, F, n - k));
 
@@ -21,12 +25,15 @@ pub fn lnNChooseK(comptime I: type, comptime F: type, n: I, k: I) F {
 
 /// Binomial coefficient for integers n and k.
 pub fn nChooseK(comptime I: type, n: I, k: I) I {
+    _ = utils.ensureIntegerType(I);
     check_n_k(I, n, k);
     const res = lnNChooseK(I, f64, n, k);
-    return @as(I, @exp(res));
+    return @as(I, @intFromFloat(@exp(res)));
 }
 
 pub fn lnFactorial(comptime I: type, comptime F: type, n: I) F {
+    _ = utils.ensureFloatType(F);
+    _ = utils.ensureIntegerType(I);
     if (n < 0) {
         @panic("Cannot take the log factorial of a negative number.");
     }
@@ -51,6 +58,8 @@ pub fn lnFactorial(comptime I: type, comptime F: type, n: I) F {
 }
 
 fn check_n_k(comptime I: type, n: I, k: I) void {
+    _ = utils.ensureIntegerType(I);
+
     if (n < k) {
         @panic("Parameter `n` cannot be less than parameter `k`.");
     }
@@ -62,20 +71,24 @@ fn check_n_k(comptime I: type, n: I, k: I) void {
     }
 }
 
-pub fn lnGammaFn(comptime F: type, x: F) F {
+pub fn lnGammaFn(comptime F: type, x: F) !F {
+    _ = utils.ensureFloatType(F);
+
     if (x < 0) {
         @panic("Parameter `x` cannot be less than 0.");
     }
 
     if (x < 10) {
-        return @log(gammaFn(F, x));
+        const gamma_val = try gammaFn(F, x);
+        return @log(gamma_val);
     }
 
     return lnGammaLanczos(F, x);
 }
 
 fn lnGammaLanczos(comptime F: type, x: F) F {
-    // zig fmt: off
+    _ = utils.ensureFloatType(F);
+
     const lanczos_coeff = [9]F{
         0.99999999999980993227684700473478,
         676.520368121885098567009190444019,
@@ -85,22 +98,21 @@ fn lnGammaLanczos(comptime F: type, x: F) F {
         12.507343278686904814458936853,
         -0.13857109526572011689554707,
         9.984369578019570859563e-6,
-        1.50563273514931155834e-7
+        1.50563273514931155834e-7,
     };
-    // zig fmt: on
 
     var k: usize = 1;
     var accum: F = lanczos_coeff[0];
     var term1: F = 0.0;
     var term2: F = 0.0;
 
-    x -= 1.0;
+    const x1 = x - 1.0;
 
     while (k <= 8) : (k += 1) {
-        accum += lanczos_coeff[k] / (x + @as(F, k));
+        accum += lanczos_coeff[k] / (x1 + @as(F, @floatFromInt(k)));
     }
 
-    term1 = (x + 0.5) * @log((x + 7.5) / math.e);
+    term1 = (x1 + 0.5) * @log((x1 + 7.5) / math.e);
     term2 = log_root_2_pi + @log(accum);
 
     return term1 + (term2 - 7.0);
@@ -108,6 +120,8 @@ fn lnGammaLanczos(comptime F: type, x: F) F {
 
 /// Calculate Gamma(x) using Spouge's approximation.
 pub fn gammaFn(comptime F: type, x: F) !F {
+    _ = utils.ensureFloatType(F);
+
     if (x < 0) {
         @panic("Parameter `x` cannot be less than 0.");
     }
@@ -140,21 +154,38 @@ pub fn gammaFn(comptime F: type, x: F) !F {
 
 /// Calculate Gamma(x) using the Sterling approximation.
 pub fn fastGammaFn(comptime F: type, x: F) F {
+    _ = utils.ensureFloatType(F);
     return @sqrt(2.0 * math.pi / x) * math.pow(F, x / math.e, x);
+}
+
+pub fn lnBetaFn(comptime F: type, a: F, b: F) !F {
+    _ = utils.ensureFloatType(F);
+
+    const val1 = try lnGammaFn(F, a);
+    const val2 = try lnGammaFn(F, b);
+    const val3 = try lnGammaFn(F, a + b);
+    return val1 + val2 - val3;
+}
+
+pub fn betaFn(comptime F: type, a: F, b: F) !F {
+    _ = utils.ensureFloatType(F);
+
+    const val1 = try lnGammaFn(F, a);
+    const val2 = try lnGammaFn(F, b);
+    const val3 = try lnGammaFn(F, a + b);
+    return @exp(val1 + val2 - val3);
 }
 
 test "Gamma function" {
     var x: f64 = 10.0;
     std.debug.print("\n", .{});
     while (x <= 100.0) : (x += 10.0) {
-        std.debug.print("{}\t{}\n", .{ try gammaFn(f64, x / 3.0), fastGammaFn(f64, x / 3.0) });
+        std.debug.print(
+            "{}\t{}\n",
+            .{
+                try gammaFn(f64, x / 3.0),
+                fastGammaFn(f64, x / 3.0),
+            },
+        );
     }
-}
-
-pub fn lnBetaFn(comptime F: type, a: F, b: F) F {
-    return lnGammaFn(F, a) + lnGammaFn(F, b) - lnGammaFn(F, a + b);
-}
-
-pub fn betaFn(comptime F: type, a: F, b: F) F {
-    return math.exp(lnGammaFn(F, a) + lnGammaFn(F, b) - lnGammaFn(F, a + b));
 }
