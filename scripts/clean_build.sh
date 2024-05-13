@@ -12,7 +12,4 @@ rm -rf zig-cache zig-out
 echo "Building module..."
 zig build
 
-echo "Building docs..."
-zig build docs
-
 popd
