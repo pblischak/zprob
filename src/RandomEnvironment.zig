@@ -207,21 +207,19 @@ pub fn dGeometric(
 pub fn rMultinomial(
     self: *Self,
     n: u32,
-    n_cat: usize,
     p_vec: []const f64,
     out_vec: []u32,
 ) void {
-    return self.multinomial.sample(n, n_cat, p_vec, out_vec);
+    return self.multinomial.sample(n, p_vec, out_vec);
 }
 
 pub fn rMultinomialSlice(
     self: *Self,
     size: usize,
     n: u32,
-    n_cat: usize,
     p_vec: []const f64,
 ) ![]u32 {
-    return try self.multinomial.sampleSlice(size, n, n_cat, p_vec, self.allocator);
+    return try self.multinomial.sampleSlice(size, n, p_vec, self.allocator);
 }
 
 pub fn dMultinomial(
@@ -456,11 +454,11 @@ pub fn dChiSquared(
     x: f64,
     k: u32,
     log: bool,
-) f64 {
+) !f64 {
     if (log) {
-        return self.chi_squared.lnPdf(x, k);
+        return try self.chi_squared.lnPdf(x, k);
     }
-    return self.chi_squared.pdf(x, k);
+    return try self.chi_squared.pdf(x, k);
 }
 
 pub fn rDirichlet(
@@ -541,11 +539,11 @@ pub fn dGamma(
     alpha: f64,
     beta: f64,
     log: bool,
-) f64 {
+) !f64 {
     if (log) {
-        return self.gamma.lnPdf(x, alpha, beta);
+        return try self.gamma.lnPdf(x, alpha, beta);
     }
-    return self.gamma.pdf(x, alpha, beta);
+    return try self.gamma.pdf(x, alpha, beta);
 }
 
 pub fn rNormal(
@@ -641,3 +639,5 @@ test "Sample Random Deviates" {
 }
 
 test "Sample Random Slices" {}
+
+test "PMFs/PDFs" {}
