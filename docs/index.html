@@ -1,1143 +1,390 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Documentation - Zig</title>
-    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAgklEQVR4AWMYWuD7EllJIM4G4g4g5oIJ/odhOJ8wToOxSTXgNxDHoeiBMfA4+wGShjyYOCkG/IGqWQziEzYAoUAeiF9D5U+DxEg14DRU7jWIT5IBIOdCxf+A+CQZAAoopEB7QJwBCBwHiip8UYmRdrAlDpIMgApwQZNnNii5Dq0MBgCxxycBnwEd+wAAAABJRU5ErkJggg==">
-    <style>
-      :root {
-        font-size: 1em;
-        --ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-        --mono: "Source Code Pro", monospace;
-        --tx-color: #141414;
-        --bg-color: #ffffff;
-        --link-color: #2A6286;
-        --sidebar-sh-color: rgba(0, 0, 0, 0.09);
-        --sidebar-mod-bg-color: #f1f1f1;
-        --sidebar-modlnk-tx-color: #141414;
-        --sidebar-modlnk-tx-color-hover: #fff;
-        --sidebar-modlnk-tx-color-active: #000;
-        --sidebar-modlnk-bg-color: transparent;
-        --sidebar-modlnk-bg-color-hover: #555;
-        --sidebar-modlnk-bg-color-active: #FFBB4D;
-        --search-bg-color: #f3f3f3;
-        --search-bg-color-focus: #ffffff;
-        --search-sh-color: rgba(0, 0, 0, 0.18);
-        --search-other-results-color: rgb(100, 100, 100);
-        --modal-sh-color: rgba(0, 0, 0, 0.75);
-        --modal-bg-color: #aaa;
-        --warning-popover-bg-color: #ff4747;
-      }
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.1.251">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Paul Blischak">
+
+<title>zprob docs</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="index_files/libs/clipboard/clipboard.min.js"></script>
+<script src="index_files/libs/quarto-html/quarto.js"></script>
+<script src="index_files/libs/quarto-html/popper.min.js"></script>
+<script src="index_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="index_files/libs/quarto-html/anchor.min.js"></script>
+<link href="index_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="index_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="dark">
+
+
+</head>
 
-      html, body { margin: 0; padding: 0; height: 100%; }
+<body>
 
-      a {
-        text-decoration: none;
-      }
-
-      a:hover {
-        text-decoration: underline;
-      }
-
-      .hidden {
-        display: none;
-      }
-
-      /* layout */
-      .canvas {
-        width: 100vw;
-        height: 100vh;
-        overflow: hidden;
-        margin: 0;
-        padding: 0;
-        font-family: var(--ui);
-        color: var(--tx-color);
-        background-color: var(--bg-color);
-      }
-
-      .flex-main {
-        display: flex;
-        width: 100%;
-        height: 100%;
-        justify-content: center;
-
-        z-index: 100;
-      }
-
-      .flex-filler {
-        flex-grow: 1;
-        flex-shrink: 1;
-      }
-
-      .flex-left {
-        width: 12rem;
-        max-width: 15vw;
-        min-width: 9.5rem;
-        overflow: auto;
-        -webkit-overflow-scrolling: touch;
-        overflow-wrap: break-word;
-        flex-shrink: 0;
-        flex-grow: 0;
-
-        z-index: 300;
-      }
-
-      .flex-right {
-        display: flex;
-        flex-direction: column;
-        overflow: auto;
-        -webkit-overflow-scrolling: touch;
-        flex-grow: 1;
-        flex-shrink: 1;
-
-        z-index: 200;
-      }
-
-      .flex-right > .wrap {
-        width: 60rem;
-        max-width: 85vw;
-        flex-shrink: 1;
-      }
-
-      .modal-container {
-        z-index: 400;
-      }
-
-      /* sidebar */
-      .sidebar {
-        font-size: 1rem;
-        background-color: var(--bg-color);
-        box-shadow: 0 0 1rem var(--sidebar-sh-color);
-      }
-
-      .sidebar .logo {
-        padding: 1rem 0.35rem 0.35rem 0.35rem;
-      }
-
-      .sidebar .logo > svg {
-        display: block;
-        overflow: visible;
-      }
-
-      .sidebar ul.guides-api-switch {
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-        text-align: center;
-        list-style-type: none;
-        margin: 0;
-        padding: 0;
-      }
-
-      .sidebar .guides-api-switch a {
-        display: block;
-        padding: 0.5rem 1rem;      
-        color: var(--sidebar-modlnk-tx-color);
-        background-color: var(--sidebar-modlnk-bg-color);
-        border: 1px solid var(--tx-color);
-      }
-
-
-      #ApiSwitch {
-        border-radius: 10px 0 0 10px;        
-      }
-
-      #guideSwitch {
-        border-radius: 0 10px 10px 0;
-      }
-
-      
-      #ApiSwitch:hover, #guideSwitch:hover {
-        text-decoration: none;      
-      }
-
-      #ApiSwitch:hover:not(.active), #guideSwitch:hover:not(.active) {
-        color: var(--sidebar-modlnk-tx-color-hover);
-        background-color: var(--sidebar-modlnk-bg-color-hover);
-      }
-
-      .sidebar .guides-api-switch .active {
-        color: var(--sidebar-modlnk-tx-color-active);
-        background-color: var(--sidebar-modlnk-bg-color-active);
-      }
-
-      .sidebar h2 {
-        margin: 0.5rem;
-        padding: 0;
-        font-size: 1.2rem;
-      }
-
-      .sidebar h2 > span {
-        border-bottom: 0.125rem dotted var(--tx-color);
-      }
-
-      .sidebar .modules {
-        list-style-type: none;
-        margin: 0;
-        padding: 0;
-        background-color: var(--sidebar-mod-bg-color);
-      }
-
-      .sidebar .modules > li > a {
-        display: block;
-        padding: 0.5rem 1rem;
-        color: var(--sidebar-modlnk-tx-color);
-        background-color: var(--sidebar-modlnk-bg-color);
-        text-decoration: none;
-      }
-
-      .sidebar .modules > li > a:hover {
-        color: var(--sidebar-modlnk-tx-color-hover);
-        background-color: var(--sidebar-modlnk-bg-color-hover);
-      }
-
-      .sidebar .modules > li > a.active {
-        color: var(--sidebar-modlnk-tx-color-active);
-        background-color: var(--sidebar-modlnk-bg-color-active);
-      }
-
-      .sidebar p.str {
-        margin: 0.5rem;
-        font-family: var(--mono);
-      }
-
-      #guides {
-        padding: 0rem 0.7rem 2.4rem 1.4rem;
-        box-sizing: border-box;
-        font-size: 1rem;
-        background-color: var(--bg-color);
-        overflow-wrap: break-word;
-      }
-
-      /* docs section */
-      .docs {
-        padding: 0rem 0.7rem 2.4rem 1.4rem;
-        font-size: 1rem;
-        background-color: var(--bg-color);
-        overflow-wrap: break-word;
-      }
-
-      .docs .search {
-        width: 100%;
-        margin-bottom: 0.8rem;
-        padding: 0.5rem;
-        font-family: var(--ui);
-        font-size: 1rem;
-        color: var(--tx-color);
-        background-color: var(--search-bg-color);
-        border-top: 0;
-        border-left: 0;
-        border-right: 0;
-        border-bottom-width: 0.125rem;
-        border-bottom-style: solid;
-        border-bottom-color: var(--tx-color);
-        outline: none;
-        transition: border-bottom-color 0.35s, background 0.35s, box-shadow 0.35s;
-        border-radius: 0;
-        -webkit-appearance: none;
-      }
-
-      .docs .search:focus {
-        background-color: var(--search-bg-color-focus);
-        border-bottom-color: #ffbb4d;
-        box-shadow: 0 0.3em 1em 0.125em var(--search-sh-color);
-      }
-
-      #searchPlaceholder {
-        position: absolute;
-        pointer-events: none;
-        top: 5px;
-        left: 5px;
-      }
-
-      #dotsPopover:before {
-        position: absolute;
-        content: "";
-        left: 20px;
-        top: -8px;
-        border-style: solid;
-        border-width: 0 10px 10px 10px;
-        border-color: transparent transparent var(--warning-popover-bg-color) transparent;
-        transition-duration: 0.3s;
-        transition-property: transform;
-        z-index: 10;
-      }      
-      
-      #dotsPopover {
-        position: absolute;
-        opacity: 0;
-        visibility: hidden;
-        background-color: var(--warning-popover-bg-color);
-        border-radius: 10px;
-        left: 10px;
-        transform: translate(0, -20px);
-        padding: 0.5rem 1rem;
-        box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
-        transition: all 0.5s cubic-bezier(0.75, -0.02, 0.2, 0.97);
-        z-index: 20;
-      }
-
-      #dotsPopover.active {
-        opacity: 1;
-        visibility: visible;
-        transform: translate(0, 0);
-      }
-
-      #sectSearchResults {
-        box-sizing: border-box;
-        max-width: 960px;
-      }
-
-      #searchHelp summary {
-        color: red;
-        list-style-position: outside;
-      }
-
-      #searchHelp summary.normal {
-        color: var(--search-other-results-color);
-        transition: all 0.5s cubic-bezier(0.75, -0.02, 0.2, 0.97);
-      }
-
-      #searchHelp div {
-        background-color: var(--modal-bg-color);
-        padding: 0.5rem 1rem;
-      }
-      
-      .other-results {
-        line-height: 1em;
-        position: relative;
-        outline: 0;
-        border: 0;
-        color: var(--search-other-results-color);
-        text-align: center;
-        height: 1.5em;
-        opacity: .5;
-      }
-      .other-results:before {
-        content: '';
-        background: var(--search-other-results-color);
-        position: absolute;
-        left: 0;
-        top: 50%;
-        width: 100%;
-        height: 1px;
-      }
-        
-      .other-results:after {
-        content: "other results";
-        position: relative;
-        display: inline-block;
-        padding: 0 .5em;
-        line-height: 1.5em;
-        color: var(--search-other-results-color);
-        background-color: var(--bg-color);
-      }
-      
-      
-      .docs a {
-        color: var(--link-color);
-      }
-
-      .docs p {
-        margin: 0.8rem 0;
-      }
-
-      .docs pre {
-        font-family: var(--mono);
-        font-size: 1em;
-        background-color: #F5F5F5;
-        padding: 1em;
-        overflow-x: auto;
-      }
-
-      .docs pre.inline {
-        background-color: var(--bg-color);
-        padding: 0;
-        display: inline;
-      }
-
-
-      .docs code {
-        font-family: var(--mono);
-        font-size: 1em;
-      }
-
-      .docs h1 {
-        font-size: 1.4em;
-        margin: 0.8em 0;
-        padding: 0;
-        border-bottom: 0.0625rem dashed;
-      }
-
-      .docs h2 {
-        font-size: 1.3em;
-        margin: 0.5em 0;
-        padding: 0;
-        border-bottom: 0.0625rem solid;
-      }
-      #listNav {
-        list-style-type: none;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background-color: #f1f1f1;
-      }
-      #listNav li {
-        float:left;
-      }
-      #listNav li a {
-        display: block;
-        color: #000;
-        text-align: center;
-        padding: .5em .8em;
-        text-decoration: none;
-      }
-      #listNav li a:hover {
-        background-color: #555;
-        color: #fff;
-      }
-      #listNav li a.active {
-        background-color: #FFBB4D;
-        color: #000;
-      }
-
-      #listSearchResults li.selected {
-        background-color: #93e196;
-      }
-
-      #tableFnErrors dt {
-        font-weight: bold;
-      }
-
-      .expand[open] .sum-less {
-        display: none;
-      }
-
-      .expand[open] .sum-more {
-        display: block;
-      }
-
-      .expand .sum-more {
-        display: none;
-      }
-
-      .expand {
-        position: relative;
-      }
-
-      .expand .button:before {
-        content: "[+] ";
-        font-family: var(--mono);
-        color: var(--link-color);
-        position: sticky;
-        float: left;
-        top: 0.5em;
-        right: -16px;
-        z-index: 1;
-        margin-left: -2em;
-        pointer-events: all;
-        cursor: pointer;
-      }
-
-      .expand[open] .button:before {
-        content: "[-] ";
-      }
-
-      .examples {
-        list-style-type: none;
-        margin: 0;
-        padding: 0;
-      }
-      .examples li {
-        padding: 0.5em 0;
-        white-space: nowrap;
-        overflow-x: auto;
-      }
-
-      .docs td {
-        margin: 0;
-        padding: 0.5em;
-        max-width: 27em;
-        text-overflow: ellipsis;
-        overflow-x: hidden;
-      }
-
-      .fieldHasDocs {
-        margin-bottom: 0;
-      }
-
-      .fieldDocs {
-        border: 1px solid #F5F5F5;
-        border-top: 0px;
-        padding: 1px 1em;
-      }
-
-      /* modals */
-      .modal-container {
-        display: flex;
-        width: 100%;
-        height: 100%;
-        position: fixed;
-        top: 0;
-        left: 0;
-        justify-content: center;
-        align-items: center;
-        background-color: rgba(0, 0, 0, 0.15);
-        backdrop-filter: blur(0.3em);
-      }
-
-      .modal-container > .modal {
-        max-width: 97vw;
-        max-height: 97vh;
-        overflow: auto;
-        font-size: 1rem;
-        color: #fff;
-        background-color: var(--modal-bg-color);
-        border: 0.125rem solid #000;
-        box-shadow: 0 0.5rem 2.5rem 0.3rem var(--modal-sh-color);
-      }
-
-      .modal-container h1 {
-        margin: 0.75em 2.5em 1em 2.5em;
-        font-size: 1.5em;
-        text-align: center;
-      }
-
-      .modal-container dt, .modal-container dd {
-        display: inline;
-        margin: 0 0.2em;
-      }
-
-      .modal-container dl {
-        margin-left: 0.5em;
-        margin-right: 0.5em;
-      }
-
-      .prefs-list {
-        list-style: none;
-        padding: 0;
-        margin-left: 0.5em;
-        margin-right: 0.5em;
-      }
-
-      kbd {
-        display: inline-block;
-        padding: 0.3em 0.2em;
-        font-family: var(--mono);
-        font-size: 1em;
-        line-height: 0.8em;
-        vertical-align: middle;
-        color: #000;
-        background-color: #fafbfc;
-        border-color: #d1d5da;
-        border-bottom-color: #c6cbd1;
-        border: solid 0.0625em;
-        border-radius: 0.1875em;
-        box-shadow: inset 0 -0.2em 0 #c6cbd1;
-        cursor: default;
-      }
-      
-      #listFns > div {
-        padding-bottom: 10px;
-      }
-
-      #listFns dt {
-        font-family: var(--mono);
-        display: flex;
-        flex-direction: colunm;
-        justify-content: space-between;
-      }
-      
-      #listFns dt .fnSignature {
-        overflow-x: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-      
-      .argBreaker {
-        display: none;
-      }
-
-      /* tokens */
-      .tok-kw {
-          color: #333;
-          font-weight: bold;
-      }
-      .tok-str {
-          color: #d14;
-      }
-      .tok-builtin {
-          color: #0086b3;
-      }
-      .tok-comment {
-          color: #777;
-          font-style: italic;
-      }
-      .tok-fn {
-          color: #900;
-          font-weight: bold;
-      }
-      .tok-null {
-          color: #008080;
-      }
-      .tok-number {
-          color: #008080;
-      }
-      .tok-type {
-          color: #458;
-          font-weight: bold;
-      }
-
-      /* dark mode */
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --tx-color: #bbb;
-          --bg-color: #111;
-          --link-color: #88f;
-          --sidebar-sh-color: rgba(128, 128, 128, 0.09);
-          --sidebar-mod-bg-color: #333;
-          --sidebar-modlnk-tx-color: #fff;
-          --sidebar-modlnk-tx-color-hover: #fff;
-          --sidebar-modlnk-tx-color-active: #000;
-          --sidebar-modlnk-bg-color: transparent;
-          --sidebar-modlnk-bg-color-hover: #555;
-          --sidebar-modlnk-bg-color-active: #FFBB4D;
-          --search-bg-color: #3c3c3c;
-          --search-bg-color-focus: #000;
-          --search-sh-color: rgba(255, 255, 255, 0.28);
-          --search-other-results-color: rgba(255, 255, 255, 0.28);
-          --modal-sh-color: rgba(142, 142, 142, 0.5);
-          --modal-bg-color: #333;
-        --warning-popover-bg-color: #600000;
-        }
-
-        .docs pre {
-          background-color:#2A2A2A;
-        }
-        .fieldDocs {
-          border-color:#2A2A2A;
-        }
-        #listNav {
-          background-color: #333;
-        }
-        #listNav li a {
-          color: #fff;
-        }
-        #listNav li a:hover {
-          background-color: #555;
-          color: #fff;
-        }
-        #listNav li a.active {
-          background-color: #FFBB4D;
-          color: #000;
-        }
-        #listSearchResults li.selected {
-          background-color: #000;
-        }
-        #listSearchResults li.selected a {
-          color: #fff;
-        }
-        .tok-kw {
-            color: #eee;
-        }
-        .tok-str {
-            color: #2e5;
-        }
-        .tok-builtin {
-            color: #ff894c;
-        }
-        .tok-comment {
-            color: #aa7;
-        }
-        .tok-fn {
-            color: #e33;
-        }
-        .tok-null {
-            color: #ff8080;
-        }
-        .tok-number {
-            color: #ff8080;
-        }
-        .tok-type {
-            color: #68f;
-        }
-      }
-
-      @media only screen and (max-width: 750px) {
-        .canvas {
-          overflow: auto;
-        }
-        .flex-main {
-          flex-direction: column;
-          display: block;
-        }
-        .sidebar {
-          min-width: calc(100vw - 2.8rem);
-          padding-left: 1.4rem;
-          padding-right: 1.4rem;
-        }
-        .logo {
-          max-width: 6.5rem;
-        }
-        .flex-main > .flex-filler {
-          display: none;
-        }
-        .flex-main > .flex-right > .flex-filler {
-          display: none;
-        }
-        .flex-main > .flex-right > .wrap {
-          max-width: 100vw;
-        }
-        .flex-main > .flex-right > .wrap > .docs {
-          padding-right: 1.4rem;
-          background: transparent;
-        }
-        .modules {
-          display: flex;
-          flex-wrap: wrap;
-        }
-        .table-container table {
-          display: flex;
-          flex-direction: column;
-        }
-        .table-container tr {
-          display: flex;
-          flex-direction: column;
-        }
-        .examples {
-          overflow-x: scroll;
-          -webkit-overflow-scrolling: touch;
-          max-width: 100vw;
-          margin-left: -1.4rem;
-          margin-right: -1.4rem;
-        }
-        .examples li {
-          width: max-content;
-          padding-left: 1.4rem;
-          padding-right: 1.4rem;
-        }
-        .mobile-scroll-container {
-          overflow-x: scroll;
-          -webkit-overflow-scrolling: touch;
-          margin-left: -1.4rem;
-          margin-right: -1.4rem;
-          max-width: 100vw;
-        }
-        .mobile-scroll-container > .scroll-item {
-          margin-left: 1.4rem;
-          margin-right: 1.4rem;
-          box-sizing: border-box;
-          width: max-content;
-          display: inline-block;
-          min-width: calc(100% - 2.8rem);
-        }
-      }
-      .banner {
-        background-color: orange;
-        text-align: center;
-        color: black;
-        padding: 5px 5px;
-      }
-      .banner a {
-        color: black;
-        text-decoration: underline;
-    }
-
-  </style>
-
-  <style>
-      pre {
-        --zig-keyword: #333;
-        --zig-builtin: #0086b3;
-        --zig-identifier: 'black';
-        --zig-string-literal: #d14;
-        --zig-type: #458;
-        --zig-fn: #900;
-      }
-      
-      @media (prefers-color-scheme: dark) { 
-        pre {
-          --zig-keyword: #eee;
-          --zig-builtin: #ff894c;
-          --zig-identifier: 'purple';
-          --zig-string-literal: #2e5;
-          --zig-type: #68f;
-          --zig-fn: #e33;
-        }
-      }
-    
-
-    .zig_keyword_addrspace,
-    .zig_keyword_align,
-    .zig_keyword_and,
-    .zig_keyword_asm,
-    .zig_keyword_async,
-    .zig_keyword_await,
-    .zig_keyword_break,
-    .zig_keyword_catch,
-    .zig_keyword_comptime,
-    .zig_keyword_const,
-    .zig_keyword_continue,
-    .zig_keyword_defer,
-    .zig_keyword_else,
-    .zig_keyword_enum,
-    .zig_keyword_errdefer,
-    .zig_keyword_error,
-    .zig_keyword_export,
-    .zig_keyword_extern,
-    .zig_keyword_for,
-    .zig_keyword_if,
-    .zig_keyword_inline,
-    .zig_keyword_noalias,
-    .zig_keyword_noinline,
-    .zig_keyword_nosuspend,
-    .zig_keyword_opaque,
-    .zig_keyword_or,
-    .zig_keyword_orelse,
-    .zig_keyword_packed,
-    .zig_keyword_anyframe,
-    .zig_keyword_pub,
-    .zig_keyword_resume,
-    .zig_keyword_return,
-    .zig_keyword_linksection,
-    .zig_keyword_callconv,
-    .zig_keyword_struct,
-    .zig_keyword_suspend,
-    .zig_keyword_switch,
-    .zig_keyword_test,
-    .zig_keyword_threadlocal,
-    .zig_keyword_try,
-    .zig_keyword_union,
-    .zig_keyword_unreachable,
-    .zig_keyword_usingnamespace,
-    .zig_keyword_var,
-    .zig_keyword_volatile,
-    .zig_keyword_allowzero,
-    .zig_keyword_while,
-    .zig_keyword_anytype,
-    .zig_keyword_fn
-    {
-      color: var(--zig-keyword);
-      font-weight: bold;
-    }
-
-
-    .zig_string_literal,
-    .zig_multiline_string_literal_line,
-    .zig_char_literal
-    {
-      color: var(--zig-string-literal);
-    }
-
-    .zig_builtin
-    {
-      color: var(--zig-builtin);
-    }
-
-    .zig_doc_comment,
-    .zig_container_doc_comment,
-    .zig_line_comment {
-      color: #545454;
-      font-style: italic;
-    }
-
-    .zig_identifier {
-      color: var(--zig-identifier);
-      font-weight: bold;
-    }
-
-    .zig_number_literal,
-    .zig_special {
-      color: #ff8080;
-    }
-
-    .zig_type {
-      color: var(--zig-type);
-      font-weight: bold;
-    }
-
-    .zig_fn {
-      color: var(--zig-fn);
-      font-weight: bold;
-    }
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
    
-    </style>
-  </head>
-  <body class="canvas">
-    <div id="banner" class="banner">
-      This is a beta autodoc build; expect bugs and missing information.
-      <a href="https://github.com/ziglang/zig/wiki/How-to-contribute-to-Autodoc">Report an Issue</a>,
-      <a href="https://github.com/ziglang/zig/wiki/How-to-contribute-to-Autodoc">Contribute</a>,
-      <a href="https://github.com/ziglang/zig/wiki/How-to-read-the-standard-library-source-code">Learn more about stdlib source code</a>.
-    </div>
-    <div id="main" class="flex-main">
-      <div class="flex-filler"></div>
-      <div class="flex-left sidebar">
-        <nav>
-          <div class="logo">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 140">
-            <g fill="#F7A41D">
-              <g>
-                <polygon points="46,22 28,44 19,30"/>
-                <polygon points="46,22 33,33 28,44 22,44 22,95 31,95 20,100 12,117 0,117 0,22" shape-rendering="crispEdges"/>
-                <polygon points="31,95 12,117 4,106"/>
-              </g>
-              <g>
-                <polygon points="56,22 62,36 37,44"/>
-                <polygon points="56,22 111,22 111,44 37,44 56,32" shape-rendering="crispEdges"/>
-                <polygon points="116,95 97,117 90,104"/>
-                <polygon points="116,95 100,104 97,117 42,117 42,95" shape-rendering="crispEdges"/>
-                <polygon points="150,0 52,117 3,140 101,22"/>
-              </g>
-              <g>
-                <polygon points="141,22 140,40 122,45"/>
-                <polygon points="153,22 153,117 106,117 120,105 125,95 131,95 131,45 122,45 132,36 141,22" shape-rendering="crispEdges"/>
-                <polygon points="125,95 130,110 106,117"/>
-              </g>
-            </g>
-            <style>
-            #text { fill: #121212 }
-            @media (prefers-color-scheme: dark) { #text { fill: #f2f2f2 } }
-            </style>
-            <g id="text">
-              <g>
-                <polygon points="260,22 260,37 229,40 177,40 177,22" shape-rendering="crispEdges"/>
-                <polygon points="260,37 207,99 207,103 176,103 229,40 229,37"/>
-                <polygon points="261,99 261,117 176,117 176,103 206,99" shape-rendering="crispEdges"/>
-              </g>
-              <rect x="272" y="22" shape-rendering="crispEdges" width="22" height="95"/>
-              <g>
-                <polygon points="394,67 394,106 376,106 376,81 360,70 346,67" shape-rendering="crispEdges"/>
-                <polygon points="360,68 376,81 346,67"/>
-                <path d="M394,106c-10.2,7.3-24,12-37.7,12c-29,0-51.1-20.8-51.1-48.3c0-27.3,22.5-48.1,52-48.1    c14.3,0,29.2,5.5,38.9,14l-13,15c-7.1-6.3-16.8-10-25.9-10c-17,0-30.2,12.9-30.2,29.5c0,16.8,13.3,29.6,30.3,29.6    c5.7,0,12.8-2.3,19-5.5L394,106z"/>
-              </g>
-            </g>
-            </svg>
-          </div>
-          <div id="sectGudeApiSwitch">
-            <ul class="guides-api-switch">
-              <li><a id="ApiSwitch" class="active" href="#A;">API</a></li>
-              <li><a id="guideSwitch" class="" href="#G;">Guides</a></li>
-            </ul>
-          </div>
-          <div id="guidesMenu" class="hidden">
-            <div id="guidesList"></div>
-          </div>
-          <div id="apiMenu" class="hidden">
-            <div id="sectMainMod" class="hidden">
-              <h2><span>Main Module</span></h2>
-              <ul class="modules">
-                <li><a id="mainMod" class="" href=""></a></li>
-              </ul>
-            </div>
-            <div id="sectMods" class="hidden">
-              <h2><span>Dependencies</span></h2>
-              <ul id="listMods" class="modules"></ul>
-            </div>
-            <div id="sectInfo" class="hidden">
-              <h2><span>Zig Version</span></h2>
-              <p class="str" id="tdZigVer"></p>
-            </div>
-          </div>
-        </nav>
-      </div>
-      <div class="flex-right">
-        <div class="wrap">
-          <section class="docs" style="padding-top: 1.5rem; padding-bottom:0;">
-          <div style="position: relative">
-            <span id="searchPlaceholder"><!-- populated by setPrefSlashSearch --></span>
-            <input type="search" class="search" id="search" autocomplete="off" spellcheck="false" disabled>
-            <div id="dotsPopover">
-              Use spaces instead of dots. See $resource for more info.
-            </div>
-          </div>
-          </section>
-        </div>
-        <div id="sectSearchResults" class="docs hidden">
-          <details id="searchHelp">
-            <summary id="searchHelpSummary" class="normal">How to search effectively</summary>
-            <div>
-              <h2>How To Search Effectively</h2>
-              <h3>Matching</h3>
-              <ul>
-                <li>Search is case-insensitive by default.</li>
-                <li>Using uppercase letters in your query will make the search
-                  case-sensitive.</li>
-                <li>Given <code>ArrayListUnmanaged</code>:
-                  <ul>
-                    <li>the following search terms (and their prefixes) will match:
-                      <ul>
-                        <li><code>array</code></li>
-                        <li><code>list</code></li>
-                        <li><code>unmanaged</code></li>
-                      </ul>
-                    </li>
-                    <li>the following search terms will <b>NOT</b> match:
-                      <ul>
-                        <li><code>stun</code></li>
-                        <li><code>ray</code></li>
-                        <li><code>managed</code></li>
-                      </ul>
-                    </li>
-                  </ul>
-                </li>
-                <li>More precisely, the search system is based on a Radix Tree. The Radix Tree contains full decl names plus some suffixes, split by following the official style guide (e.g. <code>HashMapUnmanaged</code> also produces <code>MapUnmanaged</code> and <code>Unmanaged</code>, same with snake_case and camelCase names). </li>
-              </ul> 
+  <ul>
+  <li><a href="#intro" id="toc-intro" class="nav-link active" data-scroll-target="#intro">Intro</a></li>
+  <li><a href="#guide" id="toc-guide" class="nav-link" data-scroll-target="#guide">Guide</a>
+  <ul class="collapse">
+  <li><a href="#section" id="toc-section" class="nav-link" data-scroll-target="#section"></a></li>
+  <li><a href="#sampling-from-collections" id="toc-sampling-from-collections" class="nav-link" data-scroll-target="#sampling-from-collections">Sampling from Collections</a></li>
+  </ul></li>
+  <li><a href="#distributions-api" id="toc-distributions-api" class="nav-link" data-scroll-target="#distributions-api">Distributions API</a>
+  <ul class="collapse">
+  <li><a href="#general-design" id="toc-general-design" class="nav-link" data-scroll-target="#general-design">General design</a></li>
+  <li><a href="#discrete-distributions" id="toc-discrete-distributions" class="nav-link" data-scroll-target="#discrete-distributions">Discrete distributions</a></li>
+  <li><a href="#continuous-distributions" id="toc-continuous-distributions" class="nav-link" data-scroll-target="#continuous-distributions">Continuous distributions</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+</div>
+<main class="content" id="quarto-document-content">
 
-              <h3>Multiple terms</h3>
-              
-              <ul>
-                <li>When a search query contains multiple terms, order doesn't matter when 
-                    all terms match within a single decl name (e.g. "map auto" will match <code>AutoHashMap</code>).</li>
-                <li>Query term order does matter when matching different decls alognside
-                    a path (e.g. "js parse" matching <code>std.json.parse</code>), in which
-                    case the order of the terms will determine whether the match goes above or 
-                    below the "other results" line.</li>
-                <li>As an example, "fs create" will put above the line all things related to the creation of files and directories inside of `std.fs`, while still showing (but below the line) matches from `std.Bulild`.</li>
-                <li>As another example, "fs windows" will prioritize windows-related results in `std.fs`, while "windows fs" will prioritize "fs"-related results in `std.windows`.</li>
-                <li>This means that if you're searching inside a target namespace, you never have to read below the "other results" line.</li>
-                <li>Since matching doesn't have to be perfect, you can also target a group of namespaces to search into. For example "array orderedremove" will show you all "Array-" namespaces that support <code>orderedRemove</code>.</li>
-                <li>Periods are replaced by spaces because the Radix Tree doesn't index full paths, and in practice you should expect the match scoring system to consistently give you what you're looking for even when your query path is split into multiple terms.</li>
-              </ul>
-            </div>
-          </details>
-          <h2>Search Results</h2>
-          <ul id="listSearchResults"></ul>
-          <p id="sectSearchAllResultsLink" class="hidden"><a href="">show all results</a></p>
-        </div>
-        <div id="sectSearchNoResults" class="docs hidden">
-          <h2>No Results Found</h2>
-          <p>Here are some things you can try:</p>
-          <ul>
-            <li>Check out the <a id="langRefLink">Language Reference</a> for the language itself.</li>
-            <li>Check out the <a href="https://ziglang.org/learn/">Learn page</a> for other helpful resources for learning Zig.</li>
-            <li>Use your search engine.</li>
-          </ul>
-          <p>Press <kbd>?</kbd> to see keyboard shortcuts and <kbd>Esc</kbd> to return.</p>
-        </div>
-        <div id="guides" class="wrap hidden">
-          <div id="activeGuide" class="hidden"></div>
-        </div> 
-        <div id="docs" class="wrap hidden">
-          <section class="docs">
-            <p id="status">Loading...</p>
-            <div id="sectNav" class="hidden"><ul id="listNav"></ul></div>
-            <div id="fnProto" class="hidden">
-              <div class="mobile-scroll-container"><pre id="fnProtoCode" class="scroll-item"></pre></div>
-              <div id="fnSourceLink" style="display:flex;flex-direction:row;justify-content:flex-end;"></div>
-            </div>
-            <h1 id="hdrName" class="hidden"></h1>
-            <div id="fnNoExamples" class="hidden">
-              <p>This function is not tested or referenced.</p>
-            </div>
-            <div id="declNoRef" class="hidden">
-              <p>
-              This declaration is not tested or referenced, and it has therefore not been included in
-              semantic analysis, which means the only documentation available is whatever is in the
-              doc comments.
-              </p>
-            </div>
-            <div id="tldDocs" class="hidden"></div>
-            <div id="sectParams" class="hidden">
-              <h2>Parameters</h2>
-              <div id="listParams"></div>
-            </div>
-            <div id="sectFnErrors" class="hidden">
-              <h2>Errors</h2>
-              <div id="fnErrorsAnyError">
-                <p><span class="tok-type">anyerror</span> means the error set is known only at runtime.</p>
-              </div>
-              <div id="tableFnErrors"><dl id="listFnErrors"></dl></div>
-            </div>
-            <div id="sectFields" class="hidden">
-              <h2>Fields</h2>
-              <div id="listFields"></div>
-            </div>
-            <div id="sectTypes" class="hidden">
-              <h2>Types</h2>
-              <ul id="listTypes"></ul>
-            </div>
-            <div id="sectNamespaces" class="hidden">
-              <h2>Namespaces</h2>
-              <ul id="listNamespaces"></ul>
-            </div>
-            <div id="sectGlobalVars" class="hidden">
-              <h2>Global Variables</h2>
-              <div class="table-container">
-                <table>
-                  <tbody id="listGlobalVars"></tbody>
-                </table>
-              </div>
-            </div>
-            <div id="sectFns" class="hidden">
-              <h2>Functions</h2>
-              <div class="table-container">
-                <dl id="listFns"></dl>
-              </div>
-            </div>
-            <div id="sectValues" class="hidden">
-              <h2>Values</h2>
-              <div class="table-container">
-                <table>
-                  <tbody id="listValues"></tbody>
-                </table>
-              </div>
-            </div>
-            <div id="sectErrSets" class="hidden">
-              <h2>Error Sets</h2>
-              <ul id="listErrSets"></ul>
-            </div>
-            <div id="fnExamples" class="hidden">
-              <h2>Examples</h2>
-              <ul id="listFnExamples" class="examples"></ul>
-            </div>
-            <div id="sectDocTests" class="hidden">
-              <h2>DocTests</h2>
-              <pre id="docTestsCode"></pre>
-            </div>
-            <div id="sectTests" class="hidden">
-              <h2>Tests</h2>
-              <div class="table-container">
-                <table>
-                  <tbody id="listTests"></tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-        </div>
-        <div class="flex-filler"></div>
-      </div>
-    </div>
-    <div id="helpModal" class="hidden">
-      <div class="modal-container">
-        <div class="modal">
-          <h1>Keyboard Shortcuts</h1>
-          <dl><dt><kbd>?</kbd></dt><dd>Toggle this help modal</dd></dl>
-          <dl><dt id="searchKeys"><!-- populated by setPrefSlashSearch --></dt><dd>Focus the search field</dd></dl>
-          <div style="margin-left: 1em">
-            <dl><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd></dl>
-            <dl><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd></dl>
-            <dl><dt><kbd>⏎</kbd></dt><dd>Go to active search result</dd></dl>
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">zprob docs</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Paul Blischak </p>
           </div>
-          <dl><dt><kbd>p</kbd></dt><dd>Open preferences</dd></dl>
-          <dl><dt><kbd>Esc</kbd></dt><dd>Clear focus; close this modal</dd></dl>
-        </div>
-      </div>
-    </div>
-    <div id="prefsModal" class="hidden">
-      <div class="modal-container">
-        <div class="modal">
-          <h1>Preferences</h1>
-          <ul class="prefs-list">
-            <li><input id="prefSlashSearch" type="checkbox"><label for="prefSlashSearch">Enable <kbd>/</kbd> for search</label></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-    <script src="data.js"></script>
-    <script src="commonmark.js"></script>
-    <script src="ziglexer.js"></script>
-    <script src="main.js"></script>
-  </body>
-</html>
+  </div>
+    
+    
+  </div>
+  
+
+</header>
+
+<section id="intro" class="level2">
+<h2 class="anchored" data-anchor-id="intro">Intro</h2>
+<p>The <code>zprob</code> module provides functionality for random number generation for applications in statistics, probability, data science, or just anywhere you need to randomly sample from a collection (like an <code>ArrayList</code>). The easiest way to get started with <code>zprob</code> is to read through the brief guide that is part of these docs. This guide demonstrates the high-level API that <code>zprob</code> exposes through its <code>RandomEnvironment</code> struct,</p>
+<p><strong>Acknowledgements</strong></p>
+<p><code>zprob</code> was largely inspired by the following projects:</p>
+<ul>
+<li><a href="https://github.com/ampl/gsl/tree/master/randist">GNU Scientific Library</a></li>
+<li><a href="https://github.com/rust-random/rand/tree/master/rand_distr"><code>rand_distr</code></a> Rust crate</li>
+<li><a href="https://people.sc.fsu.edu/~jburkardt/c_src/ranlib/ranlib.html"><code>RANLIB</code></a> C library</li>
+</ul>
+</section>
+<section id="guide" class="level2">
+<h2 class="anchored" data-anchor-id="guide">Guide</h2>
+<p>As with all docs, this is a work in progress…</p>
+<section id="section" class="level3">
+<h3 class="anchored" data-anchor-id="section"></h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode rs code-with-copy"><code class="sourceCode rust"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> std <span class="op">=</span> <span class="op">@</span>import(<span class="st">"std"</span>)<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> zprob <span class="op">=</span> <span class="op">@</span>import(<span class="st">"zprob"</span>)<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Allocator <span class="op">=</span> std<span class="op">.</span>mem<span class="op">.</span>Allocator<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">fn</span> main() <span class="op">!</span>void <span class="op">{</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    var gpa <span class="op">=</span> std<span class="op">.</span>heap<span class="op">.</span>GeneralPurposeAllocator(<span class="op">.{}</span>)<span class="op">{};</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> allocator <span class="op">=</span> gpa<span class="op">.</span>allocator()<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    defer <span class="op">{</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> status <span class="op">=</span> gpa<span class="op">.</span>deinit()<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        std<span class="op">.</span>testing<span class="op">.</span>expect(status <span class="op">==</span> <span class="op">.</span>ok) catch <span class="op">{</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>            <span class="op">@</span>panic(<span class="st">"Memory leak!"</span>)<span class="op">;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">};</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    var env <span class="op">=</span> zprob<span class="op">.</span>RandomEnvironment<span class="op">.</span>init(allocator)<span class="op">;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    defer env<span class="op">.</span>deinit()<span class="op">;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Generate single random deviates from different distributions</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> v1 <span class="op">=</span> env<span class="op">.</span>rBinomial(<span class="dv">10</span><span class="op">,</span> <span class="dv">0.2</span>)<span class="op">;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> v2 <span class="op">=</span> env<span class="op">.</span>rExponential(<span class="dv">10.0</span>)<span class="op">;</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Generate a slice of `size` random deviates from different distributions</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="co">// **Note:** You are responsible for freeing the slice's memory after allocation</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> s1 <span class="op">=</span> env<span class="op">.</span>rBinomialSlice(<span class="dv">2500</span><span class="op">,</span> <span class="dv">15</span><span class="op">,</span> <span class="dv">0.6</span>)<span class="op">;</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    defer allocator<span class="op">.</span>free(s1)<span class="op">;</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> s2 <span class="op">=</span> env<span class="op">.</span>rExponentialSlice(<span class="dv">10_000</span><span class="op">,</span> <span class="dv">5.0</span>)<span class="op">;</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    defer allocator<span class="op">.</span>free(s2)<span class="op">;</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="sampling-from-collections" class="level3">
+<h3 class="anchored" data-anchor-id="sampling-from-collections">Sampling from Collections</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode rs code-with-copy"><code class="sourceCode rust"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Enemy <span class="op">=</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    max_health<span class="op">:</span> <span class="dt">u8</span><span class="op">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    current_health<span class="op">:</span> <span class="dt">u8</span><span class="op">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    attack<span class="op">:</span> <span class="dt">u8</span><span class="op">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    defense<span class="op">:</span> <span class="dt">u8</span><span class="op">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>var enemies <span class="op">=</span> <span class="kw">try</span> allocator<span class="op">.</span>alloc(Enemy<span class="op">,</span> <span class="dv">100</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="distributions-api" class="level2">
+<h2 class="anchored" data-anchor-id="distributions-api">Distributions API</h2>
+<section id="general-design" class="level3">
+<h3 class="anchored" data-anchor-id="general-design">General design</h3>
+<div class="sourceCode" id="cb3"><pre class="sourceCode rs code-with-copy"><code class="sourceCode rust"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> std <span class="op">=</span> <span class="op">@</span>import(<span class="st">"std"</span>)<span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> zprob <span class="op">=</span> <span class="op">@</span>import(<span class="st">"zprob"</span>)<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> DefaultPrng <span class="op">=</span> std<span class="op">.</span>rand<span class="op">.</span>DefaultPrng<span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Return type for `main` is either `void` or `!void` depending on if</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">// an error can be returned by any of the distribution's functions.</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">fn</span> main() void <span class="op">{</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    var prng <span class="op">=</span> DefaultPrng<span class="op">.</span>init(blk<span class="op">:</span> <span class="op">{</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        var seed<span class="op">:</span> <span class="dt">u64</span> <span class="op">=</span> undefined<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">try</span> std<span class="op">.</span>posix<span class="op">.</span>getrandom(std<span class="op">.</span>mem<span class="op">.</span>asBytes(<span class="op">&amp;</span>seed))<span class="op">;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span> <span class="op">:</span>blk seed<span class="op">;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span>)<span class="op">;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    var rand <span class="op">=</span> prng<span class="op">.</span>random()<span class="op">;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="co">/*  !!! Distribution-specific code goes here !!! */</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="discrete-distributions" class="level3">
+<h3 class="anchored" data-anchor-id="discrete-distributions">Discrete distributions</h3>
+<section id="bernoulli" class="level4">
+<h4 class="anchored" data-anchor-id="bernoulli">Bernoulli</h4>
+<div class="sourceCode" id="cb4"><pre class="sourceCode rs code-with-copy"><code class="sourceCode rust"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>var bernoulli <span class="op">=</span> zprob<span class="op">.</span>Bernoulli(<span class="dt">u32</span><span class="op">,</span> <span class="dt">f64</span>)<span class="op">.</span>init(<span class="op">&amp;</span>rand)<span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> bernoulli<span class="op">.</span>sample(<span class="dv">0.4</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="binomial" class="level4">
+<h4 class="anchored" data-anchor-id="binomial">Binomial</h4>
+<div class="sourceCode" id="cb5"><pre class="sourceCode rs code-with-copy"><code class="sourceCode rust"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>var binomial <span class="op">=</span> zprob<span class="op">.</span>Binomial()<span class="op">.</span>init(<span class="op">&amp;</span>rand)<span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> val <span class="op">=</span> binomial<span class="op">.</span>sample(<span class="dv">10</span><span class="op">,</span> <span class="dv">0.25</span>)<span class="op">;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> val_slice <span class="op">=</span> binomial<span class="op">.</span>sampleSlice(<span class="dv">100</span><span class="op">,</span> <span class="dv">10</span><span class="op">,</span> <span class="dv">0.25</span><span class="op">,</span> allocator)<span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> prob <span class="op">=</span> binomial<span class="op">.</span>pmf(<span class="dv">10</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">0.25</span>)<span class="op">;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ln_prob <span class="op">=</span> binomial<span class="op">.</span>lnPmf(<span class="dv">10</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">0.25</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="geometric" class="level4">
+<h4 class="anchored" data-anchor-id="geometric">Geometric</h4>
+</section>
+<section id="multinomial" class="level4">
+<h4 class="anchored" data-anchor-id="multinomial">Multinomial</h4>
+</section>
+<section id="negative-binomial" class="level4">
+<h4 class="anchored" data-anchor-id="negative-binomial">Negative Binomial</h4>
+</section>
+<section id="poisson" class="level4">
+<h4 class="anchored" data-anchor-id="poisson">Poisson</h4>
+</section>
+</section>
+<section id="continuous-distributions" class="level3">
+<h3 class="anchored" data-anchor-id="continuous-distributions">Continuous distributions</h3>
+<section id="beta" class="level4">
+<h4 class="anchored" data-anchor-id="beta">Beta</h4>
+<div class="sourceCode" id="cb6"><pre class="sourceCode rs code-with-copy"><code class="sourceCode rust"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>var beta <span class="op">=</span> zprob<span class="op">.</span>Beta(<span class="dt">f64</span>)<span class="op">.</span>init(<span class="op">&amp;</span>rand)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="chi-squared" class="level4">
+<h4 class="anchored" data-anchor-id="chi-squared">Chi-Squared</h4>
+</section>
+<section id="dirichlet" class="level4">
+<h4 class="anchored" data-anchor-id="dirichlet">Dirichlet</h4>
+</section>
+<section id="exponential" class="level4">
+<h4 class="anchored" data-anchor-id="exponential">Exponential</h4>
+</section>
+<section id="gamma" class="level4">
+<h4 class="anchored" data-anchor-id="gamma">Gamma</h4>
+</section>
+<section id="normal" class="level4">
+<h4 class="anchored" data-anchor-id="normal">Normal</h4>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
