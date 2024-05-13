@@ -6,6 +6,6 @@ man/
 /build/
 /build-*/
 /docgen_tmp/
-libs/
+/libs/
 *.a
 *.o
