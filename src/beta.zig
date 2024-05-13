@@ -207,7 +207,6 @@ test "Beta with Different Types" {
     var rand = prng.random();
 
     const float_types = [_]type{ f16, f32, f64, f128 };
-    // const float_types = [_]type{ f32, f64 };
 
     std.debug.print("\n", .{});
     inline for (float_types) |f| {
