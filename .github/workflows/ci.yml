@@ -23,3 +23,25 @@ jobs:
         run: zig build test
       - name: Check Formatting
         run: zig fmt --check .
+  examples:
+    name: Examples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.12.0
+      - name: Run Enemy Spawner
+        run: |
+          pushd examples/enemy_spawner
+          zig build run
+          popd
+      - name: Run Approximate Bayes
+        run: |
+          pushd examples/approximate_bayes
+          zig build run
+          popd
