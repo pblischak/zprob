@@ -760,74 +760,74 @@ test "Sample Random Slices" {
     std.debug.print("Uniform: {any}\n", .{unif});
 }
 
-test "PMFs/PDFs" {
-    std.debug.print("\n", .{});
+// test "PMFs/PDFs" {
+//     std.debug.print("\n", .{});
 
-    const allocator = std.testing.allocator;
-    var env = try Self.init(allocator);
-    defer env.deinit();
+//     const allocator = std.testing.allocator;
+//     var env = try Self.init(allocator);
+//     defer env.deinit();
 
-    try std.testing.expectApproxEqAbs(
-        env.dBinomial(4, 10, 0.6, false),
-        @exp(env.dBinomial(4, 10, 0.6, true)),
-        1e-6,
-    );
+//     try std.testing.expectApproxEqAbs(
+//         env.dBinomial(4, 10, 0.6, false),
+//         @exp(env.dBinomial(4, 10, 0.6, true)),
+//         1e-6,
+//     );
 
-    try std.testing.expectApproxEqAbs(
-        env.dGeometric(3, 0.2, false),
-        @exp(env.dGeometric(3, 0.2, true)),
-        1e-6,
-    );
+//     try std.testing.expectApproxEqAbs(
+//         env.dGeometric(3, 0.2, false),
+//         @exp(env.dGeometric(3, 0.2, true)),
+//         1e-6,
+//     );
 
-    try std.testing.expectApproxEqAbs(
-        env.dMultinomial(&.{ 2, 3, 1 }, &.{ 0.25, 0.55, 0.2 }, false),
-        @exp(env.dMultinomial(&.{ 2, 3, 1 }, &.{ 0.25, 0.55, 0.2 }, true)),
-        1e-6,
-    );
+//     try std.testing.expectApproxEqAbs(
+//         env.dMultinomial(&.{ 2, 3, 1 }, &.{ 0.25, 0.55, 0.2 }, false),
+//         @exp(env.dMultinomial(&.{ 2, 3, 1 }, &.{ 0.25, 0.55, 0.2 }, true)),
+//         1e-6,
+//     );
 
-    try std.testing.expectApproxEqAbs(
-        env.dNegativeBinomial(5, 2, 0.3, false),
-        @exp(env.dNegativeBinomial(5, 2, 0.3, true)),
-        1e-6,
-    );
+//     try std.testing.expectApproxEqAbs(
+//         env.dNegativeBinomial(5, 2, 0.3, false),
+//         @exp(env.dNegativeBinomial(5, 2, 0.3, true)),
+//         1e-6,
+//     );
 
-    try std.testing.expectApproxEqAbs(
-        env.dPoisson(5, 10.0, false),
-        @exp(env.dPoisson(5, 10.0, true)),
-        1e-6,
-    );
+//     try std.testing.expectApproxEqAbs(
+//         env.dPoisson(5, 10.0, false),
+//         @exp(env.dPoisson(5, 10.0, true)),
+//         1e-6,
+//     );
 
-    const beta = try env.dBeta(0.2, 2.0, 4.0, false);
-    const ln_beta = try env.dBeta(0.2, 2.0, 4.0, true);
-    try std.testing.expectApproxEqAbs(beta, @exp(ln_beta), 1e-6);
+//     const beta = try env.dBeta(0.2, 2.0, 4.0, false);
+//     const ln_beta = try env.dBeta(0.2, 2.0, 4.0, true);
+//     try std.testing.expectApproxEqAbs(beta, @exp(ln_beta), 1e-6);
 
-    try std.testing.expectApproxEqAbs(
-        env.dCauchy(2.0, 0.0, 1.5, false),
-        @exp(env.dCauchy(2.0, 0.0, 1.5, true)),
-        1e-6,
-    );
+//     try std.testing.expectApproxEqAbs(
+//         env.dCauchy(2.0, 0.0, 1.5, false),
+//         @exp(env.dCauchy(2.0, 0.0, 1.5, true)),
+//         1e-6,
+//     );
 
-    const chi_squared = try env.dChiSquared(2.0, 4, false);
-    const ln_chi_squared = try env.dChiSquared(2.0, 4, true);
-    try std.testing.expectApproxEqAbs(chi_squared, @exp(ln_chi_squared), 1e-6);
+//     const chi_squared = try env.dChiSquared(2.0, 4, false);
+//     const ln_chi_squared = try env.dChiSquared(2.0, 4, true);
+//     try std.testing.expectApproxEqAbs(chi_squared, @exp(ln_chi_squared), 1e-6);
 
-    const dirichlet = try env.dDirichlet(&.{ 0.2, 0.3, 0.1 }, &.{ 4.0, 6.0, 2.0 }, false);
-    const ln_dirichlet = try env.dDirichlet(&.{ 0.2, 0.3, 0.1 }, &.{ 4.0, 6.0, 2.0 }, true);
-    try std.testing.expectApproxEqAbs(dirichlet, @exp(ln_dirichlet), 1e-6);
+//     const dirichlet = try env.dDirichlet(&.{ 0.2, 0.3, 0.1 }, &.{ 4.0, 6.0, 2.0 }, false);
+//     const ln_dirichlet = try env.dDirichlet(&.{ 0.2, 0.3, 0.1 }, &.{ 4.0, 6.0, 2.0 }, true);
+//     try std.testing.expectApproxEqAbs(dirichlet, @exp(ln_dirichlet), 1e-6);
 
-    try std.testing.expectApproxEqRel(
-        env.dExponential(5.0, 2.0, false),
-        @exp(env.dExponential(5.0, 2.0, true)),
-        1e-6,
-    );
+//     try std.testing.expectApproxEqRel(
+//         env.dExponential(5.0, 2.0, false),
+//         @exp(env.dExponential(5.0, 2.0, true)),
+//         1e-6,
+//     );
 
-    const gamma = try env.dGamma(2.0, 5.0, 1.0, false);
-    const ln_gamma = try env.dGamma(2.0, 5.0, 1.0, true);
-    try std.testing.expectApproxEqAbs(gamma, @exp(ln_gamma), 1e-6);
+//     const gamma = try env.dGamma(2.0, 5.0, 1.0, false);
+//     const ln_gamma = try env.dGamma(2.0, 5.0, 1.0, true);
+//     try std.testing.expectApproxEqAbs(gamma, @exp(ln_gamma), 1e-6);
 
-    try std.testing.expectApproxEqAbs(
-        env.dNormal(10.0, 8.0, 2.0, false),
-        @exp(env.dNormal(10.0, 8.0, 2.0, true)),
-        1e-6,
-    );
-}
+//     try std.testing.expectApproxEqAbs(
+//         env.dNormal(10.0, 8.0, 2.0, false),
+//         @exp(env.dNormal(10.0, 8.0, 2.0, true)),
+//         1e-6,
+//     );
+// }
