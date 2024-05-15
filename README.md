@@ -146,8 +146,7 @@ distributions, `zprob` provides a lower-level "Distributions API".
 [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution) ::
 [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) ::
 [Normal](https://en.wikipedia.org/wiki/Normal_distribution) ::
-[Uniform](https://en.wikipedia.org/wiki/Continuous_uniform_distribution) ::
-[Weibull](https://en.wikipedia.org/wiki/Weibull_distribution)
+[Uniform](https://en.wikipedia.org/wiki/Continuous_uniform_distribution)
 
 ## Issues
 
