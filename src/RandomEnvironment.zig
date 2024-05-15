@@ -208,9 +208,10 @@ pub fn rMultinomial(
     self: *Self,
     n: u32,
     p_vec: []const f64,
-    out_vec: []u32,
-) void {
-    return self.multinomial.sample(n, p_vec, out_vec);
+) ![]u32 {
+    const out_vec = try self.allocator.alloc(u32, p_vec.len);
+    self.multinomial.sample(n, p_vec, out_vec);
+    return out_vec;
 }
 
 pub fn rMultinomialSlice(
@@ -464,9 +465,10 @@ pub fn dChiSquared(
 pub fn rDirichlet(
     self: *Self,
     alpha_vec: []const f64,
-    out_vec: []f64,
-) void {
-    return self.dirichlet.sample(alpha_vec, out_vec);
+) ![]f64 {
+    const out_vec = try self.allocator.alloc(f64, alpha_vec.len);
+    self.dirichlet.sample(alpha_vec, out_vec);
+    return out_vec;
 }
 
 pub fn rDirichletSlice(
@@ -518,32 +520,32 @@ pub fn dExponential(
 
 pub fn rGamma(
     self: *Self,
-    alpha: f64,
-    beta: f64,
+    shape: f64,
+    scale: f64,
 ) f64 {
-    return self.gamma.sample(alpha, beta);
+    return self.gamma.sample(shape, scale);
 }
 
 pub fn rGammaSlice(
     self: *Self,
     size: usize,
-    alpha: f64,
-    beta: f64,
+    shape: f64,
+    scale: f64,
 ) ![]f64 {
-    return try self.gamma.sampleSlice(size, alpha, beta, self.allocator);
+    return try self.gamma.sampleSlice(size, shape, scale, self.allocator);
 }
 
 pub fn dGamma(
     self: *Self,
     x: f64,
-    alpha: f64,
-    beta: f64,
+    shape: f64,
+    scale: f64,
     log: bool,
 ) !f64 {
     if (log) {
-        return try self.gamma.lnPdf(x, alpha, beta);
+        return try self.gamma.lnPdf(x, shape, scale);
     }
-    return try self.gamma.pdf(x, alpha, beta);
+    return try self.gamma.pdf(x, shape, scale);
 }
 
 pub fn rNormal(
@@ -629,15 +631,203 @@ test "Random Environment Creation w/ Seed" {
 }
 
 test "Sample Random Deviates" {
+    std.debug.print("\n", .{});
+
     const allocator = std.testing.allocator;
     var env = try Self.init(allocator);
     defer env.deinit();
 
-    // Bernoulli
     const bern = env.rBernoulli(0.4);
     std.debug.print("\nBernoulli: {}\n", .{bern});
+
+    const binom = env.rBinomial(10, 0.4);
+    std.debug.print("Binomial: {}\n", .{binom});
+
+    const geom = env.rGeometric(0.45);
+    std.debug.print("Geometric: {}\n", .{geom});
+
+    const mnm = try env.rMultinomial(10, &.{ 0.1, 0.3, 0.3, 0.2, 0.1 });
+    defer allocator.free(mnm);
+    std.debug.print("Multinomial: {any}\n", .{mnm});
+
+    const nb = env.rNegativeBinomial(10, 0.4);
+    std.debug.print("Negative Binomial: {}\n", .{nb});
+
+    const pois = env.rPoisson(10.0);
+    std.debug.print("Poisson: {}\n", .{pois});
+
+    const unif_int = env.rUniformInt(-10, 20);
+    std.debug.print("Uniform Int: {}\n", .{unif_int});
+
+    const unif_uint = env.rUniformUInt(10, 20);
+    std.debug.print("Uniform UInt: {}\n", .{unif_uint});
+
+    const beta = env.rBeta(2.0, 5.0);
+    std.debug.print("Beta: {}\n", .{beta});
+
+    const cauchy = env.rCauchy(0.0, 2.0);
+    std.debug.print("Cauchy: {}\n", .{cauchy});
+
+    const chi_squared = env.rChiSquared(6);
+    std.debug.print("Chi Squared: {}\n", .{chi_squared});
+
+    const dirichlet = try env.rDirichlet(&.{ 0.1, 0.3, 0.3, 0.1 });
+    defer allocator.free(dirichlet);
+    std.debug.print("Dirichlet: {any}\n", .{dirichlet});
+
+    const exp = env.rExponential(5.0);
+    std.debug.print("Exponential: {}\n", .{exp});
+
+    const gam = env.rGamma(2.0, 5.0);
+    std.debug.print("Gamma: {}\n", .{gam});
+
+    const norm = env.rNormal(10.0, 2.5);
+    std.debug.print("Normal: {}\n", .{norm});
+
+    const unif = env.rUniform(-2.0, 8.0);
+    std.debug.print("Uniform: {}\n", .{unif});
 }
 
-test "Sample Random Slices" {}
+test "Sample Random Slices" {
+    std.debug.print("\n", .{});
 
-test "PMFs/PDFs" {}
+    const allocator = std.testing.allocator;
+    var env = try Self.init(allocator);
+    defer env.deinit();
+
+    const bern = try env.rBernoulliSlice(10, 0.4);
+    defer allocator.free(bern);
+    std.debug.print("\nBernoulli: {any}\n", .{bern});
+
+    const binom = try env.rBinomialSlice(10, 10, 0.4);
+    allocator.free(binom);
+    std.debug.print("Binomial: {any}\n", .{binom});
+
+    const geom = try env.rGeometricSlice(10, 0.45);
+    defer allocator.free(geom);
+    std.debug.print("Geometric: {any}\n", .{geom});
+
+    const mnm = try env.rMultinomialSlice(10, 10, &.{ 0.1, 0.3, 0.3, 0.2, 0.1 });
+    defer allocator.free(mnm);
+    std.debug.print("Multinomial: {any}\n", .{mnm});
+
+    const nb = try env.rNegativeBinomialSlice(10, 10, 0.4);
+    defer allocator.free(nb);
+    std.debug.print("Negative Binomial: {any}\n", .{nb});
+
+    const pois = try env.rPoissonSlice(10, 10.0);
+    defer allocator.free(pois);
+    std.debug.print("Poisson: {any}\n", .{pois});
+
+    const unif_int = try env.rUniformIntSlice(10, -10, 20);
+    defer allocator.free(unif_int);
+    std.debug.print("Uniform Int: {any}\n", .{unif_int});
+
+    const unif_uint = try env.rUniformUIntSlice(10, 10, 20);
+    defer allocator.free(unif_uint);
+    std.debug.print("Uniform UInt: {any}\n", .{unif_uint});
+
+    const beta = try env.rBetaSlice(10, 2.0, 5.0);
+    defer allocator.free(beta);
+    std.debug.print("Beta: {any}\n", .{beta});
+
+    const cauchy = try env.rCauchySlice(10, 0.0, 2.0);
+    defer allocator.free(cauchy);
+    std.debug.print("Cauchy: {any}\n", .{cauchy});
+
+    const chi_squared = try env.rChiSquaredSlice(10, 6);
+    defer allocator.free(chi_squared);
+    std.debug.print("Chi Squared: {any}\n", .{chi_squared});
+
+    const dirichlet = try env.rDirichletSlice(10, &.{ 0.1, 0.3, 0.3, 0.1 });
+    defer allocator.free(dirichlet);
+    std.debug.print("Dirichlet: {any}\n", .{dirichlet});
+
+    const exp = try env.rExponentialSlice(10, 5.0);
+    defer allocator.free(exp);
+    std.debug.print("Exponential: {any}\n", .{exp});
+
+    const gam = try env.rGammaSlice(10, 2.0, 5.0);
+    defer allocator.free(gam);
+    std.debug.print("Gamma: {any}\n", .{gam});
+
+    const norm = try env.rNormalSlice(10, 10.0, 2.5);
+    defer allocator.free(norm);
+    std.debug.print("Normal: {any}\n", .{norm});
+
+    const unif = try env.rUniformSlice(10, -2.0, 8.0);
+    defer allocator.free(unif);
+    std.debug.print("Uniform: {any}\n", .{unif});
+}
+
+test "PMFs/PDFs" {
+    std.debug.print("\n", .{});
+
+    const allocator = std.testing.allocator;
+    var env = try Self.init(allocator);
+    defer env.deinit();
+
+    try std.testing.expectApproxEqAbs(
+        env.dBinomial(4, 10, 0.6, false),
+        @exp(env.dBinomial(4, 10, 0.6, true)),
+        1e-6,
+    );
+
+    try std.testing.expectApproxEqAbs(
+        env.dGeometric(3, 0.2, false),
+        @exp(env.dGeometric(3, 0.2, true)),
+        1e-6,
+    );
+
+    try std.testing.expectApproxEqAbs(
+        env.dMultinomial(&.{ 2, 3, 1 }, &.{ 0.25, 0.55, 0.2 }, false),
+        @exp(env.dMultinomial(&.{ 2, 3, 1 }, &.{ 0.25, 0.55, 0.2 }, true)),
+        1e-6,
+    );
+
+    try std.testing.expectApproxEqAbs(
+        env.dNegativeBinomial(5, 2, 0.3, false),
+        @exp(env.dNegativeBinomial(5, 2, 0.3, true)),
+        1e-6,
+    );
+
+    try std.testing.expectApproxEqAbs(
+        env.dPoisson(5, 10.0, false),
+        @exp(env.dPoisson(5, 10.0, true)),
+        1e-6,
+    );
+
+    const beta = try env.dBeta(0.2, 2.0, 4.0, false);
+    const ln_beta = try env.dBeta(0.2, 2.0, 4.0, true);
+    try std.testing.expectApproxEqAbs(beta, @exp(ln_beta), 1e-6);
+
+    try std.testing.expectApproxEqAbs(
+        env.dCauchy(2.0, 0.0, 1.5, false),
+        @exp(env.dCauchy(2.0, 0.0, 1.5, true)),
+        1e-6,
+    );
+
+    const chi_squared = try env.dChiSquared(2.0, 4, false);
+    const ln_chi_squared = try env.dChiSquared(2.0, 4, true);
+    try std.testing.expectApproxEqAbs(chi_squared, @exp(ln_chi_squared), 1e-6);
+
+    const dirichlet = try env.dDirichlet(&.{ 0.2, 0.3, 0.1 }, &.{ 4.0, 6.0, 2.0 }, false);
+    const ln_dirichlet = try env.dDirichlet(&.{ 0.2, 0.3, 0.1 }, &.{ 4.0, 6.0, 2.0 }, true);
+    try std.testing.expectApproxEqAbs(dirichlet, @exp(ln_dirichlet), 1e-6);
+
+    try std.testing.expectApproxEqRel(
+        env.dExponential(5.0, 2.0, false),
+        @exp(env.dExponential(5.0, 2.0, true)),
+        1e-6,
+    );
+
+    const gamma = try env.dGamma(2.0, 5.0, 1.0, false);
+    const ln_gamma = try env.dGamma(2.0, 5.0, 1.0, true);
+    try std.testing.expectApproxEqAbs(gamma, @exp(ln_gamma), 1e-6);
+
+    try std.testing.expectApproxEqAbs(
+        env.dNormal(10.0, 8.0, 2.0, false),
+        @exp(env.dNormal(10.0, 8.0, 2.0, true)),
+        1e-6,
+    );
+}
