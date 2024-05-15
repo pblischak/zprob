@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   pull_request:
@@ -7,8 +7,8 @@ on:
       - main
 
 jobs:
-  test:
-    name: Test
+  test-zig-release:
+    name: Test Zig Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -19,6 +19,20 @@ jobs:
         uses: goto-bus-stop/setup-zig@v2
         with:
           version: 0.12.0
+      - name: Run Tests
+        run: zig build test
+      - name: Check Formatting
+        run: zig fmt --check .
+  test-zig-latest:
+    name: Test Zig Latest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Zig
+        uses: goto-bus-stop/setup-zig@v2
       - name: Run Tests
         run: zig build test
       - name: Check Formatting
