@@ -87,34 +87,28 @@ pub fn Gamma(comptime F: type) type {
 
         pub fn pdf(self: Self, x: F, shape: F, scale: F) !F {
             _ = self;
-            if (x <= 0) {
-                @panic("Parameter `x` must be greater than 0.");
+            if (x < 0) {
+                return 0.0;
+            } else if (x == 0) {
+                if (shape == 1) {
+                    return 1.0 / scale;
+                } else {
+                    return 0;
+                }
+            } else if (shape == 1) {
+                return @exp(-x / scale) / scale;
+            } else {
+                const ln_gamma_val: F = try spec_fn.lnGammaFn(F, shape);
+                return @exp((shape - 1) * @log(x / scale) - x / scale - ln_gamma_val) / scale;
             }
-            const gamma_val: F = try spec_fn.gammaFn(F, shape);
-            const value: F = @as(F, @floatCast(math.pow(
-                f64,
-                @floatCast(x),
-                @floatCast(shape - 1.0),
-            ))) * @exp(x / scale) / @as(F, @floatCast(math.pow(
-                f64,
-                @floatCast(scale),
-                @floatCast(shape),
-            ))) / gamma_val;
-
-            return value;
         }
 
         pub fn lnPdf(self: Self, x: F, shape: F, scale: F) !F {
-            _ = self;
-            if (x <= 0) {
+            if (x < 0) {
                 @panic("Parameter `x` must be greater than 0.");
             }
-            const ln_gamma_val: F = try spec_fn.lnGammaFn(F, shape);
-            // zig fmt: off
-            const value: F = (shape - 1.0) * @log(x) - x / scale
-                - shape * @log(scale) - ln_gamma_val;
-            // zig fmt: on
-            return value;
+            const val = try self.pdf(x, shape, scale);
+            return @log(val);
         }
     };
 }
