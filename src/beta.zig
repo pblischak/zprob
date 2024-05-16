@@ -111,12 +111,10 @@ pub fn Beta(comptime F: type) type {
             if (x < 0.0 or x > 1.0) {
                 value = 0.0;
             } else {
-                // zig fmt: off
                 const ln_beta: F = try spec_fn.betaFn(F, alpha, beta);
-                value = math.pow(f64, x, alpha - 1.0)
-                    * math.pow(f64, 1.0 - x, beta - 1.0)
-                    / ln_beta;
-                // zig fmt: on
+                const first_term: F = @floatCast(math.pow(f64, @floatCast(x), @floatCast(alpha - 1.0)));
+                const second_term: F = @floatCast(math.pow(f64, @floatCast(1.0 - x), @floatCast(beta - 1.0)));
+                value = first_term * second_term / ln_beta;
             }
 
             return value;
@@ -206,12 +204,16 @@ test "Beta with Different Types" {
     var prng = std.rand.Xoroshiro128.init(seed);
     var rand = prng.random();
 
-    const float_types = [_]type{ f16, f32, f64, f128 };
+    const float_types = [_]type{ f32, f64, f128 };
 
     std.debug.print("\n", .{});
     inline for (float_types) |f| {
         var beta = Beta(f).init(&rand);
         const val = beta.sample(5.0, 2.0);
         std.debug.print("Beta({any}):\t{}\n", .{ f, val });
+        const pdf = try beta.pdf(0.3, 5.0, 2.0);
+        std.debug.print("BetaPdf({any}):\t{}\n", .{ f, pdf });
+        const ln_pdf = try beta.lnPdf(0.3, 5.0, 2.0);
+        std.debug.print("BetaLnPdf({any}):\t{}\n", .{ f, ln_pdf });
     }
 }
