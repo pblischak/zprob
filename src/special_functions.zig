@@ -113,7 +113,7 @@ fn lnGammaLanczos(comptime F: type, x: F) F {
     }
 
     term1 = (x1 + 0.5) * @log((x1 + 7.5) / math.e);
-    term2 = log_root_2_pi + @log(accum);
+    term2 = @as(F, @floatCast(log_root_2_pi)) + @log(accum);
 
     return term1 + (term2 - 7.0);
 }
@@ -138,7 +138,11 @@ pub fn gammaFn(comptime F: type, x: F) !F {
     c[0] = math.sqrt(2.0 * math.pi);
     while (k < a) : (k += 1) {
         k_f = @as(F, @floatFromInt(k));
-        c[k] = @exp(a_f - k_f) * math.pow(F, a_f - k_f, k_f - 0.5) / k1_factorial;
+        c[k] = @exp(a_f - k_f) * @as(F, @floatCast(math.pow(
+            f64,
+            @floatCast(a_f - k_f),
+            @floatCast(k_f - 0.5),
+        ))) / k1_factorial;
         k1_factorial *= -k_f;
     }
 
@@ -148,14 +152,22 @@ pub fn gammaFn(comptime F: type, x: F) !F {
         k_f = @as(F, @floatFromInt(k));
         accum += c[k] / (x + k_f);
     }
-    accum *= math.exp(-(x + a_f)) * math.pow(F, x + a_f, x + 0.5);
+    accum *= @exp(-(x + a_f)) * @as(F, @floatCast(math.pow(
+        f64,
+        @floatCast(x + a_f),
+        @floatCast(x + 0.5),
+    )));
     return accum / x;
 }
 
 /// Calculate Gamma(x) using the Sterling approximation.
 pub fn fastGammaFn(comptime F: type, x: F) F {
     _ = utils.ensureFloatType(F);
-    return @sqrt(2.0 * math.pi / x) * math.pow(F, x / math.e, x);
+    return @sqrt(2.0 * math.pi / x) * @as(F, @floatCast(math.pow(
+        f64,
+        @floatCast(x / math.e),
+        @floatCast(x),
+    )));
 }
 
 pub fn lnBetaFn(comptime F: type, a: F, b: F) !F {
