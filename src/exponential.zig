@@ -112,7 +112,7 @@ test "Exponential with Different Types" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    const float_types = [_]type{ f16, f32, f64, f128 };
+    const float_types = [_]type{ f32, f64, f128 };
 
     inline for (float_types) |f| {
         var exponential = Exponential(f).init(&rand);

@@ -111,7 +111,7 @@ test "Normal with Different Types" {
     var prng = std.rand.Xoroshiro128.init(seed);
     var rand = prng.random();
 
-    const float_types = [_]type{ f16, f32, f64, f128 };
+    const float_types = [_]type{ f32, f64, f128 };
 
     std.debug.print("\n", .{});
     inline for (float_types) |f| {

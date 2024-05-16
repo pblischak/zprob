@@ -189,7 +189,7 @@ test "Multinomial with Different Types" {
     var rand = prng.random();
 
     const int_types = [_]type{ u8, u16, u32, u64, u128, i8, i16, i32, i64, i128 };
-    const float_types = [_]type{ f16, f32, f64, f128 };
+    const float_types = [_]type{ f32, f64, f128 };
 
     std.debug.print("\n", .{});
     inline for (int_types) |i| {

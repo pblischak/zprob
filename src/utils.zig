@@ -11,6 +11,9 @@ pub fn ensureIntegerType(comptime I: type) bool {
 
 /// Comptime check for float types.
 pub fn ensureFloatType(comptime F: type) bool {
+    if (F == f16) {
+        @compileError("Float type f16 not supported");
+    }
     return switch (@typeInfo(F)) {
         .ComptimeFloat => true,
         .Float => true,
