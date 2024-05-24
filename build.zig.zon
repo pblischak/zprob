@@ -8,7 +8,6 @@
         "LICENSE",
         "src",
         "examples",
-        "docs",
         "scripts",
     },
 }
