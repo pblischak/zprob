@@ -109,6 +109,6 @@ pub fn main() !void {
 
     std.debug.print("\nEnemies:\n", .{});
     for (enemies) |e| {
-        std.debug.print("\t{any}\n", .{e});
+        std.debug.print("  {any}\n", .{e});
     }
 }
