@@ -14,8 +14,8 @@ implements, please refer to the [docs site](https://github.com/pblischak/zprob).
 ## Installation
 
 > **Note:**
-> The current version of `zprob` was developed and tested using v0.12.0 of Zig and is still a work in progress.
-> Using a version of Zig other than 0.12.0 may lead to the code not compiling.
+> The current version of `zprob` was developed and tested using v0.13.0 of Zig and is still a work in progress.
+> Using a version of Zig other than 0.13.0 may lead to the code not compiling.
 
 To include `zprob` in your Zig project, you can add it to your `build.zig.zon` file in the
 dependencies section:
@@ -32,11 +32,9 @@ dependencies section:
         "src",
     },
     .dependencies = .{
-        // This will link to tagged v0.2.0 release.
-        // Change the url and hash to link to a specific commit.
         .zprob = {
-            .url = "",
-            .hash = "",
+            .url = "https://github.com/pblischak/zprob/archive/refs/tags/v0.2.0.tar.gz",
+            .hash = "12200e840921f2199753be06fa57616ae9458bb467c5fde233a851b5556bca539ed0",
         }
     },
 }
