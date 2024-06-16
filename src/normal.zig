@@ -15,6 +15,7 @@ pub fn Normal(comptime F: type) type {
 
     return struct {
         const Self = @This();
+        const inv_sqrt_2pi: F = 1.0 / @sqrt(2.0 * math.pi);
 
         rand: *Random,
 
@@ -43,17 +44,17 @@ pub fn Normal(comptime F: type) type {
             return res;
         }
 
-        pub fn pdf(self: Self, mu: F, sigma: F, x: F) F {
+        pub fn pdf(self: Self, x: F, mu: F, sigma: F) F {
             _ = self;
-            // zig fmt: off
-            return 1.0 / (sigma * @sqrt(2.0 * math.pi))
-                * @exp(-(1.0 / 2.0) * math.pow(F, (x - mu) / sigma, 2));
-            // zig fmt: on
+
+            const a: F = (x - mu) / sigma;
+            return inv_sqrt_2pi / sigma * @exp(-0.5 * a * a);
         }
 
         pub fn lnPdf(self: Self, x: F, mu: F, sigma: F) F {
             _ = self;
-            return -@log(sigma * @sqrt(2.0 * math.pi)) + math.pow(F, (x - mu) / sigma, 2);
+            const a: F = (x - mu) / sigma;
+            return @log(inv_sqrt_2pi) - @log(sigma) - 0.5 * a * a;
         }
     };
 }
