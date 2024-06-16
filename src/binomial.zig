@@ -279,21 +279,15 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
         }
 
         pub fn pmf(self: *Self, k: I, n: I, p: F) F {
-            _ = self;
-            if (k > n or k <= 0) {
+            if (k > n or k < 0) {
                 @panic("`k` must be between 0 and `n`");
             }
-            const coeff = spec_fn.nChooseK(I, n, k);
-            // zig fmt: off
-            return @as(F, @floatFromInt(coeff))
-                * math.pow(F, p, @as(F, @floatFromInt(k)))
-                * math.pow(F, 1.0 - p, @as(F, @floatFromInt(n - k)));
-            // zig fmt: on
+            return @exp(self.lnPmf(k, n, p));
         }
 
         pub fn lnPmf(self: *Self, k: I, n: I, p: F) F {
             _ = self;
-            if (k > n or k <= 0) {
+            if (k > n or k < 0) {
                 @panic("`k` must be between 0 and `n`");
             }
             const ln_coeff = spec_fn.lnNChooseK(I, F, n, k);
@@ -373,6 +367,10 @@ test "Binomial with Different Types" {
             var binomial = Binomial(i, f).init(&rand);
             const val = binomial.sample(10, 0.25);
             std.debug.print("Binomial({any}, {any}):\t{}\n", .{ i, f, val });
+            const pmf = binomial.pmf(4, 10, 0.25);
+            std.debug.print("BinomialPmf({any}, {any}):\t{}\n", .{ i, f, pmf });
+            const ln_pmf = binomial.lnPmf(4, 10, 0.25);
+            std.debug.print("BinomialLnPmf({any}, {any}):\t{}\n", .{ i, f, ln_pmf });
         }
     }
 }
