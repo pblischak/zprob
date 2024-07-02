@@ -1,7 +1,3 @@
-//! Cauchy distribution
-//!
-//! [https://en.wikipedia.org/wiki/Cauchy_distribution](https://en.wikipedia.org/wiki/Cauchy_distribution)
-
 const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
@@ -10,6 +6,8 @@ const Random = std.Random;
 const utils = @import("utils.zig");
 
 /// Cauchy distribution with median parameter `x0` and scale parameter `gamma`.
+///
+/// [https://en.wikipedia.org/wiki/Cauchy_distribution](https://en.wikipedia.org/wiki/Cauchy_distribution)
 pub fn Cauchy(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 

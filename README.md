@@ -11,60 +11,11 @@ The instructions below will get you started with integrating `zprob` into your p
 introducing some basic use cases. For more detailed information on the different APIs that `zprob`
 implements, please refer to the [docs site](https://github.com/pblischak/zprob).
 
-## Installation
-
-> **Note:**
-> The current version of `zprob` was developed and tested using v0.13.0 of Zig and is still a work in progress.
-> Using a version of Zig other than 0.13.0 may lead to the code not compiling.
-
-To include `zprob` in your Zig project, you can add it to your `build.zig.zon` file in the
-dependencies section:
-
-```zon
-.{
-    .name = "my_project",
-    .version = "0.1.0",
-    .paths = .{
-        "build.zig",
-        "build.zig.zon",
-        "README.md",
-        "LICENSE",
-        "src",
-    },
-    .dependencies = .{
-        .zprob = {
-            .url = "https://github.com/pblischak/zprob/archive/refs/tags/v0.2.0.tar.gz",
-            .hash = "12200e840921f2199753be06fa57616ae9458bb467c5fde233a851b5556bca539ed0",
-        }
-    },
-}
-```
-
-Then, in the `build.zig` file, add the following lines within the `build` function to include
-`zprob` as a module:
-
-```zig
-pub fn build(b: *std.Build) void {
-    // exe setup...
-
-    const zprob_dep = b.dependency("zprob", .{
-            .target = target,
-            .optimize = optimize,
-    });
-
-    const zprob_module = zprob_dep.module("zprob");
-    exe.root_module.addImport("zprob", zprob_module);
-
-    // additional build steps...
-}
-```
-
-Check out the build files in the [examples/](https://github.com/pblischak/zprob/tree/main/examples)
-folder for some demos of complete sample code projects.
-
 ## Getting Started
 
-Below we show a brief "Hello, World!" program that introduces the `RandomEnvironment` struct, which
+### `RandomEnvironment` API
+
+Below we show a small example program that introduces the `RandomEnvironment` struct, which
 provides a high-level interface for sampling from distributions and calculating probabilities. It
 automatically generates and stores everything needed to begin generating random numbers
 (seed + random generator), and follows the standard Zig convention of initialization with an
@@ -101,6 +52,41 @@ pub fn main() !void {
 }
 ```
 
+To initialize a `RandomEnvironment` with a particular seed, use the `initWithSeed` method:
+
+```zig
+var env = RandomEnvironment.initWithSeed(1234567890, allocator);
+env.deinit();
+```
+
+### Distributions API
+
+While the easiest way to get started using `zprob` is with the `RandomEnvironment` struct,
+for users wanting more fine-grained control over the construction and usage of different probability
+distributions, `zprob` provides a lower level "Distributions API".
+
+```zig
+const std = @import("std");
+const zprob = @import("zprob");
+const Random = std.Random;
+
+pub fn main() !void {
+    // Set up random generator.
+    var prng = Random.DefaultGenerator;
+    var rand = prng.random();
+
+    var beta = zprob.Beta(f64).init(&rand);
+    var binomial = zprob.Binomial(u8, f64).init(&rand);
+
+    var b1: f64 = undefined;
+    var b2: u8 = undefined;
+    for 0..100 |_| {
+        b1 = beta.sample(1.0, 5.0);
+        b2 = binomial.sample(20, b1);
+    }
+}
+```
+
 ## Example Projects
 
 As mentioned briefly above, there are several projects in the
@@ -116,12 +102,6 @@ usage of `zprob` for different applications:
 - **enemy_spawner:** Shows a gamedev motivated use case where distinct enemy types are sampled
   with different frequencies, are given different stats based on their type, and are placed randomly
   on the level map.
-
-## Low-Level Distributions API
-
-While the easiest way to get started using `zprob` is with the `RandomEnvironment` struct,
-for users wanting more fine-grained control over the construction and usage of different probability
-distributions, `zprob` provides a lower-level "Distributions API".
 
 ## Available Distributions
 
@@ -145,6 +125,59 @@ distributions, `zprob` provides a lower-level "Distributions API".
 [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) ::
 [Normal](https://en.wikipedia.org/wiki/Normal_distribution) ::
 [Uniform](https://en.wikipedia.org/wiki/Continuous_uniform_distribution)
+
+## Installation
+
+> [!NOTE]
+> The current version of `zprob` was developed and tested using v0.13.0 of Zig and is still a work in progress.
+> Using a version of Zig other than 0.13.0 may lead to the code not compiling.
+
+To include `zprob` in your Zig project, you can add it to your `build.zig.zon` file in the
+dependencies section:
+
+```zon
+.{
+    .name = "my_project",
+    .version = "0.1.0",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "README.md",
+        "LICENSE",
+        "src",
+    },
+    .dependencies = .{
+        // This will link to tagged v0.2.0 release.
+        // Change the url and hash to link to a specific commit.
+        .zprob = {
+            .url = "",
+            .hash = "",
+        }
+    },
+}
+```
+
+Then, in the `build.zig` file, add the following lines within the `build` function to include
+`zprob` as a module:
+
+```zig
+pub fn build(b: *std.Build) void {
+    // exe setup...
+
+    const zprob_dep = b.dependency("zprob", .{
+            .target = target,
+            .optimize = optimize,
+    });
+
+    const zprob_module = zprob_dep.module("zprob");
+    exe.root_module.addImport("zprob", zprob_module);
+
+    // additional build steps...
+}
+```
+
+Check out the build files in the [examples/](https://github.com/pblischak/zprob/tree/main/examples)
+folder for some demos of complete sample code projects.
 
 ## Issues
 

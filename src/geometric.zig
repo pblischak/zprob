@@ -1,8 +1,3 @@
-//! Geometric distribution
-//!
-//! [https://en.wikipedia.org/wiki/Geometric_distribution](https://en.wikipedia.org/wiki/Geometric_distribution)
-//!
-
 const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
@@ -10,9 +5,10 @@ const Random = std.Random;
 
 const utils = @import("utils.zig");
 
-/// Geometric distribution with parameter `p`.
+/// Geometric distribution with parameter `p`. Records the number of trials needed to get the
+///  first success.
 ///
-/// Records the number of trials needed to get the first success.
+/// [https://en.wikipedia.org/wiki/Geometric_distribution](https://en.wikipedia.org/wiki/Geometric_distribution)
 pub fn Geometric(comptime I: type, comptime F: type) type {
     _ = utils.ensureIntegerType(I);
     _ = utils.ensureFloatType(F);

@@ -1,7 +1,3 @@
-//! Binomial distribution
-//!
-//! [https://en.wikipedia.org/wiki/Binomial_distribution](https://en.wikipedia.org/wiki/Binomial_distribution)
-
 const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
@@ -11,6 +7,8 @@ const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
 
 /// Binomial distribution with parameters `p` and `n`.
+///
+/// [https://en.wikipedia.org/wiki/Binomial_distribution](https://en.wikipedia.org/wiki/Binomial_distribution)
 pub fn Binomial(comptime I: type, comptime F: type) type {
     _ = utils.ensureIntegerType(I);
     _ = utils.ensureFloatType(F);

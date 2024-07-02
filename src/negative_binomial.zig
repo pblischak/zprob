@@ -1,7 +1,3 @@
-//! Negative binomial distribution
-//!
-//! [https://en.wikipedia.org/wiki/Negative_binomial_distribution](https://en.wikipedia.org/wiki/Negative_binomial_distribution)
-
 const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
@@ -14,6 +10,8 @@ const utils = @import("utils.zig");
 
 /// Negative binomial distribution with parameters `p` (probability of success)
 ///  and `r` (number of successes).
+///
+/// [https://en.wikipedia.org/wiki/Negative_binomial_distribution](https://en.wikipedia.org/wiki/Negative_binomial_distribution)
 pub fn NegativeBinomial(comptime I: type, comptime F: type) type {
     _ = utils.ensureIntegerType(I);
     _ = utils.ensureFloatType(F);
@@ -112,6 +110,7 @@ test "Negative Binomial Mean" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
+
     var neg_binomial = NegativeBinomial(u32, f64).init(&rand);
 
     const p_vec = [_]f64{ 0.5, 0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 0.9, 0.95 };

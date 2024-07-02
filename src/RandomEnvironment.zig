@@ -62,6 +62,7 @@ gamma: Gamma(f64),
 normal: Normal(f64),
 uniform: Uniform(f64),
 
+/// Initialize a new `RandomEnvironment` struct with an `Allocator`.
 pub fn init(allocator: Allocator) !Self {
     var seed: u64 = undefined;
     try std.posix.getrandom(std.mem.asBytes(&seed));
@@ -93,6 +94,7 @@ pub fn init(allocator: Allocator) !Self {
     };
 }
 
+/// Initialize a new `RandomEnvironment` struct with a specific seed and an `Allocator`.
 pub fn initWithSeed(seed: u64, allocator: Allocator) !Self {
     const rng_state = try allocator.create(RngState);
     rng_state.*.prng = std.rand.DefaultPrng.init(seed);

@@ -1,13 +1,11 @@
-//! Bernoulli distribution
-//!
-//! [https://en.wikipedia.org/wiki/Bernoulli_distribution](https://en.wikipedia.org/wiki/Bernoulli_distribution)
-
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const Random = std.Random;
 const utils = @import("utils.zig");
 
 /// Bernoulli distribution with parameter `p`.
+///
+/// [https://en.wikipedia.org/wiki/Bernoulli_distribution](https://en.wikipedia.org/wiki/Bernoulli_distribution)
 pub fn Bernoulli(comptime I: type, comptime F: type) type {
     _ = utils.ensureIntegerType(I);
     _ = utils.ensureFloatType(F);

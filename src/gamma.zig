@@ -1,7 +1,3 @@
-//! Gamma distribution
-//!
-//! [https://en.wikipedia.org/wiki/Gamma_distribution](https://en.wikipedia.org/wiki/Gamma_distribution)
-
 const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
@@ -11,6 +7,8 @@ const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
 
 /// Gamma distribution with parameters `shape` and `scale` (`1 / rate`).
+///
+/// [https://en.wikipedia.org/wiki/Gamma_distribution](https://en.wikipedia.org/wiki/Gamma_distribution)
 pub fn Gamma(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 

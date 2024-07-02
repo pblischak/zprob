@@ -1,7 +1,3 @@
-//! Beta distribution
-//!
-//! [https://en.wikipedia.org/wiki/Beta_distribution](https://en.wikipedia.org/wiki/Beta_distribution)
-
 const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
@@ -12,6 +8,8 @@ const utils = @import("utils.zig");
 const Gamma = @import("gamma.zig").Gamma;
 
 /// Beta distribution with parameters `alpha` > 0 and `beta` > 0.
+///
+/// [https://en.wikipedia.org/wiki/Beta_distribution](https://en.wikipedia.org/wiki/Beta_distribution)
 pub fn Beta(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
