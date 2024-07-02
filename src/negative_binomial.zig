@@ -110,6 +110,7 @@ test "Negative Binomial Mean" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
+
     var neg_binomial = NegativeBinomial(u32, f64).init(&rand);
 
     const p_vec = [_]f64{ 0.5, 0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 0.9, 0.95 };
