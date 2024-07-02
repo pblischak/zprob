@@ -1,7 +1,3 @@
-//! Poisson distribution
-//!
-//! [https://en.wikipedia.org/wiki/Poisson_distribution](https://en.wikipedia.org/wiki/Poisson_distribution)
-
 const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
@@ -11,6 +7,8 @@ const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
 
 /// Poisson distribution with parameter `lambda`.
+///
+/// [https://en.wikipedia.org/wiki/Poisson_distribution](https://en.wikipedia.org/wiki/Poisson_distribution)
 pub fn Poisson(comptime I: type, comptime F: type) type {
     _ = utils.ensureIntegerType(I);
     _ = utils.ensureFloatType(F);

@@ -1,8 +1,3 @@
-//! Uniform and UniformInt distributions
-//!
-//! Contiuous: [https://en.wikipedia.org/wiki/Continuous_uniform_distribution](https://en.wikipedia.org/wiki/Continuous_uniform_distribution)
-//! Discrete [https://en.wikipedia.org/wiki/Discrete_uniform_distribution](https://en.wikipedia.org/wiki/Discrete_uniform_distribution)
-
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
@@ -12,6 +7,8 @@ const Random = std.Random;
 const utils = @import("utils.zig");
 
 /// Continuous Uniform distribution with parameters `low` and `high`.
+///
+/// [https://en.wikipedia.org/wiki/Continuous_uniform_distribution](https://en.wikipedia.org/wiki/Continuous_uniform_distribution)
 pub fn Uniform(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
@@ -48,6 +45,8 @@ pub fn Uniform(comptime F: type) type {
 }
 
 /// Discrete Uniform distribution with parameters `low` and `high`.
+///
+/// [https://en.wikipedia.org/wiki/Discrete_uniform_distribution](https://en.wikipedia.org/wiki/Discrete_uniform_distribution)
 pub fn UniformInt(comptime I: type) type {
     _ = utils.ensureIntegerType(I);
 

@@ -1,7 +1,3 @@
-//! Exponential distribution
-//!
-//! [https://en.wikipedia.org/wiki/Exponential_distribution](https://en.wikipedia.org/wiki/Exponential_distribution)
-
 const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
@@ -10,6 +6,8 @@ const Random = std.Random;
 const utils = @import("utils.zig");
 
 /// Exponential distribution with parameter `lambda`.
+///
+/// [https://en.wikipedia.org/wiki/Exponential_distribution](https://en.wikipedia.org/wiki/Exponential_distribution)
 pub fn Exponential(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 

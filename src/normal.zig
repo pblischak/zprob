@@ -1,7 +1,3 @@
-//! Normal distribution
-//!
-//! [https://en.wikipedia.org/wiki/Normal_distribution](https://en.wikipedia.org/wiki/Normal_distribution)
-
 const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
@@ -10,6 +6,8 @@ const Random = std.Random;
 const utils = @import("utils.zig");
 
 /// Normal distribution with parameters `mu` (mean) and `sigma` (standard deviation).
+///
+/// [https://en.wikipedia.org/wiki/Normal_distribution](https://en.wikipedia.org/wiki/Normal_distribution)
 pub fn Normal(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 

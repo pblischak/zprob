@@ -11,11 +11,126 @@ The instructions below will get you started with integrating `zprob` into your p
 introducing some basic use cases. For more detailed information on the different APIs that `zprob`
 implements, please refer to the [docs site](https://github.com/pblischak/zprob).
 
+## Getting Started
+
+### `RandomEnvironment` API
+
+Below we show a small example program that introduces the `RandomEnvironment` struct, which
+provides a high-level interface for sampling from distributions and calculating probabilities. It
+automatically generates and stores everything needed to begin generating random numbers
+(seed + random generator), and follows the standard Zig convention of initialization with an
+`Allocator` that handles memory allocation.
+
+```zig
+const std = @import("std");
+const zprob = @import("zprob");
+
+pub fn main() !void {
+    // Set up main memory allocator and defer deinitilization
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer {
+        const status = gpa.deinit();
+        std.testing.expect(status == .ok) catch {
+            @panic("Memory leak!");
+        };
+    }
+
+    // Set up random environment and defer deinitialization
+    var env = try zprob.RandomEnvironment.init(allocator);
+    env.deinit()
+
+    // Generate random samples
+    const binomial_sample = env.rBinomial(10, 0.8);
+    const geometric_sample = env.rGeometric(3.0);
+
+
+    // Generate slices of random samples. The caller is responsible for cleaning up
+    // the allocated memory for the slice.
+    const binomial_slice = try env.rBinomialSlice(100, 20, 0.4);
+    defer allocator.free(binomial_samples);
+}
+```
+
+To initialize a `RandomEnvironment` with a particular seed, use the `initWithSeed` method:
+
+```zig
+var env = RandomEnvironment.initWithSeed(1234567890, allocator);
+env.deinit();
+```
+
+### Distributions API
+
+While the easiest way to get started using `zprob` is with the `RandomEnvironment` struct,
+for users wanting more fine-grained control over the construction and usage of different probability
+distributions, `zprob` provides a lower level "Distributions API".
+
+```zig
+const std = @import("std");
+const zprob = @import("zprob");
+const Random = std.Random;
+
+pub fn main() !void {
+    // Set up random generator.
+    var prng = Random.DefaultGenerator;
+    var rand = prng.random();
+
+    var beta = zprob.Beta(f64).init(&rand);
+    var binomial = zprob.Binomial(u8, f64).init(&rand);
+
+    var b1: f64 = undefined;
+    var b2: u8 = undefined;
+    for 0..100 |_| {
+        b1 = beta.sample(1.0, 5.0);
+        b2 = binomial.sample(20, b1);
+    }
+}
+```
+
+## Example Projects
+
+As mentioned briefly above, there are several projects in the
+[examples/](https://github.com/pblischak/zprob/tree/main/examples) folder that demonstrate the
+usage of `zprob` for different applications:
+
+- **approximate_bayes:** Uses approximate Bayesian computation to estimate the posterior mean
+  and standard deviation of a normal distribution using a small sample of observations.
+- **compound_distributions:** Illustrates how to generate samples from compound probability
+  distributions such as the Beta-Binomial.
+- **distribution_sampling:** Shows the basics of the "Distributions API" through the construction
+  of distribution structs with different underlying types.
+- **enemy_spawner:** Shows a gamedev motivated use case where distinct enemy types are sampled
+  with different frequencies, are given different stats based on their type, and are placed randomly
+  on the level map.
+
+## Available Distributions
+
+**Discrete Probability Distributions**
+
+[Bernoulli](https://en.wikipedia.org/wiki/Bernoulli_distribution) ::
+[Binomial](https://en.wikipedia.org/wiki/Binomial_distribution) ::
+[Geometric](https://en.wikipedia.org/wiki/Geometric_distribution) ::
+[Multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution) ::
+[Negative Binomial](https://en.wikipedia.org/wiki/Negative_binomial_distribution) ::
+[Poisson](https://en.wikipedia.org/wiki/Poisson_distribution) ::
+[Uniform](https://en.wikipedia.org/wiki/Discrete_uniform_distribution)
+
+**Continuous Probability Distributions**
+
+[Beta](https://en.wikipedia.org/wiki/Beta_distribution) ::
+[Cauchy](https://en.wikipedia.org/wiki/Cauchy_distribution) ::
+[Chi-squared](https://en.wikipedia.org/wiki/Chi-squared_distribution) ::
+[Dirichlet](https://en.wikipedia.org/wiki/Dirichlet_distribution) ::
+[Exponential](https://en.wikipedia.org/wiki/Exponential_distribution) ::
+[Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) ::
+[Normal](https://en.wikipedia.org/wiki/Normal_distribution) ::
+[Uniform](https://en.wikipedia.org/wiki/Continuous_uniform_distribution)
+
 ## Installation
 
-> **Note:**
-> The current version of `zprob` was developed and tested using v0.12.0 of Zig and is still a work in progress.
-> Using a version of Zig other than 0.12.0 may lead to the code not compiling.
+> [!NOTE]
+> The current version of `zprob` was developed and tested using v0.13.0 of Zig and is still a work in progress.
+> Using a version of Zig other than 0.13.0 may lead to the code not compiling.
 
 To include `zprob` in your Zig project, you can add it to your `build.zig.zon` file in the
 dependencies section:
@@ -63,90 +178,6 @@ pub fn build(b: *std.Build) void {
 
 Check out the build files in the [examples/](https://github.com/pblischak/zprob/tree/main/examples)
 folder for some demos of complete sample code projects.
-
-## Getting Started
-
-Below we show a brief "Hello, World!" program that introduces the `RandomEnvironment` struct, which
-provides a high-level interface for sampling from distributions and calculating probabilities. It
-automatically generates and stores everything needed to begin generating random numbers
-(seed + random generator), and follows the standard Zig convention of initialization with an
-`Allocator` that handles memory allocation.
-
-```zig
-const std = @import("std");
-const zprob = @import("zprob");
-
-pub fn main() !void {
-    // Set up main memory allocator and defer deinitilization
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    defer {
-        const status = gpa.deinit();
-        std.testing.expect(status == .ok) catch {
-            @panic("Memory leak!");
-        };
-    }
-
-    // Set up random environment and defer deinitialization
-    var env = try zprob.RandomEnvironment.init(allocator);
-    env.deinit()
-
-    // Generate random samples
-    const binomial_sample = env.rBinomial(10, 0.8);
-    const geometric_sample = env.rGeometric(3.0);
-
-
-    // Generate slices of random samples. The caller is responsible for cleaning up
-    // the allocated memory for the slice.
-    const binomial_slice = try env.rBinomialSlice(100, 20, 0.4);
-    defer allocator.free(binomial_samples);
-}
-```
-
-## Example Projects
-
-As mentioned briefly above, there are several projects in the
-[examples/](https://github.com/pblischak/zprob/tree/main/examples) folder that demonstrate the
-usage of `zprob` for different applications:
-
-- **approximate_bayes:** Uses approximate Bayesian computation to estimate the posterior mean
-  and standard deviation of a normal distribution using a small sample of observations.
-- **compound_distributions:** Illustrates how to generate samples from compound probability
-  distributions such as the Beta-Binomial.
-- **distribution_sampling:** Shows the basics of the "Distributions API" through the construction
-  of distribution structs with different underlying types.
-- **enemy_spawner:** Shows a gamedev motivated use case where distinct enemy types are sampled
-  with different frequencies, are given different stats based on their type, and are placed randomly
-  on the level map.
-
-## Low-Level Distributions API
-
-While the easiest way to get started using `zprob` is with the `RandomEnvironment` struct,
-for users wanting more fine-grained control over the construction and usage of different probability
-distributions, `zprob` provides a lower-level "Distributions API".
-
-## Available Distributions
-
-**Discrete Probability Distributions**
-
-[Bernoulli](https://en.wikipedia.org/wiki/Bernoulli_distribution) ::
-[Binomial](https://en.wikipedia.org/wiki/Binomial_distribution) ::
-[Geometric](https://en.wikipedia.org/wiki/Geometric_distribution) ::
-[Multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution) ::
-[Negative Binomial](https://en.wikipedia.org/wiki/Negative_binomial_distribution) ::
-[Poisson](https://en.wikipedia.org/wiki/Poisson_distribution) ::
-[Uniform](https://en.wikipedia.org/wiki/Discrete_uniform_distribution)
-
-**Continuous Probability Distributions**
-
-[Beta](https://en.wikipedia.org/wiki/Beta_distribution) ::
-[Cauchy](https://en.wikipedia.org/wiki/Cauchy_distribution) ::
-[Chi-squared](https://en.wikipedia.org/wiki/Chi-squared_distribution) ::
-[Dirichlet](https://en.wikipedia.org/wiki/Dirichlet_distribution) ::
-[Exponential](https://en.wikipedia.org/wiki/Exponential_distribution) ::
-[Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) ::
-[Normal](https://en.wikipedia.org/wiki/Normal_distribution) ::
-[Uniform](https://en.wikipedia.org/wiki/Continuous_uniform_distribution)
 
 ## Issues
 

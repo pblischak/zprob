@@ -1,7 +1,3 @@
-//! Dirichlet distribution
-//!
-//! [https://en.wikipedia.org/wiki/Dirichlet_distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution)
-
 const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
@@ -12,6 +8,8 @@ const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
 
 /// Dirichlet distribution with parameter `alpha_vec`.
+///
+/// [https://en.wikipedia.org/wiki/Dirichlet_distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution)
 pub fn Dirichlet(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 

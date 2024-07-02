@@ -1,7 +1,3 @@
-//! Multinomial distribution
-//!
-//! [https://en.wikipedia.org/wiki/Multinomial_distribution](https://en.wikipedia.org/wiki/Multinomial_distribution)
-
 const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
@@ -13,6 +9,8 @@ const utils = @import("utils.zig");
 
 /// Multinomial distribution with parameters `n` (number of totol observations)
 /// and `p_vec` (probability of observing each category).
+///
+/// [https://en.wikipedia.org/wiki/Multinomial_distribution](https://en.wikipedia.org/wiki/Multinomial_distribution)
 pub fn Multinomial(comptime I: type, comptime F: type) type {
     _ = utils.ensureIntegerType(I);
     _ = utils.ensureFloatType(F);

@@ -1,7 +1,3 @@
-//! Chi-squared distribution
-//!
-//! [https://en.wikipedia.org/wiki/Chi-squared_distribution](https://en.wikipedia.org/wiki/Chi-squared_distribution)
-
 const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
@@ -12,6 +8,8 @@ const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
 
 /// Chi-squared distribution with degrees of freedom `k`.
+///
+/// [https://en.wikipedia.org/wiki/Chi-squared_distribution](https://en.wikipedia.org/wiki/Chi-squared_distribution)
 pub fn ChiSquared(comptime I: type, comptime F: type) type {
     _ = utils.ensureIntegerType(I);
     _ = utils.ensureFloatType(F);

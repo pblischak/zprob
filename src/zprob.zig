@@ -1,4 +1,4 @@
-//! zprob: A Zig Module for Probability Distributions
+//! ### zprob: A Zig Module for Random Number Distributions
 //!
 //! For each distribution, the following conditions are checked (when relevant) at compile time:
 //! - `comptime` parameter `I` should be an integer type.
