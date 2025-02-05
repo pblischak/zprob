@@ -4,7 +4,7 @@ const std = @import("std");
 const zprob = @import("zprob");
 
 pub fn main() !void {
-    var prng = std.rand.DefaultPrng.init(blk: {
+    var prng = std.Random.DefaultPrng.init(blk: {
         var seed: u64 = undefined;
         try std.os.getrandom(std.mem.asBytes(&seed));
         break :blk seed;
