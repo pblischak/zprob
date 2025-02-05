@@ -3,7 +3,7 @@ const std = @import("std");
 /// Comptime check for integer types.
 pub fn ensureIntegerType(comptime I: type) bool {
     return switch (@typeInfo(I)) {
-        .ComptimeInt, .Int => true,
+        .comptime_int, .int => true,
         else => @compileError("Comptime variable I must be an integer type"),
     };
 }
@@ -14,7 +14,7 @@ pub fn ensureFloatType(comptime F: type) bool {
         @compileError("Float type f16 not supported");
     }
     return switch (@typeInfo(F)) {
-        .ComptimeFloat, .Float => true,
+        .comptime_float, .float => true,
         else => @compileError("Comptime variable F must be a float type"),
     };
 }
