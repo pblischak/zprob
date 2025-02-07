@@ -1,0 +1,42 @@
+name: Zig Nightly CI
+
+on:
+  schedule:
+    - cron: "0 20 * * *"
+  push:
+    branches:
+      - nightly
+
+jobs:
+  test-zig-nightly:
+    name: Test Zig Nightly
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Zig
+        uses: goto-bus-stop/setup-zig@v2
+      - name: Run Tests
+        continue-on-error: true
+        run: zig build test
+      - name: Check Formatting
+        continue-on-error: true
+        run: zig fmt --check .
+  examples:
+    name: Examples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Zig
+        uses: goto-bus-stop/setup-zig@v2
+      - name: Run Enemy Spawner
+        run: |
+          pushd examples/enemy_spawner
+          zig build run
+          popd
+      - name: Run Approximate Bayes
+        run: |
+          pushd examples/approximate_bayes
+          zig build run
+          popd
