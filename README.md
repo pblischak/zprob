@@ -128,33 +128,21 @@ usage of `zprob` for different applications:
 
 ## Installation
 
-> [!NOTE]
-> The current version of `zprob` was developed and tested using v0.13.0 of Zig and is still a work in progress.
-> Using a version of Zig other than 0.13.0 may lead to the code not compiling.
+To include `zprob` in your Zig project, you can add it to your `build.zig.zon` file
+using the `zig fetch` command.
 
-To include `zprob` in your Zig project, you can add it to your `build.zig.zon` file in the
-dependencies section:
+The `main` branch tracks the latest release of Zig (currently v0.13.0) and can be added
+as follows:
 
-```zon
-.{
-    .name = "my_project",
-    .version = "0.1.0",
-    .paths = .{
-        "build.zig",
-        "build.zig.zon",
-        "README.md",
-        "LICENSE",
-        "src",
-    },
-    .dependencies = .{
-        // This will link to tagged v0.2.0 release.
-        // Change the url and hash to link to a specific commit.
-        .zprob = {
-            .url = "",
-            .hash = "",
-        }
-    },
-}
+```bash
+zig fetch --save git+https://github.com/pblischak/zprob/
+```
+
+The `nightly` branch tracks the Zig `master` branch and can be added by adding `#nightly` to the
+git URL:
+
+```bash
+zig fetch --save git+https://github.com/pblischak/zprob/#nightly
 ```
 
 Then, in the `build.zig` file, add the following lines within the `build` function to include
