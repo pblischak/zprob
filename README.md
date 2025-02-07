@@ -134,14 +134,14 @@ using the `zig fetch` command.
 The `main` branch tracks the latest release of Zig (currently v0.13.0) and can be added
 as follows:
 
-```bash
+```
 zig fetch --save git+https://github.com/pblischak/zprob/
 ```
 
 The `nightly` branch tracks the Zig `master` branch and can be added by adding `#nightly` to the
 git URL:
 
-```bash
+```
 zig fetch --save git+https://github.com/pblischak/zprob/#nightly
 ```
 
