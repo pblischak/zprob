@@ -1,4 +1,4 @@
-name: CI
+name: Zig Release CI
 
 on:
   pull_request:
@@ -20,20 +20,6 @@ jobs:
       - name: Run Tests
         run: zig build test
       - name: Check Formatting
-        run: zig fmt --check .
-  test-zig-latest:
-    name: Test Zig Latest
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Install Zig
-        uses: goto-bus-stop/setup-zig@v2
-      - name: Run Tests
-        continue-on-error: true
-        run: zig build test
-      - name: Check Formatting
-        continue-on-error: true
         run: zig fmt --check .
   examples:
     name: Examples
