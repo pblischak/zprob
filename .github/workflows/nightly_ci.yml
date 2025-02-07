@@ -14,13 +14,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: "nightly"
       - name: Install Zig
         uses: goto-bus-stop/setup-zig@v2
       - name: Run Tests
-        continue-on-error: true
         run: zig build test
       - name: Check Formatting
-        continue-on-error: true
         run: zig fmt --check .
   examples:
     name: Examples
@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: "nightly"
       - name: Install Zig
         uses: goto-bus-stop/setup-zig@v2
       - name: Run Enemy Spawner
