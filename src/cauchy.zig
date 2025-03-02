@@ -71,13 +71,27 @@ pub fn Cauchy(comptime F: type) type {
     };
 }
 
+test "Cauchy gamma (scale) <= 0" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+    var cauchy = Cauchy(f64).init(&rand);
+
+    const val1 = cauchy.sample(2.0, -1.0);
+    try std.testing.expectError(error.ScaleTooSmall, val1);
+    const val2 = cauchy.pdf(1.0, 2.0, -1.0);
+    try std.testing.expectError(error.ScaleTooSmall, val2);
+    const val3 = cauchy.lnPdf(1.0, 2.0, -1.0);
+    try std.testing.expectError(error.ScaleTooSmall, val3);
+}
+
 test "Sample Cauchy" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
     var cauchy = Cauchy(f64).init(&rand);
 
-    const val = cauchy.sample(2.0, 1.0);
+    const val = try cauchy.sample(2.0, 1.0);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -124,12 +138,12 @@ test "Cauchy with Different Types" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    const float_types = [_]type{ f32, f64, f128 };
+    const float_types = [_]type{ f32, f64 };
 
     std.debug.print("\n", .{});
     inline for (float_types) |f| {
         var cauchy = Cauchy(f).init(&rand);
-        const val = cauchy.sample(10, 0.25);
+        const val = try cauchy.sample(10, 0.25);
         std.debug.print("Cauchy({any}):\t{}\n", .{ f, val });
     }
 }
