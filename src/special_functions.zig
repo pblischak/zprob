@@ -31,7 +31,11 @@ pub fn lnNChooseK(comptime I: type, comptime F: type, n: I, k: I) Error!F {
     if (n == 1) return @as(F, @floatFromInt(k));
     if (n == k) return 1.0;
 
-    const res = lnFactorial(I, F, n) - (lnFactorial(I, F, k) + lnFactorial(I, F, n - k));
+    const val1 = try lnFactorial(I, F, n);
+    const val2 = try lnFactorial(I, F, k);
+    const val3 = try lnFactorial(I, F, n - k);
+
+    const res = val1 - (val2 + val3);
 
     return res;
 }
@@ -42,7 +46,7 @@ pub fn nChooseK(comptime I: type, n: I, k: I) Error!I {
     check_n_k(I, n, k) catch |err| {
         return err;
     };
-    const res = lnNChooseK(I, f64, n, k);
+    const res = try lnNChooseK(I, f64, n, k);
     return @as(I, @intFromFloat(@exp(res)));
 }
 
