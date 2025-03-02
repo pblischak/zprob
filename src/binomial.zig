@@ -283,7 +283,7 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             return res;
         }
 
-        pub fn pmf(self: *Self, k: I, n: I, p: F) Error!F {
+        pub fn pmf(self: *Self, k: I, n: I, p: F) !F {
             if (p < 0.0) {
                 return Error.ParamTooSmall;
             }
@@ -299,7 +299,7 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             return @exp(val);
         }
 
-        pub fn lnPmf(self: *Self, k: I, n: I, p: F) Error!F {
+        pub fn lnPmf(self: *Self, k: I, n: I, p: F) !F {
             _ = self;
             if (p < 0.0) {
                 return Error.ParamTooSmall;
@@ -310,7 +310,7 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             if (k > n or k < 0) {
                 return Error.KOutOfRange;
             }
-            const ln_coeff = spec_fn.lnNChooseK(I, F, n, k);
+            const ln_coeff = try spec_fn.lnNChooseK(I, F, n, k);
             // zig fmt: off
             return ln_coeff
                 + @as(F, @floatFromInt(k)) * @log(p)
