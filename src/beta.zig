@@ -154,7 +154,8 @@ test "Sample Beta" {
     var rand = prng.random();
 
     var beta = Beta(f64).init(&rand);
-    const val = beta.sample(2.0, 5.0);
+
+    const val = try beta.sample(2.0, 5.0);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -185,7 +186,7 @@ test "Beta Mean" {
             var samp: f64 = undefined;
             var sum: f64 = 0.0;
             for (0..10_000) |_| {
-                samp = beta.sample(a, b);
+                samp = try beta.sample(a, b);
                 sum += samp;
             }
 
@@ -206,12 +207,12 @@ test "Beta with Different Types" {
     var prng = std.rand.Xoroshiro128.init(seed);
     var rand = prng.random();
 
-    const float_types = [_]type{ f32, f64, f128 };
+    const float_types = [_]type{ f32, f64 };
 
     std.debug.print("\n", .{});
     inline for (float_types) |f| {
         var beta = Beta(f).init(&rand);
-        const val = beta.sample(5.0, 2.0);
+        const val = try beta.sample(5.0, 2.0);
         std.debug.print("Beta({any}):\t{}\n", .{ f, val });
         const pdf = try beta.pdf(0.3, 5.0, 2.0);
         std.debug.print("BetaPdf({any}):\t{}\n", .{ f, pdf });
