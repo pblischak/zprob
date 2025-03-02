@@ -6,7 +6,7 @@ const zprob = @import("zprob");
 pub fn main() !void {
     var prng = std.Random.DefaultPrng.init(blk: {
         var seed: u64 = undefined;
-        try std.os.getrandom(std.mem.asBytes(&seed));
+        try std.posix.getrandom(std.mem.asBytes(&seed));
         break :blk seed;
     });
     var rand = prng.random();
