@@ -21,6 +21,7 @@ pub fn Beta(comptime F: type) type {
         const Error = error{
             AlphaLessThanZero,
             BetaLessThanZero,
+            XOutOfRange,
         };
 
         /// Initializes a Beta struct with a pointer to a
@@ -108,6 +109,9 @@ pub fn Beta(comptime F: type) type {
             if (beta <= 0) {
                 return Error.BetaLessThanZero;
             }
+            if (x < 0 or x > 1) {
+                return Error.XOutOfRange;
+            }
 
             var value: F = 0.0;
             if (x < 0.0 or x > 1.0) {
@@ -129,6 +133,9 @@ pub fn Beta(comptime F: type) type {
             }
             if (beta <= 0) {
                 return Error.BetaLessThanZero;
+            }
+            if (x < 0 or x > 1) {
+                return Error.XOutOfRange;
             }
 
             var value: F = 0.0;
