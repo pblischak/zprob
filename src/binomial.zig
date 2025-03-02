@@ -320,6 +320,49 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
     };
 }
 
+test "Binomial `p` < 0" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+    var binomial = Binomial(u32, f64).init(&rand);
+
+    const val = binomial.sample(10, -0.2);
+    try std.testing.expectError(error.ParamTooSmall, val);
+
+    const val2 = binomial.pmf(8, 10, -0.2);
+    try std.testing.expectError(error.ParamTooSmall, val2);
+
+    const val3 = binomial.lnPmf(8, 10, -0.2);
+    try std.testing.expectError(error.ParamTooSmall, val3);
+}
+
+test "Binomial `p` > 1" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+    var binomial = Binomial(u32, f64).init(&rand);
+
+    const val = binomial.sample(10, 1.2);
+    try std.testing.expectError(error.ParamTooBig, val);
+
+    const val2 = binomial.pmf(8, 10, 1.2);
+    try std.testing.expectError(error.ParamTooBig, val2);
+
+    const val3 = binomial.lnPmf(8, 10, 1.2);
+    try std.testing.expectError(error.ParamTooBig, val3);
+}
+test "Binomial `k` out of range" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+    var binomial = Binomial(i32, f64).init(&rand);
+
+    const val1 = binomial.pmf(10, 8, 0.1);
+    try std.testing.expectError(error.KOutOfRange, val1);
+    const val2 = binomial.pmf(-2, 8, 0.1);
+    try std.testing.expectError(error.KOutOfRange, val2);
+}
+
 test "Sample Binomial" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
@@ -329,10 +372,6 @@ test "Sample Binomial" {
     const val = try binomial.sample(10, 0.2);
     std.debug.print("\n{}\n", .{val});
 }
-
-test "Binomial `p` < 0" {}
-test "Binomial `p` > 1" {}
-test "Binomial `k` out of range" {}
 
 test "Sample Binomial Slice" {
     const seed: u64 = @intCast(std.time.microTimestamp());
