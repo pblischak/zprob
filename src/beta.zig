@@ -155,11 +155,61 @@ pub fn Beta(comptime F: type) type {
     };
 }
 
+test "Beta alpha <= 0" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.rand.Xoroshiro128.init(seed);
+    var rand = prng.random();
+    var beta = Beta(f64).init(&rand);
+
+    const val1 = beta.sample(-1.0, 10.0);
+    try std.testing.expectError(error.AlphaLessThanZero, val1);
+
+    const val2 = beta.pdf(0.5, -1.0, 10.0);
+    try std.testing.expectError(error.AlphaLessThanZero, val2);
+
+    const val3 = beta.lnPdf(0.5, -1.0, 10.0);
+    try std.testing.expectError(error.AlphaLessThanZero, val3);
+}
+
+test "Beta beta <= 0" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.rand.Xoroshiro128.init(seed);
+    var rand = prng.random();
+    var beta = Beta(f64).init(&rand);
+
+    const val1 = beta.sample(1.0, -10.0);
+    try std.testing.expectError(error.BetaLessThanZero, val1);
+
+    const val2 = beta.pdf(0.5, 1.0, -10.0);
+    try std.testing.expectError(error.BetaLessThanZero, val2);
+
+    const val3 = beta.lnPdf(0.5, 1.0, -10.0);
+    try std.testing.expectError(error.BetaLessThanZero, val3);
+}
+
+test "Beta x out of range" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.rand.Xoroshiro128.init(seed);
+    var rand = prng.random();
+    var beta = Beta(f64).init(&rand);
+
+    const val1 = beta.pdf(-10.0, 1.0, 10.0);
+    try std.testing.expectError(error.XOutOfRange, val1);
+
+    const val2 = beta.pdf(10.0, 1.0, 10.0);
+    try std.testing.expectError(error.XOutOfRange, val2);
+
+    const val3 = beta.lnPdf(-10.0, 1.0, 10.0);
+    try std.testing.expectError(error.XOutOfRange, val3);
+
+    const val4 = beta.lnPdf(10.0, 1.0, 10.0);
+    try std.testing.expectError(error.XOutOfRange, val4);
+}
+
 test "Sample Beta" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.rand.Xoroshiro128.init(seed);
     var rand = prng.random();
-
     var beta = Beta(f64).init(&rand);
 
     const val = try beta.sample(2.0, 5.0);
