@@ -12,9 +12,10 @@ pub fn Cauchy(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
-
         rand: *Random,
+
+        const Self = @This();
+        const Error = error{ScaleTooSmall};
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -22,7 +23,10 @@ pub fn Cauchy(comptime F: type) type {
             };
         }
 
-        pub fn sample(self: Self, x0: F, gamma: F) F {
+        pub fn sample(self: Self, x0: F, gamma: F) Error!F {
+            if (gamma <= 0) {
+                return Error.ScaleTooSmall;
+            }
             var u: F = @floatCast(self.rand.float(f64));
             // u cannot be 0.5, so if by chance it is,
             // we need to draw again
@@ -39,21 +43,30 @@ pub fn Cauchy(comptime F: type) type {
             x0: F,
             gamma: F,
             allocator: Allocator,
-        ) ![]F {
+        ) (Error || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size);
+            if (gamma <= 0) {
+                return Error.ScaleTooSmall;
+            }
             for (0..size) |i| {
-                res[i] = self.sample(x0, gamma);
+                res[i] = try self.sample(x0, gamma);
             }
             return res;
         }
 
-        pub fn pdf(self: Self, x: F, x0: F, gamma: F) F {
+        pub fn pdf(self: Self, x: F, x0: F, gamma: F) Error!F {
             _ = self;
+            if (gamma <= 0) {
+                return Error.ScaleTooSmall;
+            }
             return (1.0 / math.pi) * (gamma / (((x - x0) * (x - x0)) + (gamma * gamma)));
         }
 
-        pub fn lnPdf(self: Self, x: F, x0: F, gamma: F) F {
-            return @log(self.pdf(x, x0, gamma));
+        pub fn lnPdf(self: Self, x: F, x0: F, gamma: F) Error!F {
+            if (gamma <= 0) {
+                return Error.ScaleTooSmall;
+            }
+            return @log(try self.pdf(x, x0, gamma));
         }
     };
 }
