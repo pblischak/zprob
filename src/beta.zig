@@ -14,10 +14,14 @@ pub fn Beta(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
-
         rand: *Random,
         gamma: Gamma(F),
+
+        const Self = @This();
+        const Error = error{
+            AlphaLessThanZero,
+            BetaLessThanZero,
+        };
 
         /// Initializes a Beta struct with a pointer to a
         /// Pseudo-Random Number Generator.
@@ -31,12 +35,12 @@ pub fn Beta(comptime F: type) type {
         /// Generate a sample from a Beta distribution with parameters
         /// `alpha` > 0 and `beta` > 0. Invalid values passed as
         /// parameters will cause a panic.
-        pub fn sample(self: Self, alpha: F, beta: F) F {
+        pub fn sample(self: Self, alpha: F, beta: F) Error!F {
             if (alpha <= 0) {
-                @panic("Parameter `alpha` must be greater than 0.");
+                return Error.AlphaLessThanZero;
             }
             if (beta <= 0) {
-                @panic("Parameter `beta` must be greater than 0.");
+                return Error.BetaLessThanZero;
             }
 
             if (alpha <= 1.0 and beta <= 1.0) {
@@ -85,10 +89,10 @@ pub fn Beta(comptime F: type) type {
             alpha: F,
             beta: F,
             allocator: Allocator,
-        ) ![]F {
+        ) (Error || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
-                res[i] = self.sample(alpha, beta);
+                res[i] = try self.sample(alpha, beta);
             }
             return res;
         }
@@ -96,20 +100,20 @@ pub fn Beta(comptime F: type) type {
         /// For a Beta random variable, X, with parameters `alpha` > 0
         /// and `beta` > 0, return the probability that X is less than
         /// some value 0 <= x <= 1.
-        pub fn pdf(self: Self, x: F, alpha: F, beta: F) !F {
+        pub fn pdf(self: Self, x: F, alpha: F, beta: F) Error!F {
             _ = self;
             if (alpha <= 0) {
-                @panic("Parameter `alpha` must be greater than 0.");
+                return Error.AlphaLessThanZero;
             }
             if (beta <= 0) {
-                @panic("Parameter `beta` must be greater than 0.");
+                return Error.BetaLessThanZero;
             }
 
             var value: F = 0.0;
             if (x < 0.0 or x > 1.0) {
                 value = 0.0;
             } else {
-                const ln_beta: F = try spec_fn.betaFn(F, alpha, beta);
+                const ln_beta: F = spec_fn.betaFn(F, alpha, beta);
                 const first_term: F = @floatCast(math.pow(f64, @floatCast(x), @floatCast(alpha - 1.0)));
                 const second_term: F = @floatCast(math.pow(f64, @floatCast(1.0 - x), @floatCast(beta - 1.0)));
                 value = first_term * second_term / ln_beta;
@@ -121,10 +125,10 @@ pub fn Beta(comptime F: type) type {
         pub fn lnPdf(self: Self, x: F, alpha: F, beta: F) !F {
             _ = self;
             if (alpha <= 0) {
-                @panic("Parameter `alpha` must be greater than 0.");
+                return Error.AlphaLessThanZero;
             }
             if (beta <= 0) {
-                @panic("Parameter `beta` must be greater than 0.");
+                return Error.BetaLessThanZero;
             }
 
             var value: F = 0.0;
@@ -132,7 +136,7 @@ pub fn Beta(comptime F: type) type {
                 value = math.inf(F);
             } else {
                 // zig fmt: off
-                const ln_beta: F = try spec_fn.lnBetaFn(F, alpha, beta);
+                const ln_beta: F = spec_fn.lnBetaFn(F, alpha, beta);
                 value = (alpha - 1.0) * @log(x)
                     + (beta - 1.0) * @log(1.0 - x)
                     - ln_beta;
