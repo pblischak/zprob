@@ -11,7 +11,7 @@ const utils = @import("utils.zig");
 /// and `p_vec` (probability of observing each category).
 ///
 /// [https://en.wikipedia.org/wiki/Multinomial_distribution](https://en.wikipedia.org/wiki/Multinomial_distribution)
-pub fn Multinomial(comptime I: type, comptime F: type) type {
+pub fn Multinomial(comptime K: usize, comptime I: type, comptime F: type) type {
     _ = utils.ensureIntegerType(I);
     _ = utils.ensureFloatType(F);
 
@@ -32,60 +32,75 @@ pub fn Multinomial(comptime I: type, comptime F: type) type {
         pub fn sample(
             self: Self,
             n: I,
-            p_vec: []const F,
-            out_vec: []I,
-        ) Error!void {
-            const n_cat: usize = p_vec.len;
-            if (p_vec.len != out_vec.len) {
-                @panic("Length of probability and output vectors are not the same...");
-            }
-
-            if (!utils.sumToOne(F, p_vec, @sqrt(math.floatEps(F)))) {
+            p_vec: [K]F,
+        ) Error![K]I {
+            if (!utils.sumToOne(F, p_vec[0..], @sqrt(math.floatEps(F)))) {
                 return Error.ProbSumNotOne;
             }
+            var out_vec: [K]I = undefined;
 
             var p_tot: F = 1.0;
             var n_tot = n;
             var prob: F = undefined;
 
-            for (0..n_cat) |i| {
+            for (0..K) |i| {
                 out_vec[i] = 0;
             }
 
-            for (0..(n_cat - 1)) |icat| {
+            for (0..(K - 1)) |icat| {
                 prob = p_vec[icat] / p_tot;
                 out_vec[icat] = try self.binomial.sample(n_tot, prob);
                 n_tot -= out_vec[icat];
                 if (n_tot <= 0) {
-                    return;
+                    return out_vec;
                 }
                 p_tot -= p_vec[icat];
             }
-            out_vec[n_cat - 1] = n_tot;
+            out_vec[K - 1] = n_tot;
+
+            return out_vec;
         }
 
         pub fn sampleSlice(
             self: Self,
             size: usize,
             n: I,
-            p_vec: []const F,
+            p_vec: [K]F,
             allocator: Allocator,
         ) (Error || Allocator.Error)![]I {
-            const n_cat = p_vec.len;
-            var res = try allocator.alloc(I, n_cat * size);
+            var res = try allocator.alloc(I, K * size);
+            var tmp: [K]I = undefined;
             var start: usize = 0;
             for (0..size) |i| {
-                start = i * n_cat;
-                try self.sample(n, p_vec, res[start..(start + n_cat)]);
+                start = i * K;
+                tmp = try self.sample(
+                    n,
+                    p_vec,
+                );
+                @memcpy(res[start..(start + K)], tmp[0..]);
             }
             return res;
         }
 
-        pub fn pmf(self: Self, k_vec: []const I, p_vec: []const F) spec_fn.Error!F {
+        pub fn pmf(
+            self: Self,
+            k_vec: []const I,
+            p_vec: []const F,
+        ) (Error || spec_fn.Error)!F {
+            if (!utils.sumToOne(F, p_vec[0..], @sqrt(math.floatEps(F)))) {
+                return Error.ProbSumNotOne;
+            }
             return @exp(try self.lnPmf(k_vec, p_vec));
         }
 
-        pub fn lnPmf(self: Self, k_vec: []const I, p_vec: []const F) spec_fn.Error!F {
+        pub fn lnPmf(
+            self: Self,
+            k_vec: []const I,
+            p_vec: []const F,
+        ) (Error || spec_fn.Error)!F {
+            if (!utils.sumToOne(F, p_vec[0..], @sqrt(math.floatEps(F)))) {
+                return Error.ProbSumNotOne;
+            }
             _ = self;
             var n: I = 0;
             for (k_vec) |x| {
@@ -108,10 +123,9 @@ test "Sample Multinomial" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var multinomial = Multinomial(u32, f64).init(&rand);
-    var p_vec = [_]f64{ 0.1, 0.25, 0.35, 0.3 };
-    var out_vec = [_]u32{ 0, 0, 0, 0 };
-    try multinomial.sample(10, p_vec[0..], out_vec[0..]);
+    var multinomial = Multinomial(4, u32, f64).init(&rand);
+    const p_vec = [_]f64{ 0.1, 0.25, 0.35, 0.3 };
+    const out_vec = try multinomial.sample(10, p_vec);
     std.debug.print("\n{any}\n", .{out_vec});
 }
 
@@ -120,13 +134,13 @@ test "Sample Multinomial Slice" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var multinomial = Multinomial(u32, f64).init(&rand);
+    var multinomial = Multinomial(4, u32, f64).init(&rand);
     const allocator = std.testing.allocator;
-    var p_vec = [_]f64{ 0.1, 0.25, 0.35, 0.3 };
+    const p_vec = [4]f64{ 0.1, 0.25, 0.35, 0.3 };
     const sample = try multinomial.sampleSlice(
         100,
         10,
-        p_vec[0..],
+        p_vec,
         allocator,
     );
     defer allocator.free(sample);
@@ -142,7 +156,7 @@ test "Multinomial Mean" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var multinomial = Multinomial(u32, f64).init(&rand);
+    var multinomial = Multinomial(3, u32, f64).init(&rand);
 
     const p_vecs = [_][3]f64{
         [3]f64{ 0.33, 0.33, 0.34 },
@@ -156,7 +170,7 @@ test "Multinomial Mean" {
         var tmp: [3]u32 = [3]u32{ 0.0, 0.0, 0.0 };
         var avg_vec: [3]f64 = [3]f64{ 0.0, 0.0, 0.0 };
         for (0..10_000) |_| {
-            try multinomial.sample(10, p_vec[0..], tmp[0..]);
+            tmp = try multinomial.sample(10, p_vec);
             avg_vec[0] += @floatFromInt(tmp[0]);
             avg_vec[1] += @floatFromInt(tmp[1]);
             avg_vec[2] += @floatFromInt(tmp[2]);
@@ -193,10 +207,9 @@ test "Multinomial with Different Types" {
     std.debug.print("\n", .{});
     inline for (int_types) |i| {
         inline for (float_types) |f| {
-            var multinomial = Multinomial(i, f).init(&rand);
-            var p_vec = [_]f{ 0.1, 0.25, 0.35, 0.3 };
-            var out_vec = [_]i{ 0, 0, 0, 0 };
-            try multinomial.sample(10, p_vec[0..], out_vec[0..]);
+            var multinomial = Multinomial(4, i, f).init(&rand);
+            const p_vec = [4]f{ 0.1, 0.25, 0.35, 0.3 };
+            const out_vec = try multinomial.sample(10, p_vec);
             std.debug.print(
                 "Multinomial({any}, {any}): {any}\n",
                 .{ i, f, out_vec },
