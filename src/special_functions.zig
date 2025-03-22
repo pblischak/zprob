@@ -5,7 +5,7 @@ const math = std.math;
 
 const utils = @import("utils.zig");
 
-const Error = error{
+pub const Error = error{
     /// n < 0 (cannot be equal to 0)
     NegativeN,
     /// k < 0 (cannot be equal to 0)
