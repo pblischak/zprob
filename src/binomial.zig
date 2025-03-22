@@ -16,7 +16,7 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
     return struct {
         rand: *Random,
         const Self = @This();
-        const Error = error{ KOutOfRange, ParamTooSmall, ParamTooBig };
+        pub const Error = error{ KOutOfRange, ParamTooSmall, ParamTooBig };
 
         pub fn init(rand: *Random) Self {
             return Self{
