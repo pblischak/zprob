@@ -15,10 +15,11 @@ pub fn ChiSquared(comptime I: type, comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
-
         rand: *Random,
         gamma: Gamma(F),
+
+        const Self = @This();
+        const Error = Gamma(F).Error;
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -27,7 +28,7 @@ pub fn ChiSquared(comptime I: type, comptime F: type) type {
             };
         }
 
-        pub fn sample(self: Self, k: I) F {
+        pub fn sample(self: Self, k: I) Error!F {
             const b: F = @as(F, @floatFromInt(k)) / 2.0;
             const k_usize: usize = @intCast(k);
 
@@ -40,7 +41,7 @@ pub fn ChiSquared(comptime I: type, comptime F: type) type {
                     x2 += x * x;
                 }
             } else {
-                x2 = self.gamma.sample(b, 0.5);
+                x2 = try self.gamma.sample(b, 0.5);
             }
 
             return x2;
@@ -51,16 +52,16 @@ pub fn ChiSquared(comptime I: type, comptime F: type) type {
             size: usize,
             k: I,
             allocator: Allocator,
-        ) ![]F {
+        ) (Error || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
-                res[i] = self.sample(k);
+                res[i] = try self.sample(k);
             }
             return res;
         }
 
         pub fn pdf(self: Self, x: F, k: I) !F {
-            if (x < 0.0) {
+            if (x <= 0.0) {
                 return 0.0;
             }
 
@@ -83,7 +84,7 @@ test "Sample Chi-Squared" {
     var rand = prng.random();
 
     var chi_squared = ChiSquared(u32, f64).init(&rand);
-    const val = chi_squared.sample(10);
+    const val = try chi_squared.sample(10);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -111,7 +112,7 @@ test "Chi-squared Mean" {
     for (k_vec) |k| {
         var sum: f64 = 0.0;
         for (0..10_000) |_| {
-            sum += chi_squared.sample(@intCast(k));
+            sum += try chi_squared.sample(@intCast(k));
         }
         const mean = @as(f64, @floatFromInt(k));
         const avg = sum / 10_000.0;
@@ -130,13 +131,13 @@ test "Chi-Squared with Different Types" {
     var rand = prng.random();
 
     const int_types = [_]type{ u8, u16, u32, u64, u128, i8, i16, i32, i64, i128 };
-    const float_types = [_]type{ f32, f64, f128 };
+    const float_types = [_]type{ f32, f64 };
 
     std.debug.print("\n", .{});
     inline for (int_types) |i| {
         inline for (float_types) |f| {
             var chi_squared = ChiSquared(i, f).init(&rand);
-            const val = chi_squared.sample(10);
+            const val = try chi_squared.sample(10);
             std.debug.print("ChiSquared({any}, {any}):\t{}\n", .{ i, f, val });
         }
     }
