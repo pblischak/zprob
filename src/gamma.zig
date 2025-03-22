@@ -16,7 +16,7 @@ pub fn Gamma(comptime F: type) type {
         rand: *Random,
 
         const Self = @This();
-        const Error = error{
+        pub const Error = error{
             ShapeInvalid,
             ScaleInvalid,
             ParamsInfinite,
