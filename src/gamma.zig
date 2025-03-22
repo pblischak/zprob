@@ -13,9 +13,14 @@ pub fn Gamma(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
-
         rand: *Random,
+
+        const Self = @This();
+        const Error = error{
+            ShapeInvalid,
+            ScaleInvalid,
+            ParamsInfinite,
+        };
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -23,14 +28,26 @@ pub fn Gamma(comptime F: type) type {
             };
         }
 
+        fn check(shape: F, scale: F) Error!void {
+            if (math.isNan(shape) or shape <= 0.0) {
+                return Error.ShapeInvalid;
+            }
+            if (math.isNan(scale) or scale <= 0.0) {
+                return Error.ScaleInvalid;
+            }
+            if (math.isInf(shape) and math.isInf(scale)) {
+                return Error.ParamsInfinite;
+            }
+        }
+
         // GEORGE MARSAGLIA and WAI WAN TSANG. A Simple Method for Generating Gamma Variables.
         // ACM Transactions on Mathematical Software, Vol. 26, September 2000, Pages 363–37.
-        pub fn sample(self: Self, shape: F, scale: F) F {
-            std.debug.assert(shape > 0);
+        pub fn sample(self: Self, shape: F, scale: F) Error!F {
+            try check(shape, scale);
 
             if (shape < 1) {
                 const u: F = @floatCast(self.rand.float(f64));
-                return self.sample(
+                return try self.sample(
                     1.0 + shape,
                     scale,
                 ) * @as(F, @floatCast(math.pow(
@@ -75,10 +92,10 @@ pub fn Gamma(comptime F: type) type {
             shape: F,
             scale: F,
             allocator: Allocator,
-        ) ![]F {
+        ) (Error || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
-                res[i] = self.sample(shape, scale);
+                res[i] = try self.sample(shape, scale);
             }
             return res;
         }
@@ -117,7 +134,7 @@ test "Sample Gamma" {
     var rand = prng.random();
 
     var gamma = Gamma(f64).init(&rand);
-    const val = gamma.sample(2.0, 5.0);
+    const val = try gamma.sample(2.0, 5.0);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -147,7 +164,7 @@ test "Gamma Mean" {
         for (scale_vec) |scale| {
             var sum: f64 = 0.0;
             for (0..10_000) |_| {
-                sum += gamma.sample(shape, scale);
+                sum += try gamma.sample(shape, scale);
             }
             const mean = shape * scale;
             const avg = sum / 10_000.0;
@@ -171,7 +188,7 @@ test "Gamma with Different Types" {
     std.debug.print("\n", .{});
     inline for (float_types) |f| {
         var gamma = Gamma(f).init(&rand);
-        const val = gamma.sample(5.0, 2.0);
+        const val = try gamma.sample(5.0, 2.0);
         std.debug.print("Gamma({any}):\t{}\n", .{ f, val });
     }
 }
