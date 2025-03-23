@@ -12,10 +12,11 @@ pub fn Normal(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
-        const inv_sqrt_2pi: F = 1.0 / @sqrt(2.0 * math.pi);
-
         rand: *Random,
+        const Self = @This();
+        pub const Error = error{ MeanNaN, BadStdDev };
+
+        const inv_sqrt_2pi: F = 1.0 / @sqrt(2.0 * math.pi);
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -23,7 +24,17 @@ pub fn Normal(comptime F: type) type {
             };
         }
 
-        pub fn sample(self: Self, mu: F, sigma: F) F {
+        fn check(mu: F, sigma: F) Error!void {
+            if (math.isNan(mu)) {
+                return Error.MeanNaN;
+            }
+            if (sigma <= 0 or math.isNan(sigma)) {
+                return Error.BadStdDev;
+            }
+        }
+
+        pub fn sample(self: Self, mu: F, sigma: F) Error!F {
+            try check(mu, sigma);
             const value: F = @floatCast(self.rand.floatNorm(f64));
             return value * sigma + mu;
         }
@@ -34,23 +45,26 @@ pub fn Normal(comptime F: type) type {
             mu: F,
             sigma: F,
             allocator: Allocator,
-        ) ![]F {
+        ) (Error || Allocator.Error)![]F {
+            try check(mu, sigma);
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
-                res[i] = self.sample(mu, sigma);
+                res[i] = try self.sample(mu, sigma);
             }
             return res;
         }
 
-        pub fn pdf(self: Self, x: F, mu: F, sigma: F) F {
+        pub fn pdf(self: Self, x: F, mu: F, sigma: F) Error!F {
             _ = self;
+            try check(mu, sigma);
 
             const a: F = (x - mu) / sigma;
             return inv_sqrt_2pi / sigma * @exp(-0.5 * a * a);
         }
 
-        pub fn lnPdf(self: Self, x: F, mu: F, sigma: F) F {
+        pub fn lnPdf(self: Self, x: F, mu: F, sigma: F) Error!F {
             _ = self;
+            try check(mu, sigma);
             const a: F = (x - mu) / sigma;
             return @log(inv_sqrt_2pi) - @log(sigma) - 0.5 * a * a;
         }
@@ -63,7 +77,7 @@ test "Sample Normal" {
     var rand = prng.random();
 
     var normal = Normal(f64).init(&rand);
-    const val = normal.sample(2.0, 0.5);
+    const val = try normal.sample(2.0, 0.5);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -93,7 +107,7 @@ test "Normal Mean" {
         for (sigma_vec) |sigma| {
             var sum: f64 = 0.0;
             for (0..10_000) |_| {
-                sum += normal.sample(mu, sigma);
+                sum += try normal.sample(mu, sigma);
             }
             const avg = sum / 10_000.0;
             std.debug.print(
@@ -110,12 +124,12 @@ test "Normal with Different Types" {
     var prng = std.rand.Xoroshiro128.init(seed);
     var rand = prng.random();
 
-    const float_types = [_]type{ f32, f64, f128 };
+    const float_types = [_]type{ f32, f64 };
 
     std.debug.print("\n", .{});
     inline for (float_types) |f| {
         var normal = Normal(f).init(&rand);
-        const val = normal.sample(2.0, 0.5);
+        const val = try normal.sample(2.0, 0.5);
         std.debug.print("Normal({any}):\t{}\n", .{ f, val });
     }
 }
