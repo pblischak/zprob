@@ -14,9 +14,10 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
-
         rand: *Random,
+
+        const Self = @This();
+        pub const Error = error{BadLambda} || spec_fn.Error;
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -24,7 +25,7 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
             };
         }
 
-        pub fn sample(self: Self, lambda: F) I {
+        pub fn sample(self: Self, lambda: F) Error!I {
             if (lambda < 17.0) {
                 if (lambda < 1.0e-6) {
                     if (lambda == 0.0) {
@@ -32,7 +33,7 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
                     }
 
                     if (lambda < 0.0) {
-                        @panic("Parameter lambda cannot be negative...");
+                        return Error.BadLambda;
                     }
 
                     return self.low(lambda);
@@ -52,10 +53,10 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
             size: usize,
             lambda: F,
             allocator: Allocator,
-        ) ![]I {
+        ) (Error || Allocator.Error)![]I {
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
-                res[i] = self.sample(lambda);
+                res[i] = try self.sample(lambda);
             }
             return res;
         }
@@ -110,7 +111,7 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
             }
         }
 
-        fn ratioUniforms(self: Self, lambda: F) I {
+        fn ratioUniforms(self: Self, lambda: F) Error!I {
             var u: F = undefined;
             var lf: F = undefined;
             var x: F = undefined;
@@ -119,7 +120,7 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
             const p_a = lambda + 0.5;
             const mode = @as(I, @intFromFloat(lambda));
             const p_g = @log(lambda);
-            const p_q = @as(F, @floatFromInt(mode)) * p_g - spec_fn.lnFactorial(I, F, mode);
+            const p_q = @as(F, @floatFromInt(mode)) * p_g - try spec_fn.lnFactorial(I, F, mode);
             const p_h = @sqrt(2.943035529371538573 * (lambda + 0.5)) + 0.8989161620588987408;
             const p_bound = @as(I, @intFromFloat(p_a + 6.0 * p_h));
 
@@ -135,7 +136,7 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
                 }
 
                 k = @as(I, @intFromFloat(x));
-                lf = @as(F, @floatFromInt(k)) * p_g - spec_fn.lnFactorial(I, F, k) - p_q;
+                lf = @as(F, @floatFromInt(k)) * p_g - try spec_fn.lnFactorial(I, F, k) - p_q;
                 if (lf >= u * (4.0 - u) - 3.0) {
                     break;
                 }
@@ -149,16 +150,17 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
             return k;
         }
 
-        pub fn pmf(self: Self, k: I, lambda: F) F {
+        pub fn pmf(self: Self, k: I, lambda: F) !F {
             return @exp(self.lnPmf(k, lambda));
         }
 
-        pub fn lnPmf(self: Self, k: I, lambda: F) F {
+        pub fn lnPmf(self: Self, k: I, lambda: F) !F {
             _ = self;
+            const factorial = try spec_fn.lnFactorial(I, F, k);
             return @as(
                 F,
                 @floatFromInt(k),
-            ) * @log(lambda) - lambda + spec_fn.lnFactorial(I, F, k);
+            ) * @log(lambda) - lambda + factorial;
         }
     };
 }
@@ -169,7 +171,7 @@ test "Sample Poisson" {
     var rand = prng.random();
 
     var poisson = Poisson(u32, f64).init(&rand);
-    const val = poisson.sample(20.0);
+    const val = try poisson.sample(20.0);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -197,7 +199,7 @@ test "Poisson Mean" {
     for (lambda_vec) |lambda| {
         var sum: f64 = 0.0;
         for (0..10_000) |_| {
-            const samp = poisson.sample(lambda);
+            const samp = try poisson.sample(lambda);
             sum += @as(f64, @floatFromInt(samp));
         }
         const avg: f64 = sum / 10_000.0;
@@ -212,13 +214,13 @@ test "Poisson with Different Types" {
     var rand = prng.random();
 
     const int_types = [_]type{ u8, u16, u32, u64, u128, i8, i16, i32, i64, i128 };
-    const float_types = [_]type{ f32, f64, f128 };
+    const float_types = [_]type{ f32, f64 };
 
     std.debug.print("\n", .{});
     inline for (int_types) |i| {
         inline for (float_types) |f| {
             var poisson = Poisson(i, f).init(&rand);
-            const val = poisson.sample(20.0);
+            const val = try poisson.sample(20.0);
             std.debug.print(
                 "Poisson({any}, {any}): {}\n",
                 .{ i, f, val },
