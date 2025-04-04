@@ -115,7 +115,7 @@ test "Cholesky–Banachiewicz algorithm" {
 }
 
 test "Multivariate Normal API" {
-    const DefaultPrng = std.rand.Xoshiro256;
+    const DefaultPrng = std.Random.Xoshiro256;
     const test_allocator = std.testing.allocator;
     // var sm = [9]f64{ 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
     // var mu = [3]f64{ 5.0, 9.5, 2.0 };

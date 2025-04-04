@@ -49,7 +49,7 @@ const Uniform = @import("uniform.zig").Uniform;
 const Self = @This();
 
 const RngState = struct {
-    prng: std.rand.DefaultPrng,
+    prng: std.Random.DefaultPrng,
     rand: Random,
 };
 
@@ -106,7 +106,7 @@ pub fn init(allocator: Allocator) (std.posix.GetRandomError || Allocator.Error)!
 /// Initialize a new `RandomEnvironment` struct with a specific seed and an `Allocator`.
 pub fn initWithSeed(seed: u64, allocator: Allocator) Allocator.Error!Self {
     const rng_state = try allocator.create(RngState);
-    rng_state.*.prng = std.rand.DefaultPrng.init(seed);
+    rng_state.*.prng = std.Random.DefaultPrng.init(seed);
     rng_state.*.rand = rng_state.*.prng.random();
     return Self{
         .seed = seed,

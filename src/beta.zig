@@ -159,7 +159,7 @@ pub fn Beta(comptime F: type) type {
 
 test "Beta alpha <= 0" {
     const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.rand.Xoroshiro128.init(seed);
+    var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
     var beta = Beta(f64).init(&rand);
 
@@ -175,7 +175,7 @@ test "Beta alpha <= 0" {
 
 test "Beta beta <= 0" {
     const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.rand.Xoroshiro128.init(seed);
+    var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
     var beta = Beta(f64).init(&rand);
 
@@ -191,7 +191,7 @@ test "Beta beta <= 0" {
 
 test "Beta x out of range" {
     const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.rand.Xoroshiro128.init(seed);
+    var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
     var beta = Beta(f64).init(&rand);
 
@@ -210,7 +210,7 @@ test "Beta x out of range" {
 
 test "Sample Beta" {
     const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.rand.Xoroshiro128.init(seed);
+    var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
     var beta = Beta(f64).init(&rand);
 
@@ -220,7 +220,7 @@ test "Sample Beta" {
 
 test "Sample Beta Slice" {
     const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.rand.Xoroshiro128.init(seed);
+    var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
     var beta = Beta(f64).init(&rand);
 
@@ -232,7 +232,7 @@ test "Sample Beta Slice" {
 
 test "Beta Mean" {
     const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.rand.Xoroshiro128.init(seed);
+    var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
     var beta = Beta(f64).init(&rand);
 
@@ -263,7 +263,7 @@ test "Beta Mean" {
 
 test "Beta with Different Types" {
     const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.rand.Xoroshiro128.init(seed);
+    var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
 
     const float_types = [_]type{ f32, f64 };
