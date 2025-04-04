@@ -69,7 +69,7 @@ pub fn Weighted(comptime T: type, comptime F: type) type {
 
 test "Sample Weighted UInts" {
     const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.rand.Xoroshiro128.init(seed);
+    var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
     var weighted = Weighted(u32, f64).init(&rand);
 
@@ -84,7 +84,7 @@ test "Sample Weighted UInts Slice" {
     const allocator = std.testing.allocator;
 
     const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.rand.Xoroshiro128.init(seed);
+    var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
     var weighted = Weighted(u32, f64).init(&rand);
 
@@ -103,7 +103,7 @@ test "Sample Weighted UInts Slice" {
 
 test "Sample Weighted Uint Expectation" {
     const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.rand.Xoroshiro128.init(seed);
+    var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
     var weighted = Weighted(u32, f64).init(&rand);
 
@@ -130,7 +130,7 @@ test "Sample Weighted Struct" {
     };
 
     const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.rand.Xoroshiro128.init(seed);
+    var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
     var weighted = Weighted(Pair, f64).init(&rand);
 

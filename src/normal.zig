@@ -122,7 +122,7 @@ test "Normal Mean" {
 
 test "Normal with Different Types" {
     const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.rand.Xoroshiro128.init(seed);
+    var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
 
     const float_types = [_]type{ f32, f64 };
