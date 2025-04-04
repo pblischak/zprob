@@ -5,6 +5,8 @@ const Random = std.Random;
 
 const utils = @import("utils.zig");
 
+pub const GeometricError = error{ParamInvalid};
+
 /// Geometric distribution with parameter `p`. Records the number of trials needed to get the
 ///  first success.
 ///
@@ -17,11 +19,10 @@ pub fn Geometric(comptime I: type, comptime F: type) type {
         rand: *Random,
 
         const Self = @This();
-        const Error = error{ParamInvalid};
 
-        fn check(p: F) Error!void {
+        fn check(p: F) GeometricError!void {
             if (p <= 0 or p > 1 or math.isNan(p)) {
-                return Error.ParamInvalid;
+                return GeometricError.ParamInvalid;
             }
         }
 
@@ -31,7 +32,7 @@ pub fn Geometric(comptime I: type, comptime F: type) type {
             };
         }
 
-        pub fn sample(self: Self, p: F) Error!I {
+        pub fn sample(self: Self, p: F) GeometricError!I {
             try check(p);
             const u: F = @floatCast(self.rand.float(f64));
             return @as(I, @intFromFloat(@log(u) / @log(1.0 - p))) + 1;
@@ -42,7 +43,7 @@ pub fn Geometric(comptime I: type, comptime F: type) type {
             size: usize,
             p: F,
             allocator: Allocator,
-        ) (Error || Allocator.Error)![]I {
+        ) (GeometricError || Allocator.Error)![]I {
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
                 res[i] = try self.sample(p);
@@ -50,7 +51,7 @@ pub fn Geometric(comptime I: type, comptime F: type) type {
             return res;
         }
 
-        pub fn pmf(self: Self, k: I, p: F) Error!F {
+        pub fn pmf(self: Self, k: I, p: F) GeometricError!F {
             _ = self;
             try check(p);
             return @as(F, math.pow(
@@ -60,7 +61,7 @@ pub fn Geometric(comptime I: type, comptime F: type) type {
             )) * p;
         }
 
-        pub fn lnPmf(self: Self, k: I, p: F) Error!F {
+        pub fn lnPmf(self: Self, k: I, p: F) GeometricError!F {
             _ = self;
             try check(p);
             return (@as(F, @floatFromInt(k)) - 1.0) * @log(1.0 - p) + @log(p);

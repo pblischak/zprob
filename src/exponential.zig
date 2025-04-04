@@ -5,6 +5,8 @@ const Random = std.Random;
 
 const utils = @import("utils.zig");
 
+pub const ExponentialError = error{LambdaInvalid};
+
 /// Exponential distribution with parameter `lambda`.
 ///
 /// [https://en.wikipedia.org/wiki/Exponential_distribution](https://en.wikipedia.org/wiki/Exponential_distribution)
@@ -15,7 +17,6 @@ pub fn Exponential(comptime F: type) type {
         rand: *Random,
 
         const Self = @This();
-        const Error = error{LambdaInvalid};
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -23,9 +24,9 @@ pub fn Exponential(comptime F: type) type {
             };
         }
 
-        pub fn sample(self: Self, lambda: F) Error!F {
+        pub fn sample(self: Self, lambda: F) ExponentialError!F {
             if (math.isNan(lambda) or lambda <= 0) {
-                return Error.LambdaInvalid;
+                return ExponentialError.LambdaInvalid;
             }
             const u: F = @floatCast(self.rand.float(f64));
             const value = -@log(1.0 - u) / lambda;
@@ -37,7 +38,7 @@ pub fn Exponential(comptime F: type) type {
             size: usize,
             lambda: F,
             allocator: Allocator,
-        ) (Error || Allocator.Error)![]F {
+        ) (ExponentialError || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
                 res[i] = try self.sample(lambda);
@@ -45,10 +46,10 @@ pub fn Exponential(comptime F: type) type {
             return res;
         }
 
-        pub fn pdf(self: Self, x: F, lambda: F) Error!F {
+        pub fn pdf(self: Self, x: F, lambda: F) ExponentialError!F {
             _ = self;
             if (math.isNan(lambda) or lambda <= 0) {
-                return Error.LambdaInvalid;
+                return ExponentialError.LambdaInvalid;
             }
             if (x < 0) {
                 return 0.0;
@@ -57,14 +58,14 @@ pub fn Exponential(comptime F: type) type {
             return value;
         }
 
-        pub fn lnPdf(self: Self, x: F, lambda: F) Error!F {
+        pub fn lnPdf(self: Self, x: F, lambda: F) ExponentialError!F {
             if (math.isNan(lambda) or lambda <= 0) {
-                return Error.LambdaInvalid;
+                return ExponentialError.LambdaInvalid;
             }
             if (x < 0) {
                 @panic("Cannot evaluate x less than 0.");
             }
-            const value = self.pdf(x, lambda);
+            const value = try self.pdf(x, lambda);
             return @log(value);
         }
     };

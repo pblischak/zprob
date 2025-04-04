@@ -6,6 +6,13 @@ const Random = std.Random;
 const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
 const Gamma = @import("gamma.zig").Gamma;
+const GammaError = @import("gamma.zig").GammaError;
+
+pub const BetaError = error{
+    AlphaLessThanZero,
+    BetaLessThanZero,
+    XOutOfRange,
+} || GammaError;
 
 /// Beta distribution with parameters `alpha` > 0 and `beta` > 0.
 ///
@@ -18,11 +25,6 @@ pub fn Beta(comptime F: type) type {
         gamma: Gamma(F),
 
         const Self = @This();
-        const Error = error{
-            AlphaLessThanZero,
-            BetaLessThanZero,
-            XOutOfRange,
-        };
 
         /// Initializes a Beta struct with a pointer to a
         /// Pseudo-Random Number Generator.
@@ -36,12 +38,12 @@ pub fn Beta(comptime F: type) type {
         /// Generate a sample from a Beta distribution with parameters
         /// `alpha` > 0 and `beta` > 0. Invalid values passed as
         /// parameters will cause a panic.
-        pub fn sample(self: Self, alpha: F, beta: F) Error!F {
+        pub fn sample(self: Self, alpha: F, beta: F) BetaError!F {
             if (alpha <= 0) {
-                return Error.AlphaLessThanZero;
+                return BetaError.AlphaLessThanZero;
             }
             if (beta <= 0) {
-                return Error.BetaLessThanZero;
+                return BetaError.BetaLessThanZero;
             }
 
             if (alpha <= 1.0 and beta <= 1.0) {
@@ -78,8 +80,8 @@ pub fn Beta(comptime F: type) type {
                     }
                 }
             } else {
-                const x1: F = self.gamma.sample(alpha, 1.0);
-                const x2: F = self.gamma.sample(beta, 1.0);
+                const x1: F = try self.gamma.sample(alpha, 1.0);
+                const x2: F = try self.gamma.sample(beta, 1.0);
                 return x1 / (x1 + x2);
             }
         }
@@ -90,7 +92,7 @@ pub fn Beta(comptime F: type) type {
             alpha: F,
             beta: F,
             allocator: Allocator,
-        ) (Error || Allocator.Error)![]F {
+        ) (BetaError || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
                 res[i] = try self.sample(alpha, beta);
@@ -101,16 +103,16 @@ pub fn Beta(comptime F: type) type {
         /// For a Beta random variable, X, with parameters `alpha` > 0
         /// and `beta` > 0, return the probability that X is less than
         /// some value 0 <= x <= 1.
-        pub fn pdf(self: Self, x: F, alpha: F, beta: F) Error!F {
+        pub fn pdf(self: Self, x: F, alpha: F, beta: F) BetaError!F {
             _ = self;
             if (alpha <= 0) {
-                return Error.AlphaLessThanZero;
+                return BetaError.AlphaLessThanZero;
             }
             if (beta <= 0) {
-                return Error.BetaLessThanZero;
+                return BetaError.BetaLessThanZero;
             }
             if (x < 0 or x > 1) {
-                return Error.XOutOfRange;
+                return BetaError.XOutOfRange;
             }
 
             var value: F = 0.0;
@@ -129,13 +131,13 @@ pub fn Beta(comptime F: type) type {
         pub fn lnPdf(self: Self, x: F, alpha: F, beta: F) !F {
             _ = self;
             if (alpha <= 0) {
-                return Error.AlphaLessThanZero;
+                return BetaError.AlphaLessThanZero;
             }
             if (beta <= 0) {
-                return Error.BetaLessThanZero;
+                return BetaError.BetaLessThanZero;
             }
             if (x < 0 or x > 1) {
-                return Error.XOutOfRange;
+                return BetaError.XOutOfRange;
             }
 
             var value: F = 0.0;

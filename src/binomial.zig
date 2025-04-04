@@ -6,6 +6,8 @@ const Random = std.Random;
 const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
 
+pub const BinomialError = error{ KOutOfRange, ParamTooSmall, ParamTooBig };
+
 /// Binomial distribution with parameters `p` and `n`.
 ///
 /// [https://en.wikipedia.org/wiki/Binomial_distribution](https://en.wikipedia.org/wiki/Binomial_distribution)
@@ -16,7 +18,6 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
     return struct {
         rand: *Random,
         const Self = @This();
-        pub const Error = error{ KOutOfRange, ParamTooSmall, ParamTooBig };
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -34,12 +35,12 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
         ///   Binomial Random Variate Generation,
         ///   Communications of the ACM,
         ///   Volume 31, Number 2, February 1988, pages 216-222.
-        pub fn sample(self: Self, n: I, p: F) Error!I {
+        pub fn sample(self: Self, n: I, p: F) BinomialError!I {
             if (p < 0.0) {
-                return Error.ParamTooSmall;
+                return BinomialError.ParamTooSmall;
             }
             if (p > 1.0) {
-                return Error.ParamTooBig;
+                return BinomialError.ParamTooBig;
             }
             var al: F = 0.0;
             var alv: F = 0.0;
@@ -275,7 +276,7 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             n: I,
             p: F,
             allocator: Allocator,
-        ) (Error || Allocator.Error)![]I {
+        ) (BinomialError || Allocator.Error)![]I {
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
                 res[i] = try self.sample(n, p);
@@ -285,13 +286,13 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
 
         pub fn pmf(self: *Self, k: I, n: I, p: F) !F {
             if (p < 0.0) {
-                return Error.ParamTooSmall;
+                return BinomialError.ParamTooSmall;
             }
             if (p > 1.0) {
-                return Error.ParamTooBig;
+                return BinomialError.ParamTooBig;
             }
             if (k > n or k < 0) {
-                return Error.KOutOfRange;
+                return BinomialError.KOutOfRange;
             }
             const val = self.lnPmf(k, n, p) catch |err| {
                 return err;
@@ -302,13 +303,13 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
         pub fn lnPmf(self: *Self, k: I, n: I, p: F) !F {
             _ = self;
             if (p < 0.0) {
-                return Error.ParamTooSmall;
+                return BinomialError.ParamTooSmall;
             }
             if (p > 1.0) {
-                return Error.ParamTooBig;
+                return BinomialError.ParamTooBig;
             }
             if (k > n or k < 0) {
-                return Error.KOutOfRange;
+                return BinomialError.KOutOfRange;
             }
             const ln_coeff = try spec_fn.lnNChooseK(I, F, n, k);
             // zig fmt: off

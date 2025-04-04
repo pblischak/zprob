@@ -5,6 +5,8 @@ const Random = std.Random;
 
 const utils = @import("utils.zig");
 
+pub const NormalError = error{ MeanNaN, BadStdDev };
+
 /// Normal distribution with parameters `mu` (mean) and `sigma` (standard deviation).
 ///
 /// [https://en.wikipedia.org/wiki/Normal_distribution](https://en.wikipedia.org/wiki/Normal_distribution)
@@ -14,7 +16,6 @@ pub fn Normal(comptime F: type) type {
     return struct {
         rand: *Random,
         const Self = @This();
-        pub const Error = error{ MeanNaN, BadStdDev };
 
         const inv_sqrt_2pi: F = 1.0 / @sqrt(2.0 * math.pi);
 
@@ -24,16 +25,16 @@ pub fn Normal(comptime F: type) type {
             };
         }
 
-        fn check(mu: F, sigma: F) Error!void {
+        fn check(mu: F, sigma: F) NormalError!void {
             if (math.isNan(mu)) {
-                return Error.MeanNaN;
+                return NormalError.MeanNaN;
             }
             if (sigma <= 0 or math.isNan(sigma)) {
-                return Error.BadStdDev;
+                return NormalError.BadStdDev;
             }
         }
 
-        pub fn sample(self: Self, mu: F, sigma: F) Error!F {
+        pub fn sample(self: Self, mu: F, sigma: F) NormalError!F {
             try check(mu, sigma);
             const value: F = @floatCast(self.rand.floatNorm(f64));
             return value * sigma + mu;
@@ -45,7 +46,7 @@ pub fn Normal(comptime F: type) type {
             mu: F,
             sigma: F,
             allocator: Allocator,
-        ) (Error || Allocator.Error)![]F {
+        ) (NormalError || Allocator.Error)![]F {
             try check(mu, sigma);
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
@@ -54,7 +55,7 @@ pub fn Normal(comptime F: type) type {
             return res;
         }
 
-        pub fn pdf(self: Self, x: F, mu: F, sigma: F) Error!F {
+        pub fn pdf(self: Self, x: F, mu: F, sigma: F) NormalError!F {
             _ = self;
             try check(mu, sigma);
 
@@ -62,7 +63,7 @@ pub fn Normal(comptime F: type) type {
             return inv_sqrt_2pi / sigma * @exp(-0.5 * a * a);
         }
 
-        pub fn lnPdf(self: Self, x: F, mu: F, sigma: F) Error!F {
+        pub fn lnPdf(self: Self, x: F, mu: F, sigma: F) NormalError!F {
             _ = self;
             try check(mu, sigma);
             const a: F = (x - mu) / sigma;

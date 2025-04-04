@@ -3,8 +3,13 @@ const math = std.math;
 const Allocator = std.mem.Allocator;
 const Random = std.Random;
 
-const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
+
+pub const GammaError = error{
+    ShapeInvalid,
+    ScaleInvalid,
+    ParamsInfinite,
+};
 
 /// Gamma distribution with parameters `shape` and `scale` (`1 / rate`).
 ///
@@ -16,11 +21,6 @@ pub fn Gamma(comptime F: type) type {
         rand: *Random,
 
         const Self = @This();
-        pub const Error = error{
-            ShapeInvalid,
-            ScaleInvalid,
-            ParamsInfinite,
-        };
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -28,21 +28,21 @@ pub fn Gamma(comptime F: type) type {
             };
         }
 
-        fn check(shape: F, scale: F) Error!void {
+        fn check(shape: F, scale: F) GammaError!void {
             if (math.isNan(shape) or shape <= 0.0) {
-                return Error.ShapeInvalid;
+                return GammaError.ShapeInvalid;
             }
             if (math.isNan(scale) or scale <= 0.0) {
-                return Error.ScaleInvalid;
+                return GammaError.ScaleInvalid;
             }
             if (math.isInf(shape) and math.isInf(scale)) {
-                return Error.ParamsInfinite;
+                return GammaError.ParamsInfinite;
             }
         }
 
         // GEORGE MARSAGLIA and WAI WAN TSANG. A Simple Method for Generating Gamma Variables.
         // ACM Transactions on Mathematical Software, Vol. 26, September 2000, Pages 363–37.
-        pub fn sample(self: Self, shape: F, scale: F) Error!F {
+        pub fn sample(self: Self, shape: F, scale: F) GammaError!F {
             try check(shape, scale);
 
             if (shape < 1) {
@@ -92,7 +92,7 @@ pub fn Gamma(comptime F: type) type {
             shape: F,
             scale: F,
             allocator: Allocator,
-        ) (Error || Allocator.Error)![]F {
+        ) (GammaError || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
                 res[i] = try self.sample(shape, scale);
@@ -113,7 +113,7 @@ pub fn Gamma(comptime F: type) type {
             } else if (shape == 1) {
                 return @exp(-x / scale) / scale;
             } else {
-                const ln_gamma_val: F = try spec_fn.lnGammaFn(F, shape);
+                const ln_gamma_val: F = math.lgamma(F, shape);
                 return @exp((shape - 1) * @log(x / scale) - x / scale - ln_gamma_val) / scale;
             }
         }
