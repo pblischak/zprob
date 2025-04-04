@@ -4,6 +4,7 @@ const Allocator = std.mem.Allocator;
 const Random = std.Random;
 
 const Gamma = @import("gamma.zig").Gamma;
+const GammaError = @import("gamma.zig").GammaError;
 const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
 
@@ -18,7 +19,7 @@ pub fn Dirichlet(comptime K: usize, comptime F: type) type {
         gamma: Gamma(F),
 
         const Self = @This();
-        const Error = Gamma(F).Error;
+        const Error = GammaError;
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -59,12 +60,12 @@ pub fn Dirichlet(comptime K: usize, comptime F: type) type {
             return res;
         }
 
-        pub fn pdf(self: Self, x_vec: [K]F, alpha_vec: [K]F) !F {
-            const val = try self.lnPdf(x_vec, alpha_vec);
+        pub fn pdf(self: Self, x_vec: [K]F, alpha_vec: [K]F) F {
+            const val = self.lnPdf(x_vec, alpha_vec);
             return @exp(val);
         }
 
-        pub fn lnPdf(self: Self, x_vec: [K]F, alpha_vec: [K]F) !F {
+        pub fn lnPdf(self: Self, x_vec: [K]F, alpha_vec: [K]F) F {
             _ = self;
             var numerator: F = 0.0;
 
@@ -72,26 +73,26 @@ pub fn Dirichlet(comptime K: usize, comptime F: type) type {
                 numerator += (alpha_vec[i] - 1.0) * @log(x);
             }
 
-            const ln_multi_beta = try lnMultivariateBeta(F, alpha_vec);
+            const ln_multi_beta = lnMultivariateBeta(F, alpha_vec[0..]);
             return numerator - ln_multi_beta;
         }
     };
 }
 
-fn multivariateBeta(comptime F: type, alpha_vec: []const F) !F {
+fn multivariateBeta(comptime F: type, alpha_vec: []const F) F {
     return @exp(lnMultivariateBeta(F, alpha_vec));
 }
 
-fn lnMultivariateBeta(comptime F: type, alpha_vec: []const F) !F {
+fn lnMultivariateBeta(comptime F: type, alpha_vec: []const F) F {
     var numerator: F = undefined;
     var alpha_sum: F = 0.0;
 
     for (alpha_vec) |alpha| {
-        numerator += try spec_fn.lnGammaFn(F, alpha);
+        numerator += math.lgamma(F, alpha);
         alpha_sum += alpha;
     }
 
-    const ln_gamma = try spec_fn.lnGammaFn(F, alpha_sum);
+    const ln_gamma = math.lgamma(F, alpha_sum);
     return numerator - ln_gamma;
 }
 
