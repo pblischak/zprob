@@ -3,6 +3,7 @@ const Allocator = std.mem.Allocator;
 const Random = std.Random;
 const utils = @import("utils.zig");
 
+pub const BernoulliError = error{ ParamTooSmall, ParamTooBig };
 /// Bernoulli distribution with parameter `p`.
 ///
 /// [https://en.wikipedia.org/wiki/Bernoulli_distribution](https://en.wikipedia.org/wiki/Bernoulli_distribution)
@@ -14,20 +15,18 @@ pub fn Bernoulli(comptime I: type, comptime F: type) type {
         rand: *Random,
         const Self = @This();
 
-        const Error = error{ ParamTooSmall, ParamTooBig };
-
         pub fn init(rand: *Random) Self {
             return Self{ .rand = rand };
         }
 
         /// Generate a random sample from a Bernoulli distribution with
         /// probability of success `p`.
-        pub fn sample(self: Self, p: F) Error!I {
+        pub fn sample(self: Self, p: F) BernoulliError!I {
             if (p < 0.0) {
-                return Error.ParamTooSmall;
+                return BernoulliError.ParamTooSmall;
             }
             if (p > 1.0) {
-                return Error.ParamTooBig;
+                return BernoulliError.ParamTooBig;
             }
             // if (p < 0.0 or p > 1.0) {
             //     @panic("Parameter `p` must be within the range 0 < p < 1.");
@@ -48,12 +47,12 @@ pub fn Bernoulli(comptime I: type, comptime F: type) type {
             size: usize,
             p: F,
             allocator: Allocator,
-        ) (Error || Allocator.Error)![]I {
+        ) (BernoulliError || Allocator.Error)![]I {
             if (p < 0.0) {
-                return Error.ParamTooSmall;
+                return BernoulliError.ParamTooSmall;
             }
             if (p > 1.0) {
-                return Error.ParamTooBig;
+                return BernoulliError.ParamTooBig;
             }
             // if (p < 0.0 or p > 1.0) {
             //     @panic("Parameter `p` must be within the range 0 < p < 1.");

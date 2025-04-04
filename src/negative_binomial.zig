@@ -4,9 +4,16 @@ const Allocator = std.mem.Allocator;
 const Random = std.Random;
 
 const Gamma = @import("gamma.zig").Gamma;
+const GammaError = @import("gamma.zig").GammaError;
 const Poisson = @import("poisson.zig").Poisson;
+const PoissonError = @import("poisson.zig").PoissonError;
 const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
+
+pub const NegativeBinomialError = error{
+    BadNumSuccesses,
+    BadProbSuccess,
+} || GammaError || PoissonError;
 
 /// Negative binomial distribution with parameters `p` (probability of success)
 ///  and `r` (number of successes).
@@ -22,10 +29,6 @@ pub fn NegativeBinomial(comptime I: type, comptime F: type) type {
         gamma: Gamma(F),
 
         const Self = @This();
-        pub const Error = error{
-            BadNumSuccesses,
-            BadProbSuccess,
-        } || Gamma(F).Error || Poisson(I, F).Error;
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -35,17 +38,17 @@ pub fn NegativeBinomial(comptime I: type, comptime F: type) type {
             };
         }
 
-        fn check(r: I, p: F) Error!void {
+        fn check(r: I, p: F) NegativeBinomialError!void {
             if (r <= 0) {
-                return Error.BadNumSuccesses;
+                return NegativeBinomialError.BadNumSuccesses;
             }
 
             if (p <= 0.0 or 1.0 <= p) {
-                return Error.BadProbSuccess;
+                return NegativeBinomialError.BadProbSuccess;
             }
         }
 
-        pub fn sample(self: Self, r: I, p: F) Error!I {
+        pub fn sample(self: Self, r: I, p: F) NegativeBinomialError!I {
             try check(r, p);
             const r_f = @as(F, @floatFromInt(r));
             var a: F = undefined;
@@ -65,7 +68,7 @@ pub fn NegativeBinomial(comptime I: type, comptime F: type) type {
             r: I,
             p: F,
             allocator: Allocator,
-        ) (Error || Allocator.Error)![]I {
+        ) (NegativeBinomialError || Allocator.Error)![]I {
             try check(r, p);
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
@@ -74,15 +77,16 @@ pub fn NegativeBinomial(comptime I: type, comptime F: type) type {
             return res;
         }
 
-        pub fn pmf(self: Self, k: I, r: I, p: F) F {
-            return @exp(self.lnPmf(k, r, p));
+        pub fn pmf(self: Self, k: I, r: I, p: F) !F {
+            return @exp(try self.lnPmf(k, r, p));
         }
 
-        pub fn lnPmf(self: Self, k: I, r: I, p: F) F {
+        pub fn lnPmf(self: Self, k: I, r: I, p: F) !F {
             _ = self;
             const k_f = @as(F, @floatFromInt(k));
             const r_f = @as(F, @floatFromInt(r));
-            return spec_fn.lnNChooseK(I, F, k + r - 1, k) + k_f * @log(1.0 - p) + r_f * @log(p);
+            const coeff = try spec_fn.lnNChooseK(I, F, k + r - 1, k);
+            return coeff + k_f * @log(1.0 - p) + r_f * @log(p);
         }
     };
 }

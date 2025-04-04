@@ -4,7 +4,7 @@ const Allocator = std.mem.Allocator;
 const Random = std.Random;
 
 const Gamma = @import("gamma.zig").Gamma;
-const spec_fn = @import("special_functions.zig");
+const GammaError = @import("gamma.zig").GammaError;
 const utils = @import("utils.zig");
 
 /// Chi-squared distribution with degrees of freedom `k`.
@@ -19,7 +19,7 @@ pub fn ChiSquared(comptime I: type, comptime F: type) type {
         gamma: Gamma(F),
 
         const Self = @This();
-        const Error = Gamma(F).Error;
+        const Error = GammaError;
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -72,7 +72,7 @@ pub fn ChiSquared(comptime I: type, comptime F: type) type {
         pub fn lnPdf(self: Self, x: F, k: I) !F {
             _ = self;
             const b: F = @as(F, @floatFromInt(k)) / 2.0;
-            const gamma_val = try spec_fn.lnGammaFn(F, b);
+            const gamma_val = math.lgamma(F, b);
             return -(b * @log(2.0) + gamma_val) - b + (b - 1.0) * @log(x);
         }
     };

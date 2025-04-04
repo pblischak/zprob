@@ -5,6 +5,8 @@ const Random = std.Random;
 
 const utils = @import("utils.zig");
 
+pub const CauchyError = error{ScaleTooSmall};
+
 /// Cauchy distribution with median parameter `x0` and scale parameter `gamma`.
 ///
 /// [https://en.wikipedia.org/wiki/Cauchy_distribution](https://en.wikipedia.org/wiki/Cauchy_distribution)
@@ -15,7 +17,6 @@ pub fn Cauchy(comptime F: type) type {
         rand: *Random,
 
         const Self = @This();
-        const Error = error{ScaleTooSmall};
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -23,9 +24,9 @@ pub fn Cauchy(comptime F: type) type {
             };
         }
 
-        pub fn sample(self: Self, x0: F, gamma: F) Error!F {
+        pub fn sample(self: Self, x0: F, gamma: F) CauchyError!F {
             if (gamma <= 0) {
-                return Error.ScaleTooSmall;
+                return CauchyError.ScaleTooSmall;
             }
             var u: F = @floatCast(self.rand.float(f64));
             // u cannot be 0.5, so if by chance it is,
@@ -43,10 +44,10 @@ pub fn Cauchy(comptime F: type) type {
             x0: F,
             gamma: F,
             allocator: Allocator,
-        ) (Error || Allocator.Error)![]F {
+        ) (CauchyError || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size);
             if (gamma <= 0) {
-                return Error.ScaleTooSmall;
+                return CauchyError.ScaleTooSmall;
             }
             for (0..size) |i| {
                 res[i] = try self.sample(x0, gamma);
@@ -54,17 +55,17 @@ pub fn Cauchy(comptime F: type) type {
             return res;
         }
 
-        pub fn pdf(self: Self, x: F, x0: F, gamma: F) Error!F {
+        pub fn pdf(self: Self, x: F, x0: F, gamma: F) CauchyError!F {
             _ = self;
             if (gamma <= 0) {
-                return Error.ScaleTooSmall;
+                return CauchyError.ScaleTooSmall;
             }
             return (1.0 / math.pi) * (gamma / (((x - x0) * (x - x0)) + (gamma * gamma)));
         }
 
-        pub fn lnPdf(self: Self, x: F, x0: F, gamma: F) Error!F {
+        pub fn lnPdf(self: Self, x: F, x0: F, gamma: F) CauchyError!F {
             if (gamma <= 0) {
-                return Error.ScaleTooSmall;
+                return CauchyError.ScaleTooSmall;
             }
             return @log(try self.pdf(x, x0, gamma));
         }

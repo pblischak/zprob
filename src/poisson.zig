@@ -6,6 +6,8 @@ const Random = std.Random;
 const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
 
+pub const PoissonError = error{BadLambda} || spec_fn.Error;
+
 /// Poisson distribution with parameter `lambda`.
 ///
 /// [https://en.wikipedia.org/wiki/Poisson_distribution](https://en.wikipedia.org/wiki/Poisson_distribution)
@@ -17,7 +19,6 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
         rand: *Random,
 
         const Self = @This();
-        pub const Error = error{BadLambda} || spec_fn.Error;
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -25,7 +26,7 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
             };
         }
 
-        pub fn sample(self: Self, lambda: F) Error!I {
+        pub fn sample(self: Self, lambda: F) PoissonError!I {
             if (lambda < 17.0) {
                 if (lambda < 1.0e-6) {
                     if (lambda == 0.0) {
@@ -33,7 +34,7 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
                     }
 
                     if (lambda < 0.0) {
-                        return Error.BadLambda;
+                        return PoissonError.BadLambda;
                     }
 
                     return self.low(lambda);
@@ -53,7 +54,7 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
             size: usize,
             lambda: F,
             allocator: Allocator,
-        ) (Error || Allocator.Error)![]I {
+        ) (PoissonError || Allocator.Error)![]I {
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
                 res[i] = try self.sample(lambda);
@@ -111,7 +112,7 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
             }
         }
 
-        fn ratioUniforms(self: Self, lambda: F) Error!I {
+        fn ratioUniforms(self: Self, lambda: F) PoissonError!I {
             var u: F = undefined;
             var lf: F = undefined;
             var x: F = undefined;
@@ -151,7 +152,7 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
         }
 
         pub fn pmf(self: Self, k: I, lambda: F) !F {
-            return @exp(self.lnPmf(k, lambda));
+            return @exp(try self.lnPmf(k, lambda));
         }
 
         pub fn lnPmf(self: Self, k: I, lambda: F) !F {
