@@ -4,8 +4,11 @@ const Allocator = std.mem.Allocator;
 const Random = std.Random;
 
 const Binomial = @import("binomial.zig").Binomial;
+const BinomialError = @import("binomial.zig").BinomialError;
 const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
+
+pub const MultinomialError = error{ProbSumNotOne} || BinomialError;
 
 /// Multinomial distribution with parameters `n` (number of totol observations)
 /// and `p_vec` (probability of observing each category).
@@ -20,7 +23,6 @@ pub fn Multinomial(comptime K: usize, comptime I: type, comptime F: type) type {
         binomial: Binomial(I, F),
 
         const Self = @This();
-        const Error = error{ProbSumNotOne} || Binomial(I, F).Error;
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -33,9 +35,9 @@ pub fn Multinomial(comptime K: usize, comptime I: type, comptime F: type) type {
             self: Self,
             n: I,
             p_vec: [K]F,
-        ) Error![K]I {
+        ) MultinomialError![K]I {
             if (!utils.sumToOne(F, p_vec[0..], @sqrt(math.floatEps(F)))) {
-                return Error.ProbSumNotOne;
+                return MultinomialError.ProbSumNotOne;
             }
             var out_vec: [K]I = undefined;
 
@@ -67,7 +69,7 @@ pub fn Multinomial(comptime K: usize, comptime I: type, comptime F: type) type {
             n: I,
             p_vec: [K]F,
             allocator: Allocator,
-        ) (Error || Allocator.Error)![]I {
+        ) (MultinomialError || Allocator.Error)![]I {
             var res = try allocator.alloc(I, K * size);
             var tmp: [K]I = undefined;
             var start: usize = 0;
@@ -84,32 +86,32 @@ pub fn Multinomial(comptime K: usize, comptime I: type, comptime F: type) type {
 
         pub fn pmf(
             self: Self,
-            k_vec: []const I,
-            p_vec: []const F,
-        ) (Error || spec_fn.Error)!F {
+            k_vec: [K]I,
+            p_vec: [K]F,
+        ) (MultinomialError || spec_fn.Error)!F {
             if (!utils.sumToOne(F, p_vec[0..], @sqrt(math.floatEps(F)))) {
-                return Error.ProbSumNotOne;
+                return MultinomialError.ProbSumNotOne;
             }
             return @exp(try self.lnPmf(k_vec, p_vec));
         }
 
         pub fn lnPmf(
             self: Self,
-            k_vec: []const I,
-            p_vec: []const F,
-        ) (Error || spec_fn.Error)!F {
+            k_vec: [K]I,
+            p_vec: [K]F,
+        ) (MultinomialError || spec_fn.Error)!F {
             if (!utils.sumToOne(F, p_vec[0..], @sqrt(math.floatEps(F)))) {
-                return Error.ProbSumNotOne;
+                return MultinomialError.ProbSumNotOne;
             }
             _ = self;
             var n: I = 0;
-            for (k_vec) |x| {
+            for (k_vec[0..]) |x| {
                 n += x;
             }
 
             var coeff: F = try spec_fn.lnFactorial(I, F, n);
             var probs: F = undefined;
-            for (k_vec, 0..) |k, i| {
+            for (k_vec[0..], 0..) |k, i| {
                 coeff -= try spec_fn.lnFactorial(I, F, k);
                 probs += @as(F, @floatFromInt(k)) * @log(p_vec[i]);
             }
