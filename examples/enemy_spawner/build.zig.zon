@@ -1,5 +1,5 @@
 .{
-    .name = "enemy_spawner",
+    .name = .enemy_spawner,
     .version = "0.2.0",
     .paths = .{
         "build.zig",
@@ -12,4 +12,5 @@
             .path = "../../",
         },
     },
+    .fingerprint = 0x6887d9f09b5ea4b5,
 }
