@@ -6,13 +6,15 @@ const Random = std.Random;
 
 const utils = @import("utils.zig");
 
+pub const WeightedError = error{ ProbSumNotOne, UnequalLengths };
+
 pub fn Weighted(comptime T: type, comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
-
         rand: *Random,
+
+        const Self = @This();
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -20,9 +22,16 @@ pub fn Weighted(comptime T: type, comptime F: type) type {
             };
         }
 
-        pub fn sample(self: Self, items: []const T, weights: []const F) T {
-            assert(items.len == weights.len);
-            assert(utils.sumToOne(F, weights, 1.0e-6));
+        /// Sample from `items` using a given weight for each item. Assumes
+        /// that `weights` sums to one.
+        pub fn sample(self: Self, items: []const T, weights: []const F) WeightedError!T {
+            if (items.len != weights.len) {
+                return WeightedError.UnequalLengths;
+            }
+
+            if (!utils.sumToOne(F, weights, @sqrt(math.floatEps(F)))) {
+                return WeightedError.ProbSumNotOne;
+            }
             const u: F = @floatCast(self.rand.float(f64));
 
             var lower_bound: F = 0.0;
@@ -41,12 +50,17 @@ pub fn Weighted(comptime T: type, comptime F: type) type {
             items: []const T,
             weights: []const F,
             allocator: Allocator,
-        ) ![]T {
-            assert(items.len == weights.len);
-            assert(utils.sumToOne(F, weights, 1.0e-6));
+        ) (WeightedError || Allocator.Error)![]T {
+            if (items.len != weights.len) {
+                return WeightedError.UnequalLengths;
+            }
+
+            if (!utils.sumToOne(F, weights, @sqrt(math.floatEps(F)))) {
+                return WeightedError.ProbSumNotOne;
+            }
             var res = try allocator.alloc(T, size);
             for (0..size) |i| {
-                res[i] = self.sample(items, weights);
+                res[i] = try self.sample(items, weights);
             }
             return res;
         }
@@ -62,7 +76,7 @@ test "Sample Weighted UInts" {
     const items = [_]u32{ 1, 2, 3, 4 };
     const weights = [_]f64{ 0.1, 0.5, 0.2, 0.2 };
 
-    const val = weighted.sample(items[0..], weights[0..]);
+    const val = try weighted.sample(items[0..], weights[0..]);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -99,7 +113,7 @@ test "Sample Weighted Uint Expectation" {
     var expectation = [_]f64{ 0.0, 0.0, 0.0, 0.0 };
 
     for (0..10_000) |_| {
-        const val = weighted.sample(items[0..], weights[0..]);
+        const val = try weighted.sample(items[0..], weights[0..]);
         const idx: usize = @intCast(val - 1);
         expectation[idx] += 1.0;
     }
@@ -128,6 +142,6 @@ test "Sample Weighted Struct" {
     };
     const weights = [_]f64{ 0.2, 0.3, 0.4, 0.1 };
 
-    const val = weighted.sample(items[0..], weights[0..]);
+    const val = try weighted.sample(items[0..], weights[0..]);
     std.debug.print("\n{any}\n", .{val});
 }
