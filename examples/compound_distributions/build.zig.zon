@@ -1,5 +1,5 @@
 .{
-    .name = "compound_distributions",
+    .name = .compound_distributions,
     .version = "0.2.0",
     .paths = .{
         "build.zig",
@@ -12,4 +12,5 @@
             .path = "../../",
         },
     },
+    .fingerprint = 0xb2f6052d1f0580ee,
 }
