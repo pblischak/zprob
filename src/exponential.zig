@@ -5,6 +5,8 @@ const Random = std.Random;
 
 const utils = @import("utils.zig");
 
+pub const ExponentialError = error{LambdaInvalid};
+
 /// Exponential distribution with parameter `lambda`.
 ///
 /// [https://en.wikipedia.org/wiki/Exponential_distribution](https://en.wikipedia.org/wiki/Exponential_distribution)
@@ -12,9 +14,9 @@ pub fn Exponential(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
-
         rand: *Random,
+
+        const Self = @This();
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -22,7 +24,10 @@ pub fn Exponential(comptime F: type) type {
             };
         }
 
-        pub fn sample(self: Self, lambda: F) F {
+        pub fn sample(self: Self, lambda: F) ExponentialError!F {
+            if (math.isNan(lambda) or lambda <= 0) {
+                return ExponentialError.LambdaInvalid;
+            }
             const u: F = @floatCast(self.rand.float(f64));
             const value = -@log(1.0 - u) / lambda;
             return value;
@@ -33,16 +38,19 @@ pub fn Exponential(comptime F: type) type {
             size: usize,
             lambda: F,
             allocator: Allocator,
-        ) ![]F {
+        ) (ExponentialError || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
-                res[i] = self.sample(lambda);
+                res[i] = try self.sample(lambda);
             }
             return res;
         }
 
-        pub fn pdf(self: Self, x: F, lambda: F) F {
+        pub fn pdf(self: Self, x: F, lambda: F) ExponentialError!F {
             _ = self;
+            if (math.isNan(lambda) or lambda <= 0) {
+                return ExponentialError.LambdaInvalid;
+            }
             if (x < 0) {
                 return 0.0;
             }
@@ -50,11 +58,14 @@ pub fn Exponential(comptime F: type) type {
             return value;
         }
 
-        pub fn lnPdf(self: Self, x: F, lambda: F) F {
+        pub fn lnPdf(self: Self, x: F, lambda: F) ExponentialError!F {
+            if (math.isNan(lambda) or lambda <= 0) {
+                return ExponentialError.LambdaInvalid;
+            }
             if (x < 0) {
                 @panic("Cannot evaluate x less than 0.");
             }
-            const value = self.pdf(x, lambda);
+            const value = try self.pdf(x, lambda);
             return @log(value);
         }
     };
@@ -66,7 +77,7 @@ test "Sample Exponential" {
     var rand = prng.random();
 
     var exponential = Exponential(f64).init(&rand);
-    const val = exponential.sample(5.0);
+    const val = try exponential.sample(5.0);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -93,7 +104,7 @@ test "Exponential Mean" {
     for (lambda_vec) |lambda| {
         var sum: f64 = 0.0;
         for (0..10_000) |_| {
-            sum += exponential.sample(lambda);
+            sum += try exponential.sample(lambda);
         }
         const mean = 1.0 / lambda;
         const avg = sum / 10_000.0;
@@ -110,11 +121,11 @@ test "Exponential with Different Types" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    const float_types = [_]type{ f32, f64, f128 };
+    const float_types = [_]type{ f32, f64 };
 
     inline for (float_types) |f| {
         var exponential = Exponential(f).init(&rand);
-        const val = exponential.sample(5.0);
+        const val = try exponential.sample(5.0);
         std.debug.print("Exponential({any}):\t{}\n", .{ f, val });
     }
 }

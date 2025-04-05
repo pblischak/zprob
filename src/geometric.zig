@@ -5,6 +5,8 @@ const Random = std.Random;
 
 const utils = @import("utils.zig");
 
+pub const GeometricError = error{ParamInvalid};
+
 /// Geometric distribution with parameter `p`. Records the number of trials needed to get the
 ///  first success.
 ///
@@ -14,8 +16,15 @@ pub fn Geometric(comptime I: type, comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
         rand: *Random,
+
+        const Self = @This();
+
+        fn check(p: F) GeometricError!void {
+            if (p <= 0 or p > 1 or math.isNan(p)) {
+                return GeometricError.ParamInvalid;
+            }
+        }
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -23,7 +32,8 @@ pub fn Geometric(comptime I: type, comptime F: type) type {
             };
         }
 
-        pub fn sample(self: Self, p: F) I {
+        pub fn sample(self: Self, p: F) GeometricError!I {
+            try check(p);
             const u: F = @floatCast(self.rand.float(f64));
             return @as(I, @intFromFloat(@log(u) / @log(1.0 - p))) + 1;
         }
@@ -33,16 +43,17 @@ pub fn Geometric(comptime I: type, comptime F: type) type {
             size: usize,
             p: F,
             allocator: Allocator,
-        ) ![]I {
+        ) (GeometricError || Allocator.Error)![]I {
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
-                res[i] = self.sample(p);
+                res[i] = try self.sample(p);
             }
             return res;
         }
 
-        pub fn pmf(self: Self, k: I, p: F) F {
+        pub fn pmf(self: Self, k: I, p: F) GeometricError!F {
             _ = self;
+            try check(p);
             return @as(F, math.pow(
                 f64,
                 @floatCast(1.0 - p),
@@ -50,8 +61,9 @@ pub fn Geometric(comptime I: type, comptime F: type) type {
             )) * p;
         }
 
-        pub fn lnPmf(self: Self, k: I, p: F) F {
+        pub fn lnPmf(self: Self, k: I, p: F) GeometricError!F {
             _ = self;
+            try check(p);
             return (@as(F, @floatFromInt(k)) - 1.0) * @log(1.0 - p) + @log(p);
         }
     };
@@ -63,7 +75,7 @@ test "Sample Geometric" {
     var rand = prng.random();
 
     var geometric = Geometric(u32, f64).init(&rand);
-    const val = geometric.sample(0.2);
+    const val = try geometric.sample(0.2);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -92,7 +104,7 @@ test "Geometric Mean" {
         var sum: f64 = 0.0;
         var samp: u32 = undefined;
         for (0..10_000) |_| {
-            samp = geometric.sample(p);
+            samp = try geometric.sample(p);
             sum += @as(f64, @floatFromInt(samp));
         }
         const avg: f64 = sum / 10_000.0;
@@ -118,13 +130,13 @@ test "Geometric with Different Types" {
     var rand = prng.random();
 
     const int_types = [_]type{ u8, u16, u32, u64, u128, i8, i16, i32, i64, i128 };
-    const float_types = [_]type{ f32, f64, f128 };
+    const float_types = [_]type{ f32, f64 };
 
     std.debug.print("\n", .{});
     inline for (int_types) |i| {
         inline for (float_types) |f| {
             var geometric = Geometric(i, f).init(&rand);
-            const val = geometric.sample(0.2);
+            const val = try geometric.sample(0.2);
             std.debug.print("Binomial({any}, {any}):\t{}\n", .{ i, f, val });
         }
     }
@@ -136,8 +148,8 @@ test "Geometric PMF" {
     var rand = prng.random();
 
     var geometric = Geometric(u32, f64).init(&rand);
-    const val = geometric.pmf(5, 0.4);
-    const ln_val = geometric.lnPmf(5, 0.4);
+    const val = try geometric.pmf(5, 0.4);
+    const ln_val = try geometric.lnPmf(5, 0.4);
     std.debug.print(
         "\nP(k = 5; p = 0.4) = {}\t{}\n",
         .{ val, @exp(ln_val) },

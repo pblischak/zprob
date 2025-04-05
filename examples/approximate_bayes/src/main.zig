@@ -135,7 +135,7 @@ pub fn main() !void {
     // Number of prior samples to save for estimation
     const NSAVE: usize = 250;
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa = std.heap.DebugAllocator(.{}){};
     const allocator = gpa.allocator();
     defer {
         const status = gpa.deinit();
@@ -167,7 +167,7 @@ pub fn main() !void {
 
     for (mu_prior, sigma_prior, 0..) |mu, sigma, i| {
         for (0..data.len) |j| {
-            sim_data[j] = env.rNormal(mu, sigma);
+            sim_data[j] = try env.rNormal(mu, sigma);
         }
         distances[i] = Distance{
             .value = dist(data[0..], sim_data[0..]),

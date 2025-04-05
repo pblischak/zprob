@@ -4,9 +4,16 @@ const Allocator = std.mem.Allocator;
 const Random = std.Random;
 
 const Gamma = @import("gamma.zig").Gamma;
+const GammaError = @import("gamma.zig").GammaError;
 const Poisson = @import("poisson.zig").Poisson;
+const PoissonError = @import("poisson.zig").PoissonError;
 const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
+
+pub const NegativeBinomialError = error{
+    BadNumSuccesses,
+    BadProbSuccess,
+} || GammaError || PoissonError;
 
 /// Negative binomial distribution with parameters `p` (probability of success)
 ///  and `r` (number of successes).
@@ -17,11 +24,11 @@ pub fn NegativeBinomial(comptime I: type, comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
-
         rand: *Random,
         poisson: Poisson(I, F),
         gamma: Gamma(F),
+
+        const Self = @This();
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -31,28 +38,26 @@ pub fn NegativeBinomial(comptime I: type, comptime F: type) type {
             };
         }
 
-        pub fn sample(self: Self, n: I, p: F) I {
+        fn check(r: I, p: F) NegativeBinomialError!void {
+            if (r <= 0) {
+                return NegativeBinomialError.BadNumSuccesses;
+            }
+
+            if (p <= 0.0 or 1.0 <= p) {
+                return NegativeBinomialError.BadProbSuccess;
+            }
+        }
+
+        pub fn sample(self: Self, r: I, p: F) NegativeBinomialError!I {
+            try check(r, p);
+            const r_f = @as(F, @floatFromInt(r));
             var a: F = undefined;
-            var r: F = undefined;
             var y: F = undefined;
             var value: I = undefined;
 
-            if (n <= 0) {
-                @panic("Number of trials cannot be negative...");
-            }
-
-            if (p <= 0.0) {
-                @panic("Probability of success cannot be less than or equal to 0...");
-            }
-
-            if (1.0 <= p) {
-                @panic("Probability of success cannot be greater than or equal to 1...");
-            }
-
-            r = @as(F, @floatFromInt(n));
             a = (1.0 - p) / p;
-            y = self.gamma.sample(a, r);
-            value = self.poisson.sample(y);
+            y = try self.gamma.sample(a, r_f);
+            value = try self.poisson.sample(y);
 
             return value;
         }
@@ -60,26 +65,28 @@ pub fn NegativeBinomial(comptime I: type, comptime F: type) type {
         pub fn sampleSlice(
             self: Self,
             size: usize,
-            n: I,
+            r: I,
             p: F,
             allocator: Allocator,
-        ) ![]I {
+        ) (NegativeBinomialError || Allocator.Error)![]I {
+            try check(r, p);
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
-                res[i] = self.sample(n, p);
+                res[i] = try self.sample(r, p);
             }
             return res;
         }
 
-        pub fn pmf(self: Self, k: I, r: I, p: F) F {
-            return @exp(self.lnPmf(k, r, p));
+        pub fn pmf(self: Self, k: I, r: I, p: F) !F {
+            return @exp(try self.lnPmf(k, r, p));
         }
 
-        pub fn lnPmf(self: Self, k: I, r: I, p: F) F {
+        pub fn lnPmf(self: Self, k: I, r: I, p: F) !F {
             _ = self;
             const k_f = @as(F, @floatFromInt(k));
             const r_f = @as(F, @floatFromInt(r));
-            return spec_fn.lnNChooseK(I, F, k + r - 1, k) + k_f * @log(1.0 - p) + r_f * @log(p);
+            const coeff = try spec_fn.lnNChooseK(I, F, k + r - 1, k);
+            return coeff + k_f * @log(1.0 - p) + r_f * @log(p);
         }
     };
 }
@@ -90,7 +97,7 @@ test "Sample Negative Binomial" {
     var rand = prng.random();
 
     var neg_binomial = NegativeBinomial(u32, f64).init(&rand);
-    const val = neg_binomial.sample(10, 0.9);
+    const val = try neg_binomial.sample(10, 0.9);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -119,7 +126,7 @@ test "Negative Binomial Mean" {
     for (p_vec) |p| {
         var sum: u32 = 0;
         for (0..10_000) |_| {
-            sum += neg_binomial.sample(10, p);
+            sum += try neg_binomial.sample(10, p);
         }
         const mean = 10.0 * (1.0 - p) / p;
         const variance = 10.0 * (1.0 - p) / p / p;
@@ -138,13 +145,13 @@ test "Negative Binomial with Different Types" {
     var rand = prng.random();
 
     const int_types = [_]type{ u8, u16, u32, u64, u128, i8, i16, i32, i64, i128 };
-    const float_types = [_]type{ f32, f64, f128 };
+    const float_types = [_]type{ f32, f64 };
 
     std.debug.print("\n", .{});
     inline for (int_types) |i| {
         inline for (float_types) |f| {
             var neg_binomial = NegativeBinomial(i, f).init(&rand);
-            const val = neg_binomial.sample(10, 0.9);
+            const val = try neg_binomial.sample(10, 0.9);
             std.debug.print(
                 "NegativeBinomial({any}, {any}): {}\n",
                 .{ i, f, val },

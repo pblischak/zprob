@@ -10,8 +10,8 @@ pub fn ensureIntegerType(comptime I: type) bool {
 
 /// Comptime check for float types.
 pub fn ensureFloatType(comptime F: type) bool {
-    if (F == f16) {
-        @compileError("Float type f16 not supported");
+    if (F != f32 and F != f64) {
+        @compileError("Only f32 and f64 float types are supported");
     }
     return switch (@typeInfo(F)) {
         .comptime_float, .float => true,

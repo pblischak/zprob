@@ -14,7 +14,7 @@ pub fn main() !void {
 
     var sample: i32 = 0;
     for (0..100) |_| {
-        sample = binomial.sample(50, 0.5);
+        sample = try binomial.sample(50, 0.5);
         std.debug.print("{}\n", .{sample});
     }
 }

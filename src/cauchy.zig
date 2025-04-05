@@ -5,6 +5,8 @@ const Random = std.Random;
 
 const utils = @import("utils.zig");
 
+pub const CauchyError = error{ScaleTooSmall};
+
 /// Cauchy distribution with median parameter `x0` and scale parameter `gamma`.
 ///
 /// [https://en.wikipedia.org/wiki/Cauchy_distribution](https://en.wikipedia.org/wiki/Cauchy_distribution)
@@ -12,9 +14,9 @@ pub fn Cauchy(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
-
         rand: *Random,
+
+        const Self = @This();
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -22,7 +24,10 @@ pub fn Cauchy(comptime F: type) type {
             };
         }
 
-        pub fn sample(self: Self, x0: F, gamma: F) F {
+        pub fn sample(self: Self, x0: F, gamma: F) CauchyError!F {
+            if (gamma <= 0) {
+                return CauchyError.ScaleTooSmall;
+            }
             var u: F = @floatCast(self.rand.float(f64));
             // u cannot be 0.5, so if by chance it is,
             // we need to draw again
@@ -39,23 +44,46 @@ pub fn Cauchy(comptime F: type) type {
             x0: F,
             gamma: F,
             allocator: Allocator,
-        ) ![]F {
+        ) (CauchyError || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size);
+            if (gamma <= 0) {
+                return CauchyError.ScaleTooSmall;
+            }
             for (0..size) |i| {
-                res[i] = self.sample(x0, gamma);
+                res[i] = try self.sample(x0, gamma);
             }
             return res;
         }
 
-        pub fn pdf(self: Self, x: F, x0: F, gamma: F) F {
+        pub fn pdf(self: Self, x: F, x0: F, gamma: F) CauchyError!F {
             _ = self;
+            if (gamma <= 0) {
+                return CauchyError.ScaleTooSmall;
+            }
             return (1.0 / math.pi) * (gamma / (((x - x0) * (x - x0)) + (gamma * gamma)));
         }
 
-        pub fn lnPdf(self: Self, x: F, x0: F, gamma: F) F {
-            return @log(self.pdf(x, x0, gamma));
+        pub fn lnPdf(self: Self, x: F, x0: F, gamma: F) CauchyError!F {
+            if (gamma <= 0) {
+                return CauchyError.ScaleTooSmall;
+            }
+            return @log(try self.pdf(x, x0, gamma));
         }
     };
+}
+
+test "Cauchy gamma (scale) <= 0" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+    var cauchy = Cauchy(f64).init(&rand);
+
+    const val1 = cauchy.sample(2.0, -1.0);
+    try std.testing.expectError(error.ScaleTooSmall, val1);
+    const val2 = cauchy.pdf(1.0, 2.0, -1.0);
+    try std.testing.expectError(error.ScaleTooSmall, val2);
+    const val3 = cauchy.lnPdf(1.0, 2.0, -1.0);
+    try std.testing.expectError(error.ScaleTooSmall, val3);
 }
 
 test "Sample Cauchy" {
@@ -64,7 +92,7 @@ test "Sample Cauchy" {
     var rand = prng.random();
     var cauchy = Cauchy(f64).init(&rand);
 
-    const val = cauchy.sample(2.0, 1.0);
+    const val = try cauchy.sample(2.0, 1.0);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -111,12 +139,12 @@ test "Cauchy with Different Types" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    const float_types = [_]type{ f32, f64, f128 };
+    const float_types = [_]type{ f32, f64 };
 
     std.debug.print("\n", .{});
     inline for (float_types) |f| {
         var cauchy = Cauchy(f).init(&rand);
-        const val = cauchy.sample(10, 0.25);
+        const val = try cauchy.sample(10, 0.25);
         std.debug.print("Cauchy({any}):\t{}\n", .{ f, val });
     }
 }

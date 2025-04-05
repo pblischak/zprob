@@ -5,7 +5,7 @@ const zprob = @import("zprob");
 const Allocator = std.mem.Allocator;
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa = std.heap.DebugAllocator(.{}){};
     const allocator = gpa.allocator();
     defer {
         const deinit_status = gpa.deinit();
@@ -34,7 +34,7 @@ pub fn main() !void {
     var beta_bin_samples = try allocator.alloc(u32, size);
     defer allocator.free(beta_bin_samples);
     for (beta_samples, 0..) |b, i| {
-        beta_bin_samples[i] = env.rBinomial(n, b);
+        beta_bin_samples[i] = try env.rBinomial(n, b);
     }
 
     std.debug.print(

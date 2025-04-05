@@ -13,9 +13,9 @@ pub fn Uniform(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
-
         rand: *Random,
+
+        const Self = @This();
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -34,7 +34,7 @@ pub fn Uniform(comptime F: type) type {
             low: F,
             high: F,
             allocator: Allocator,
-        ) ![]F {
+        ) Allocator.Error![]F {
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
                 res[i] = self.sample(low, high);
@@ -51,9 +51,9 @@ pub fn UniformInt(comptime I: type) type {
     _ = utils.ensureIntegerType(I);
 
     return struct {
-        const Self = @This();
-
         rand: *Random,
+
+        const Self = @This();
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -71,7 +71,7 @@ pub fn UniformInt(comptime I: type) type {
             low: I,
             high: I,
             allocator: Allocator,
-        ) ![]I {
+        ) Allocator.Error![]I {
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
                 res[i] = self.sample(low, high);
@@ -137,7 +137,7 @@ test "Uniform with Different Types" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    const float_types = [_]type{ f32, f64, f128 };
+    const float_types = [_]type{ f32, f64 };
 
     std.debug.print("\n", .{});
     inline for (float_types) |f| {

@@ -6,6 +6,13 @@ const Random = std.Random;
 const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
 const Gamma = @import("gamma.zig").Gamma;
+const GammaError = @import("gamma.zig").GammaError;
+
+pub const BetaError = error{
+    AlphaLessThanZero,
+    BetaLessThanZero,
+    XOutOfRange,
+} || GammaError;
 
 /// Beta distribution with parameters `alpha` > 0 and `beta` > 0.
 ///
@@ -14,10 +21,10 @@ pub fn Beta(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
-
         rand: *Random,
         gamma: Gamma(F),
+
+        const Self = @This();
 
         /// Initializes a Beta struct with a pointer to a
         /// Pseudo-Random Number Generator.
@@ -31,12 +38,12 @@ pub fn Beta(comptime F: type) type {
         /// Generate a sample from a Beta distribution with parameters
         /// `alpha` > 0 and `beta` > 0. Invalid values passed as
         /// parameters will cause a panic.
-        pub fn sample(self: Self, alpha: F, beta: F) F {
+        pub fn sample(self: Self, alpha: F, beta: F) BetaError!F {
             if (alpha <= 0) {
-                @panic("Parameter `alpha` must be greater than 0.");
+                return BetaError.AlphaLessThanZero;
             }
             if (beta <= 0) {
-                @panic("Parameter `beta` must be greater than 0.");
+                return BetaError.BetaLessThanZero;
             }
 
             if (alpha <= 1.0 and beta <= 1.0) {
@@ -73,8 +80,8 @@ pub fn Beta(comptime F: type) type {
                     }
                 }
             } else {
-                const x1: F = self.gamma.sample(alpha, 1.0);
-                const x2: F = self.gamma.sample(beta, 1.0);
+                const x1: F = try self.gamma.sample(alpha, 1.0);
+                const x2: F = try self.gamma.sample(beta, 1.0);
                 return x1 / (x1 + x2);
             }
         }
@@ -85,10 +92,10 @@ pub fn Beta(comptime F: type) type {
             alpha: F,
             beta: F,
             allocator: Allocator,
-        ) ![]F {
+        ) (BetaError || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
-                res[i] = self.sample(alpha, beta);
+                res[i] = try self.sample(alpha, beta);
             }
             return res;
         }
@@ -96,20 +103,23 @@ pub fn Beta(comptime F: type) type {
         /// For a Beta random variable, X, with parameters `alpha` > 0
         /// and `beta` > 0, return the probability that X is less than
         /// some value 0 <= x <= 1.
-        pub fn pdf(self: Self, x: F, alpha: F, beta: F) !F {
+        pub fn pdf(self: Self, x: F, alpha: F, beta: F) BetaError!F {
             _ = self;
             if (alpha <= 0) {
-                @panic("Parameter `alpha` must be greater than 0.");
+                return BetaError.AlphaLessThanZero;
             }
             if (beta <= 0) {
-                @panic("Parameter `beta` must be greater than 0.");
+                return BetaError.BetaLessThanZero;
+            }
+            if (x < 0 or x > 1) {
+                return BetaError.XOutOfRange;
             }
 
             var value: F = 0.0;
             if (x < 0.0 or x > 1.0) {
                 value = 0.0;
             } else {
-                const ln_beta: F = try spec_fn.betaFn(F, alpha, beta);
+                const ln_beta: F = spec_fn.betaFn(F, alpha, beta);
                 const first_term: F = @floatCast(math.pow(f64, @floatCast(x), @floatCast(alpha - 1.0)));
                 const second_term: F = @floatCast(math.pow(f64, @floatCast(1.0 - x), @floatCast(beta - 1.0)));
                 value = first_term * second_term / ln_beta;
@@ -121,10 +131,13 @@ pub fn Beta(comptime F: type) type {
         pub fn lnPdf(self: Self, x: F, alpha: F, beta: F) !F {
             _ = self;
             if (alpha <= 0) {
-                @panic("Parameter `alpha` must be greater than 0.");
+                return BetaError.AlphaLessThanZero;
             }
             if (beta <= 0) {
-                @panic("Parameter `beta` must be greater than 0.");
+                return BetaError.BetaLessThanZero;
+            }
+            if (x < 0 or x > 1) {
+                return BetaError.XOutOfRange;
             }
 
             var value: F = 0.0;
@@ -132,7 +145,7 @@ pub fn Beta(comptime F: type) type {
                 value = math.inf(F);
             } else {
                 // zig fmt: off
-                const ln_beta: F = try spec_fn.lnBetaFn(F, alpha, beta);
+                const ln_beta: F = spec_fn.lnBetaFn(F, alpha, beta);
                 value = (alpha - 1.0) * @log(x)
                     + (beta - 1.0) * @log(1.0 - x)
                     - ln_beta;
@@ -144,13 +157,64 @@ pub fn Beta(comptime F: type) type {
     };
 }
 
+test "Beta alpha <= 0" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.Xoroshiro128.init(seed);
+    var rand = prng.random();
+    var beta = Beta(f64).init(&rand);
+
+    const val1 = beta.sample(-1.0, 10.0);
+    try std.testing.expectError(error.AlphaLessThanZero, val1);
+
+    const val2 = beta.pdf(0.5, -1.0, 10.0);
+    try std.testing.expectError(error.AlphaLessThanZero, val2);
+
+    const val3 = beta.lnPdf(0.5, -1.0, 10.0);
+    try std.testing.expectError(error.AlphaLessThanZero, val3);
+}
+
+test "Beta beta <= 0" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.Xoroshiro128.init(seed);
+    var rand = prng.random();
+    var beta = Beta(f64).init(&rand);
+
+    const val1 = beta.sample(1.0, -10.0);
+    try std.testing.expectError(error.BetaLessThanZero, val1);
+
+    const val2 = beta.pdf(0.5, 1.0, -10.0);
+    try std.testing.expectError(error.BetaLessThanZero, val2);
+
+    const val3 = beta.lnPdf(0.5, 1.0, -10.0);
+    try std.testing.expectError(error.BetaLessThanZero, val3);
+}
+
+test "Beta x out of range" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.Xoroshiro128.init(seed);
+    var rand = prng.random();
+    var beta = Beta(f64).init(&rand);
+
+    const val1 = beta.pdf(-10.0, 1.0, 10.0);
+    try std.testing.expectError(error.XOutOfRange, val1);
+
+    const val2 = beta.pdf(10.0, 1.0, 10.0);
+    try std.testing.expectError(error.XOutOfRange, val2);
+
+    const val3 = beta.lnPdf(-10.0, 1.0, 10.0);
+    try std.testing.expectError(error.XOutOfRange, val3);
+
+    const val4 = beta.lnPdf(10.0, 1.0, 10.0);
+    try std.testing.expectError(error.XOutOfRange, val4);
+}
+
 test "Sample Beta" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
-
     var beta = Beta(f64).init(&rand);
-    const val = beta.sample(2.0, 5.0);
+
+    const val = try beta.sample(2.0, 5.0);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -181,7 +245,7 @@ test "Beta Mean" {
             var samp: f64 = undefined;
             var sum: f64 = 0.0;
             for (0..10_000) |_| {
-                samp = beta.sample(a, b);
+                samp = try beta.sample(a, b);
                 sum += samp;
             }
 
@@ -202,12 +266,12 @@ test "Beta with Different Types" {
     var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
 
-    const float_types = [_]type{ f32, f64, f128 };
+    const float_types = [_]type{ f32, f64 };
 
     std.debug.print("\n", .{});
     inline for (float_types) |f| {
         var beta = Beta(f).init(&rand);
-        const val = beta.sample(5.0, 2.0);
+        const val = try beta.sample(5.0, 2.0);
         std.debug.print("Beta({any}):\t{}\n", .{ f, val });
         const pdf = try beta.pdf(0.3, 5.0, 2.0);
         std.debug.print("BetaPdf({any}):\t{}\n", .{ f, pdf });

@@ -1,22 +1,23 @@
-name: Zig Release CI
+name: Zig Nightly CI
 
 on:
-  pull_request:
+  schedule:
+    - cron: "0 20 * * *"
   push:
     branches:
-      - main
+      - nightly
 
 jobs:
-  test-zig-release:
-    name: Test Zig Release
+  test-zig-nightly:
+    name: Test Zig Nightly
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: "nightly"
       - name: Install Zig
         uses: goto-bus-stop/setup-zig@v2
-        with:
-          version: 0.14.0
       - name: Run Tests
         run: zig build test
       - name: Check Formatting
@@ -27,10 +28,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: "nightly"
       - name: Install Zig
         uses: goto-bus-stop/setup-zig@v2
-        with:
-          version: 0.14.0
       - name: Run Enemy Spawner
         run: |
           pushd examples/enemy_spawner

@@ -27,7 +27,7 @@ const zprob = @import("zprob");
 
 pub fn main() !void {
     // Set up main memory allocator and defer deinitilization
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa = std.heap.DebugAllocator(.{}){};
     const allocator = gpa.allocator();
     defer {
         const status = gpa.deinit();
@@ -41,8 +41,8 @@ pub fn main() !void {
     env.deinit()
 
     // Generate random samples
-    const binomial_sample = env.rBinomial(10, 0.8);
-    const geometric_sample = env.rGeometric(3.0);
+    const binomial_sample = try env.rBinomial(10, 0.8);
+    const geometric_sample = try env.rGeometric(3.0);
 
 
     // Generate slices of random samples. The caller is responsible for cleaning up
@@ -68,11 +68,11 @@ distributions, `zprob` provides a lower level "Distributions API".
 ```zig
 const std = @import("std");
 const zprob = @import("zprob");
-const Random = std.Random;
 
 pub fn main() !void {
     // Set up random generator.
-    var prng = Random.DefaultGenerator;
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
     var beta = zprob.Beta(f64).init(&rand);
@@ -81,8 +81,8 @@ pub fn main() !void {
     var b1: f64 = undefined;
     var b2: u8 = undefined;
     for 0..100 |_| {
-        b1 = beta.sample(1.0, 5.0);
-        b2 = binomial.sample(20, b1);
+        b1 = try beta.sample(1.0, 5.0);
+        b2 = try binomial.sample(20, b1);
     }
 }
 ```
@@ -128,33 +128,21 @@ usage of `zprob` for different applications:
 
 ## Installation
 
-> [!NOTE]
-> The current version of `zprob` was developed and tested using v0.13.0 of Zig and is still a work in progress.
-> Using a version of Zig other than 0.13.0 may lead to the code not compiling.
+To include `zprob` in your Zig project, you can add it to your `build.zig.zon` file
+using the `zig fetch` command.
 
-To include `zprob` in your Zig project, you can add it to your `build.zig.zon` file in the
-dependencies section:
+The `main` branch tracks the latest release of Zig (currently v0.14.0) and can be added
+as follows:
 
-```zon
-.{
-    .name = "my_project",
-    .version = "0.1.0",
-    .paths = .{
-        "build.zig",
-        "build.zig.zon",
-        "README.md",
-        "LICENSE",
-        "src",
-    },
-    .dependencies = .{
-        // This will link to tagged v0.2.0 release.
-        // Change the url and hash to link to a specific commit.
-        .zprob = {
-            .url = "",
-            .hash = "",
-        }
-    },
-}
+```
+zig fetch --save git+https://github.com/pblischak/zprob/
+```
+
+The `nightly` branch tracks the Zig `master` branch and can be added by adding `#nightly` to the
+git URL:
+
+```
+zig fetch --save git+https://github.com/pblischak/zprob/#nightly
 ```
 
 Then, in the `build.zig` file, add the following lines within the `build` function to include
@@ -193,3 +181,5 @@ can help build new features for `zprob`.
 
 - [https://ziglang.org/documentation/master/std/#std.Random](https://ziglang.org/documentation/master/std/#std.Random)
 - [https://zig.guide/standard-library/random-numbers](https://zig.guide/standard-library/random-numbers)
+- [https://github.com/statrs-dev/statrs](https://github.com/statrs-dev/statrs)
+- [https://github.com/rust-random/rand_distr](https://github.com/rust-random/rand_distr)

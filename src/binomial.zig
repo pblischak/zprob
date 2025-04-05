@@ -6,6 +6,8 @@ const Random = std.Random;
 const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
 
+pub const BinomialError = error{ KOutOfRange, ParamTooSmall, ParamTooBig };
+
 /// Binomial distribution with parameters `p` and `n`.
 ///
 /// [https://en.wikipedia.org/wiki/Binomial_distribution](https://en.wikipedia.org/wiki/Binomial_distribution)
@@ -14,8 +16,8 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        const Self = @This();
         rand: *Random,
+        const Self = @This();
 
         pub fn init(rand: *Random) Self {
             return Self{
@@ -33,7 +35,13 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
         ///   Binomial Random Variate Generation,
         ///   Communications of the ACM,
         ///   Volume 31, Number 2, February 1988, pages 216-222.
-        pub fn sample(self: Self, n: I, p: F) I {
+        pub fn sample(self: Self, n: I, p: F) BinomialError!I {
+            if (p < 0.0) {
+                return BinomialError.ParamTooSmall;
+            }
+            if (p > 1.0) {
+                return BinomialError.ParamTooBig;
+            }
             var al: F = 0.0;
             var alv: F = 0.0;
             var amaxp: F = 0.0;
@@ -268,27 +276,42 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             n: I,
             p: F,
             allocator: Allocator,
-        ) ![]I {
+        ) (BinomialError || Allocator.Error)![]I {
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
-                res[i] = self.sample(n, p);
+                res[i] = try self.sample(n, p);
             }
             return res;
         }
 
-        pub fn pmf(self: *Self, k: I, n: I, p: F) F {
-            if (k > n or k < 0) {
-                @panic("`k` must be between 0 and `n`");
+        pub fn pmf(self: *Self, k: I, n: I, p: F) !F {
+            if (p < 0.0) {
+                return BinomialError.ParamTooSmall;
             }
-            return @exp(self.lnPmf(k, n, p));
+            if (p > 1.0) {
+                return BinomialError.ParamTooBig;
+            }
+            if (k > n or k < 0) {
+                return BinomialError.KOutOfRange;
+            }
+            const val = self.lnPmf(k, n, p) catch |err| {
+                return err;
+            };
+            return @exp(val);
         }
 
-        pub fn lnPmf(self: *Self, k: I, n: I, p: F) F {
+        pub fn lnPmf(self: *Self, k: I, n: I, p: F) !F {
             _ = self;
-            if (k > n or k < 0) {
-                @panic("`k` must be between 0 and `n`");
+            if (p < 0.0) {
+                return BinomialError.ParamTooSmall;
             }
-            const ln_coeff = spec_fn.lnNChooseK(I, F, n, k);
+            if (p > 1.0) {
+                return BinomialError.ParamTooBig;
+            }
+            if (k > n or k < 0) {
+                return BinomialError.KOutOfRange;
+            }
+            const ln_coeff = try spec_fn.lnNChooseK(I, F, n, k);
             // zig fmt: off
             return ln_coeff
                 + @as(F, @floatFromInt(k)) * @log(p)
@@ -298,13 +321,56 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
     };
 }
 
+test "Binomial `p` < 0" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+    var binomial = Binomial(u32, f64).init(&rand);
+
+    const val = binomial.sample(10, -0.2);
+    try std.testing.expectError(error.ParamTooSmall, val);
+
+    const val2 = binomial.pmf(8, 10, -0.2);
+    try std.testing.expectError(error.ParamTooSmall, val2);
+
+    const val3 = binomial.lnPmf(8, 10, -0.2);
+    try std.testing.expectError(error.ParamTooSmall, val3);
+}
+
+test "Binomial `p` > 1" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+    var binomial = Binomial(u32, f64).init(&rand);
+
+    const val = binomial.sample(10, 1.2);
+    try std.testing.expectError(error.ParamTooBig, val);
+
+    const val2 = binomial.pmf(8, 10, 1.2);
+    try std.testing.expectError(error.ParamTooBig, val2);
+
+    const val3 = binomial.lnPmf(8, 10, 1.2);
+    try std.testing.expectError(error.ParamTooBig, val3);
+}
+test "Binomial `k` out of range" {
+    const seed: u64 = @intCast(std.time.microTimestamp());
+    var prng = std.Random.DefaultPrng.init(seed);
+    var rand = prng.random();
+    var binomial = Binomial(i32, f64).init(&rand);
+
+    const val1 = binomial.pmf(10, 8, 0.1);
+    try std.testing.expectError(error.KOutOfRange, val1);
+    const val2 = binomial.pmf(-2, 8, 0.1);
+    try std.testing.expectError(error.KOutOfRange, val2);
+}
+
 test "Sample Binomial" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
     var binomial = Binomial(u32, f64).init(&rand);
-    const val = binomial.sample(10, 0.2);
+    const val = try binomial.sample(10, 0.2);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -335,7 +401,7 @@ test "Binomial Mean" {
             var samp: f64 = undefined;
             var sum: f64 = 0.0;
             for (0..10_000) |_| {
-                samp = @as(f64, @floatFromInt(binomial.sample(n, p)));
+                samp = @as(f64, @floatFromInt(try binomial.sample(n, p)));
                 sum += samp;
             }
 
@@ -357,17 +423,17 @@ test "Binomial with Different Types" {
     var rand = prng.random();
 
     const int_types = [_]type{ u8, u16, u32, u64, u128, i8, i16, i32, i64, i128 };
-    const float_types = [_]type{ f32, f64, f128 };
+    const float_types = [_]type{ f32, f64 };
 
     std.debug.print("\n", .{});
     inline for (int_types) |i| {
         inline for (float_types) |f| {
             var binomial = Binomial(i, f).init(&rand);
-            const val = binomial.sample(10, 0.25);
+            const val = try binomial.sample(10, 0.25);
             std.debug.print("Binomial({any}, {any}):\t{}\n", .{ i, f, val });
-            const pmf = binomial.pmf(4, 10, 0.25);
+            const pmf = try binomial.pmf(4, 10, 0.25);
             std.debug.print("BinomialPmf({any}, {any}):\t{}\n", .{ i, f, pmf });
-            const ln_pmf = binomial.lnPmf(4, 10, 0.25);
+            const ln_pmf = try binomial.lnPmf(4, 10, 0.25);
             std.debug.print("BinomialLnPmf({any}, {any}):\t{}\n", .{ i, f, ln_pmf });
         }
     }

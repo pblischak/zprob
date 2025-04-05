@@ -1,6 +1,6 @@
 .{
     .name = .zprob,
-    .version = "0.2.1",
+    .version = "0.3.0",
     .paths = .{
         "build.zig",
         "build.zig.zon",
@@ -10,5 +10,5 @@
         "examples",
         "scripts",
     },
-    .fingerprint = 0x8d364cd34189888,
+    .fingerprint = 0x8d364cd0b0abd36,
 }
