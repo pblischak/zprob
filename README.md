@@ -38,7 +38,7 @@ pub fn main() !void {
 
     // Set up random environment and defer deinitialization
     var env = try zprob.RandomEnvironment.init(allocator);
-    env.deinit()
+    defer env.deinit();
 
     // Generate random samples
     const binomial_sample = try env.rBinomial(10, 0.8);
@@ -55,8 +55,8 @@ pub fn main() !void {
 To initialize a `RandomEnvironment` with a particular seed, use the `initWithSeed` method:
 
 ```zig
-var env = RandomEnvironment.initWithSeed(1234567890, allocator);
-env.deinit();
+var env = try zprob.RandomEnvironment.initWithSeed(1234567890, allocator);
+defer env.deinit();
 ```
 
 ### Distributions API
