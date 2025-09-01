@@ -2,6 +2,7 @@
 
 const std = @import("std");
 const zprob = @import("zprob");
+const binomial = zprob.default_binomial;
 
 pub fn main() !void {
     var prng = std.Random.DefaultPrng.init(blk: {
@@ -10,11 +11,10 @@ pub fn main() !void {
         break :blk seed;
     });
     var rand = prng.random();
-    var binomial = zprob.Binomial(i32, f64).init(&rand);
 
-    var sample: i32 = 0;
+    var sample: u32 = 0;
     for (0..100) |_| {
-        sample = try binomial.sample(50, 0.5);
+        sample = try binomial.sample(50, 0.5, &rand);
         std.debug.print("{}\n", .{sample});
     }
 }
