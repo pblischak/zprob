@@ -14,21 +14,14 @@ pub fn Exponential(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        rand: *Random,
-
         const Self = @This();
 
-        pub fn init(rand: *Random) Self {
-            return Self{
-                .rand = rand,
-            };
-        }
-
-        pub fn sample(self: Self, lambda: F) ExponentialError!F {
+        pub fn sample(self: Self, lambda: F, rand: *Random) ExponentialError!F {
+            _ = self;
             if (math.isNan(lambda) or lambda <= 0) {
                 return ExponentialError.LambdaInvalid;
             }
-            const u: F = @floatCast(self.rand.float(f64));
+            const u: F = @floatCast(rand.float(f64));
             const value = -@log(1.0 - u) / lambda;
             return value;
         }
@@ -37,11 +30,12 @@ pub fn Exponential(comptime F: type) type {
             self: Self,
             size: usize,
             lambda: F,
+            rand: *Random,
             allocator: Allocator,
         ) (ExponentialError || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
-                res[i] = try self.sample(lambda);
+                res[i] = try self.sample(lambda, rand);
             }
             return res;
         }
@@ -76,8 +70,8 @@ test "Sample Exponential" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var exponential = Exponential(f64).init(&rand);
-    const val = try exponential.sample(5.0);
+    const exponential = Exponential(f64){};
+    const val = try exponential.sample(5.0, &rand);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -86,9 +80,9 @@ test "Sample Exponential Slice" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var exponential = Exponential(f64).init(&rand);
+    const exponential = Exponential(f64){};
     const allocator = std.testing.allocator;
-    const sample = try exponential.sampleSlice(100, 5.0, allocator);
+    const sample = try exponential.sampleSlice(100, 5.0, &rand, allocator);
     defer allocator.free(sample);
     std.debug.print("\n{any}\n", .{sample});
 }
@@ -97,14 +91,14 @@ test "Exponential Mean" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var exponential = Exponential(f64).init(&rand);
+    const exponential = Exponential(f64){};
 
     const lambda_vec = [_]f64{ 0.1, 0.5, 2.0, 5.0, 10.0, 20.0, 50.0 };
 
     for (lambda_vec) |lambda| {
         var sum: f64 = 0.0;
         for (0..10_000) |_| {
-            sum += try exponential.sample(lambda);
+            sum += try exponential.sample(lambda, &rand);
         }
         const mean = 1.0 / lambda;
         const avg = sum / 10_000.0;
@@ -124,8 +118,8 @@ test "Exponential with Different Types" {
     const float_types = [_]type{ f32, f64 };
 
     inline for (float_types) |f| {
-        var exponential = Exponential(f).init(&rand);
-        const val = try exponential.sample(5.0);
+        const exponential = Exponential(f){};
+        const val = try exponential.sample(5.0, &rand);
         std.debug.print("Exponential({any}):\t{}\n", .{ f, val });
     }
 }

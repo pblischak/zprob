@@ -16,8 +16,6 @@ pub fn Geometric(comptime I: type, comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        rand: *Random,
-
         const Self = @This();
 
         fn check(p: F) GeometricError!void {
@@ -26,15 +24,10 @@ pub fn Geometric(comptime I: type, comptime F: type) type {
             }
         }
 
-        pub fn init(rand: *Random) Self {
-            return Self{
-                .rand = rand,
-            };
-        }
-
-        pub fn sample(self: Self, p: F) GeometricError!I {
+        pub fn sample(self: Self, p: F, rand: *Random) GeometricError!I {
+            _ = self;
             try check(p);
-            const u: F = @floatCast(self.rand.float(f64));
+            const u: F = @floatCast(rand.float(f64));
             return @as(I, @intFromFloat(@log(u) / @log(1.0 - p))) + 1;
         }
 
@@ -42,11 +35,12 @@ pub fn Geometric(comptime I: type, comptime F: type) type {
             self: Self,
             size: usize,
             p: F,
+            rand: *Random,
             allocator: Allocator,
         ) (GeometricError || Allocator.Error)![]I {
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
-                res[i] = try self.sample(p);
+                res[i] = try self.sample(p, rand);
             }
             return res;
         }
@@ -74,8 +68,8 @@ test "Sample Geometric" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var geometric = Geometric(u32, f64).init(&rand);
-    const val = try geometric.sample(0.2);
+    const geometric = Geometric(u32, f64){};
+    const val = try geometric.sample(0.2, &rand);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -84,9 +78,9 @@ test "Sample Geometric Slice" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var geometric = Geometric(u32, f64).init(&rand);
+    const geometric = Geometric(u32, f64){};
     const allocator = std.testing.allocator;
-    const sample = try geometric.sampleSlice(100, 0.2, allocator);
+    const sample = try geometric.sampleSlice(100, 0.2, &rand, allocator);
     defer allocator.free(sample);
     std.debug.print("\n{any}\n", .{sample});
 }
@@ -95,7 +89,7 @@ test "Geometric Mean" {
     const seed: u64 = @intCast(std.time.milliTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var geometric = Geometric(u32, f64).init(&rand);
+    const geometric = Geometric(u32, f64){};
 
     const p_vec = [_]f64{ 0.05, 0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 0.9, 0.95 };
 
@@ -104,7 +98,7 @@ test "Geometric Mean" {
         var sum: f64 = 0.0;
         var samp: u32 = undefined;
         for (0..10_000) |_| {
-            samp = try geometric.sample(p);
+            samp = try geometric.sample(p, &rand);
             sum += @as(f64, @floatFromInt(samp));
         }
         const avg: f64 = sum / 10_000.0;
@@ -135,19 +129,15 @@ test "Geometric with Different Types" {
     std.debug.print("\n", .{});
     inline for (int_types) |i| {
         inline for (float_types) |f| {
-            var geometric = Geometric(i, f).init(&rand);
-            const val = try geometric.sample(0.2);
-            std.debug.print("Binomial({any}, {any}):\t{}\n", .{ i, f, val });
+            const geometric = Geometric(i, f){};
+            const val = try geometric.sample(0.2, &rand);
+            std.debug.print("Geometric({any}, {any}):\t{}\n", .{ i, f, val });
         }
     }
 }
 
 test "Geometric PMF" {
-    const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.Random.DefaultPrng.init(seed);
-    var rand = prng.random();
-
-    var geometric = Geometric(u32, f64).init(&rand);
+    const geometric = Geometric(u32, f64){};
     const val = try geometric.pmf(5, 0.4);
     const ln_val = try geometric.lnPmf(5, 0.4);
     std.debug.print(

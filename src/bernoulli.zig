@@ -4,6 +4,7 @@ const Random = std.Random;
 const utils = @import("utils.zig");
 
 pub const BernoulliError = error{ ParamTooSmall, ParamTooBig };
+
 /// Bernoulli distribution with parameter `p`.
 ///
 /// [https://en.wikipedia.org/wiki/Bernoulli_distribution](https://en.wikipedia.org/wiki/Bernoulli_distribution)
@@ -12,16 +13,12 @@ pub fn Bernoulli(comptime I: type, comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        rand: *Random,
         const Self = @This();
-
-        pub fn init(rand: *Random) Self {
-            return Self{ .rand = rand };
-        }
 
         /// Generate a random sample from a Bernoulli distribution with
         /// probability of success `p`.
-        pub fn sample(self: Self, p: F) BernoulliError!I {
+        pub fn sample(self: Self, p: F, rand: *Random) BernoulliError!I {
+            _ = self;
             if (p < 0.0) {
                 return BernoulliError.ParamTooSmall;
             }
@@ -32,7 +29,7 @@ pub fn Bernoulli(comptime I: type, comptime F: type) type {
             //     @panic("Parameter `p` must be within the range 0 < p < 1.");
             // }
             // Random floats can only be generated for f32 and f64
-            const random_val: F = @floatCast(self.rand.float(f64));
+            const random_val: F = @floatCast(rand.float(f64));
             if (p < random_val) {
                 return 0;
             } else {
@@ -46,6 +43,7 @@ pub fn Bernoulli(comptime I: type, comptime F: type) type {
             self: Self,
             size: usize,
             p: F,
+            rand: *Random,
             allocator: Allocator,
         ) (BernoulliError || Allocator.Error)![]I {
             if (p < 0.0) {
@@ -54,12 +52,9 @@ pub fn Bernoulli(comptime I: type, comptime F: type) type {
             if (p > 1.0) {
                 return BernoulliError.ParamTooBig;
             }
-            // if (p < 0.0 or p > 1.0) {
-            //     @panic("Parameter `p` must be within the range 0 < p < 1.");
-            // }
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
-                res[i] = try self.sample(p);
+                res[i] = try self.sample(p, rand);
             }
             return res;
         }
@@ -70,8 +65,8 @@ test "Sample Bernoulli" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var bernoulli = Bernoulli(u8, f64).init(&rand);
-    const val = try bernoulli.sample(0.4);
+    const bernoulli = Bernoulli(u8, f64){};
+    const val = try bernoulli.sample(0.4, &rand);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -79,8 +74,8 @@ test "Bernoulli `p` < 0" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var bernoulli = Bernoulli(u8, f64).init(&rand);
-    const val = bernoulli.sample(-0.1);
+    const bernoulli = Bernoulli(u8, f64){};
+    const val = bernoulli.sample(-0.1, &rand);
     std.debug.print("\n{any}\n", .{val});
     try std.testing.expectError(error.ParamTooSmall, val);
 }
@@ -89,8 +84,8 @@ test "Bernoulli `p` > 1" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var bernoulli = Bernoulli(u8, f64).init(&rand);
-    const val = bernoulli.sample(5.0);
+    const bernoulli = Bernoulli(u8, f64){};
+    const val = bernoulli.sample(5.0, &rand);
     std.debug.print("\n{any}\n", .{val});
     try std.testing.expectError(error.ParamTooBig, val);
 }
@@ -99,10 +94,10 @@ test "Sample Bernoulli Slice" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var bernoulli = Bernoulli(u8, f64).init(&rand);
+    const bernoulli = Bernoulli(u8, f64){};
 
     var allocator = std.testing.allocator;
-    const sample = try bernoulli.sampleSlice(100, 0.4, allocator);
+    const sample = try bernoulli.sampleSlice(100, 0.4, &rand, allocator);
     defer allocator.free(sample);
     std.debug.print("\n{any}\n", .{sample});
 }
@@ -111,7 +106,7 @@ test "Bernoulli Mean" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var bernoulli = Bernoulli(u8, f64).init(&rand);
+    const bernoulli = Bernoulli(u8, f64){};
 
     const p_vec = [_]f64{ 0.05, 0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 0.9, 0.95 };
 
@@ -120,7 +115,7 @@ test "Bernoulli Mean" {
         var samp: u8 = undefined;
         var sum: f64 = 0.0;
         for (0..10_000) |_| {
-            samp = try bernoulli.sample(p);
+            samp = try bernoulli.sample(p, &rand);
             sum += @as(f64, @floatFromInt(samp));
         }
         const mean: f64 = p;
@@ -142,8 +137,8 @@ test "Bernoulli with Different Types" {
     std.debug.print("\n", .{});
     inline for (int_types) |i| {
         inline for (float_types) |f| {
-            var bernoulli = Bernoulli(i, f).init(&rand);
-            const val = try bernoulli.sample(0.25);
+            const bernoulli = Bernoulli(i, f){};
+            const val = try bernoulli.sample(0.25, &rand);
             std.debug.print("Bernoulli({any}, {any}):\t{}\n", .{ i, f, val });
         }
     }

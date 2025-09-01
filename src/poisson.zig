@@ -16,17 +16,9 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        rand: *Random,
-
         const Self = @This();
 
-        pub fn init(rand: *Random) Self {
-            return Self{
-                .rand = rand,
-            };
-        }
-
-        pub fn sample(self: Self, lambda: F) PoissonError!I {
+        pub fn sample(self: Self, lambda: F, rand: *Random) PoissonError!I {
             if (lambda < 17.0) {
                 if (lambda < 1.0e-6) {
                     if (lambda == 0.0) {
@@ -37,15 +29,15 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
                         return PoissonError.BadLambda;
                     }
 
-                    return self.low(lambda);
+                    return self.low(lambda, rand);
                 } else {
-                    return self.inversion(lambda);
+                    return self.inversion(lambda, rand);
                 }
             } else {
                 if (lambda > 2.0e9) {
                     @panic("Parameter lambda too large...");
                 }
-                return self.ratioUniforms(lambda);
+                return self.ratioUniforms(lambda, rand);
             }
         }
 
@@ -53,22 +45,24 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
             self: Self,
             size: usize,
             lambda: F,
+            rand: *Random,
             allocator: Allocator,
         ) (PoissonError || Allocator.Error)![]I {
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
-                res[i] = try self.sample(lambda);
+                res[i] = try self.sample(lambda, rand);
             }
             return res;
         }
 
-        fn low(self: Self, lambda: F) I {
+        fn low(self: Self, lambda: F, rand: *Random) I {
+            _ = self;
             const d: F = @sqrt(lambda);
-            if (@as(F, @floatCast(self.rand.float(f64))) >= d) {
+            if (@as(F, @floatCast(rand.float(f64))) >= d) {
                 return 0;
             }
 
-            const r: F = @as(F, @floatCast(self.rand.float(f64))) * d;
+            const r: F = @as(F, @floatCast(rand.float(f64))) * d;
             if (r > lambda * (1.0 - lambda)) {
                 return 0;
             }
@@ -79,7 +73,8 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
             return 2;
         }
 
-        fn inversion(self: Self, lambda: F) I {
+        fn inversion(self: Self, lambda: F, rand: *Random) I {
+            _ = self;
             const bound: I = 127;
             const p_f0 = @exp(-lambda);
             var x: I = undefined;
@@ -87,7 +82,7 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
             var f: F = p_f0;
 
             while (true) {
-                r = @floatCast(self.rand.float(f64));
+                r = @floatCast(rand.float(f64));
                 x = 0;
                 f = p_f0;
 
@@ -112,7 +107,8 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
             }
         }
 
-        fn ratioUniforms(self: Self, lambda: F) PoissonError!I {
+        fn ratioUniforms(self: Self, lambda: F, rand: *Random) PoissonError!I {
+            _ = self;
             var u: F = undefined;
             var lf: F = undefined;
             var x: F = undefined;
@@ -126,12 +122,12 @@ pub fn Poisson(comptime I: type, comptime F: type) type {
             const p_bound = @as(I, @intFromFloat(p_a + 6.0 * p_h));
 
             while (true) {
-                u = @floatCast(self.rand.float(f64));
+                u = @floatCast(rand.float(f64));
                 if (u == 0) {
                     continue;
                 }
 
-                x = p_a + p_h * (@as(F, @floatCast(self.rand.float(f64))) - 0.5) / u;
+                x = p_a + p_h * (@as(F, @floatCast(rand.float(f64))) - 0.5) / u;
                 if (x < 0.0 or x >= @as(F, @floatFromInt(p_bound))) {
                     continue;
                 }
@@ -171,8 +167,8 @@ test "Sample Poisson" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var poisson = Poisson(u32, f64).init(&rand);
-    const val = try poisson.sample(20.0);
+    const poisson = Poisson(u32, f64){};
+    const val = try poisson.sample(20.0, &rand);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -181,9 +177,9 @@ test "Sample Poisson Slice" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var poisson = Poisson(u32, f64).init(&rand);
+    const poisson = Poisson(u32, f64){};
     const allocator = std.testing.allocator;
-    const sample = try poisson.sampleSlice(100, 20.0, allocator);
+    const sample = try poisson.sampleSlice(100, 20.0, &rand, allocator);
     defer allocator.free(sample);
     std.debug.print("\n{any}\n", .{sample});
 }
@@ -192,7 +188,7 @@ test "Poisson Mean" {
     const seed: u64 = @intCast(std.time.milliTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var poisson = Poisson(u32, f64).init(&rand);
+    const poisson = Poisson(u32, f64){};
 
     const lambda_vec = [_]f64{ 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0 };
 
@@ -200,7 +196,7 @@ test "Poisson Mean" {
     for (lambda_vec) |lambda| {
         var sum: f64 = 0.0;
         for (0..10_000) |_| {
-            const samp = try poisson.sample(lambda);
+            const samp = try poisson.sample(lambda, &rand);
             sum += @as(f64, @floatFromInt(samp));
         }
         const avg: f64 = sum / 10_000.0;
@@ -220,8 +216,8 @@ test "Poisson with Different Types" {
     std.debug.print("\n", .{});
     inline for (int_types) |i| {
         inline for (float_types) |f| {
-            var poisson = Poisson(i, f).init(&rand);
-            const val = try poisson.sample(20.0);
+            const poisson = Poisson(i, f){};
+            const val = try poisson.sample(20.0, &rand);
             std.debug.print(
                 "Poisson({any}, {any}): {}\n",
                 .{ i, f, val },

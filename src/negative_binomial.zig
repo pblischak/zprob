@@ -24,19 +24,9 @@ pub fn NegativeBinomial(comptime I: type, comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        rand: *Random,
-        poisson: Poisson(I, F),
-        gamma: Gamma(F),
-
         const Self = @This();
-
-        pub fn init(rand: *Random) Self {
-            return Self{
-                .rand = rand,
-                .poisson = Poisson(I, F).init(rand),
-                .gamma = Gamma(F).init(rand),
-            };
-        }
+        const poisson = Poisson(I, F){};
+        const gamma = Gamma(F){};
 
         fn check(r: I, p: F) NegativeBinomialError!void {
             if (r <= 0) {
@@ -48,7 +38,8 @@ pub fn NegativeBinomial(comptime I: type, comptime F: type) type {
             }
         }
 
-        pub fn sample(self: Self, r: I, p: F) NegativeBinomialError!I {
+        pub fn sample(self: Self, r: I, p: F, rand: *Random) NegativeBinomialError!I {
+            _ = self;
             try check(r, p);
             const r_f = @as(F, @floatFromInt(r));
             var a: F = undefined;
@@ -56,8 +47,8 @@ pub fn NegativeBinomial(comptime I: type, comptime F: type) type {
             var value: I = undefined;
 
             a = (1.0 - p) / p;
-            y = try self.gamma.sample(a, r_f);
-            value = try self.poisson.sample(y);
+            y = try gamma.sample(a, r_f, rand);
+            value = try poisson.sample(y, rand);
 
             return value;
         }
@@ -67,12 +58,13 @@ pub fn NegativeBinomial(comptime I: type, comptime F: type) type {
             size: usize,
             r: I,
             p: F,
+            rand: *Random,
             allocator: Allocator,
         ) (NegativeBinomialError || Allocator.Error)![]I {
             try check(r, p);
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
-                res[i] = try self.sample(r, p);
+                res[i] = try self.sample(r, p, rand);
             }
             return res;
         }
@@ -96,8 +88,8 @@ test "Sample Negative Binomial" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var neg_binomial = NegativeBinomial(u32, f64).init(&rand);
-    const val = try neg_binomial.sample(10, 0.9);
+    const neg_binomial = NegativeBinomial(u32, f64){};
+    const val = try neg_binomial.sample(10, 0.9, &rand);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -106,9 +98,9 @@ test "Sample Negative Binomial Slice" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var neg_binomial = NegativeBinomial(u32, f64).init(&rand);
+    const neg_binomial = NegativeBinomial(u32, f64){};
     const allocator = std.testing.allocator;
-    const sample = try neg_binomial.sampleSlice(100, 10, 0.9, allocator);
+    const sample = try neg_binomial.sampleSlice(100, 10, 0.9, &rand, allocator);
     defer allocator.free(sample);
     std.debug.print("\n{any}\n", .{sample});
 }
@@ -118,7 +110,7 @@ test "Negative Binomial Mean" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var neg_binomial = NegativeBinomial(u32, f64).init(&rand);
+    const neg_binomial = NegativeBinomial(u32, f64){};
 
     const p_vec = [_]f64{ 0.5, 0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 0.9, 0.95 };
 
@@ -126,7 +118,7 @@ test "Negative Binomial Mean" {
     for (p_vec) |p| {
         var sum: u32 = 0;
         for (0..10_000) |_| {
-            sum += try neg_binomial.sample(10, p);
+            sum += try neg_binomial.sample(10, p, &rand);
         }
         const mean = 10.0 * (1.0 - p) / p;
         const variance = 10.0 * (1.0 - p) / p / p;
@@ -150,8 +142,8 @@ test "Negative Binomial with Different Types" {
     std.debug.print("\n", .{});
     inline for (int_types) |i| {
         inline for (float_types) |f| {
-            var neg_binomial = NegativeBinomial(i, f).init(&rand);
-            const val = try neg_binomial.sample(10, 0.9);
+            const neg_binomial = NegativeBinomial(i, f){};
+            const val = try neg_binomial.sample(10, 0.9, &rand);
             std.debug.print(
                 "NegativeBinomial({any}, {any}): {}\n",
                 .{ i, f, val },
