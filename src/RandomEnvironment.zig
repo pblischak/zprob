@@ -15,36 +15,42 @@ const Random = std.Random;
 const spec_fn = @import("special_functions.zig");
 const utils = @import("utils.zig");
 
-const Bernoulli = @import("bernoulli.zig").Bernoulli;
-const BernoulliError = @import("bernoulli.zig").BernoulliError;
-const Binomial = @import("binomial.zig").Binomial;
-const BinomialError = @import("binomial.zig").BinomialError;
-const Geometric = @import("geometric.zig").Geometric;
+const bernoulli = @import("bernoulli.zig").Bernoulli(u32, f64){};
+const binomial = @import("binomial.zig").Binomial(u32, f64){};
+const geometric = @import("geometric.zig").Geometric(u32, f64){};
+const negative_binomial = @import("negative_binomial.zig").NegativeBinomial(u32, f64){};
+const poisson = @import("poisson.zig").Poisson(u32, f64){};
+const uniform_int = @import("uniform.zig").UniformInt(i32){};
+const uniform_uint = @import("uniform.zig").UniformInt(u32){};
+const uniform_usize = @import("uniform.zip").UniformInt(usize){};
+
 const Multinomial = @import("multinomial.zig").Multinomial;
-const MultinomialError = @import("multinomial.zig").MultinomialError;
-const GeometricError = @import("geometric.zig").GeometricError;
-const NegativeBinomial = @import("negative_binomial.zig").NegativeBinomial;
-const NegativeBinomialError = @import("negative_binomial.zig").NegativeBinomialError;
-const Poisson = @import("poisson.zig").Poisson;
-const PoissonError = @import("poisson.zig").PoissonError;
-const UniformInt = @import("uniform.zig").UniformInt;
 const Weighted = @import("sample.zig").Weighted;
+
+const BernoulliError = @import("bernoulli.zig").BernoulliError;
+const BinomialError = @import("binomial.zig").BinomialError;
+const GeometricError = @import("geometric.zig").GeometricError;
+const MultinomialError = @import("multinomial.zig").MultinomialError;
+const NegativeBinomialError = @import("negative_binomial.zig").NegativeBinomialError;
+const PoissonError = @import("poisson.zig").PoissonError;
 const WeightedError = @import("sample.zig").WeightedError;
 
-const Beta = @import("beta.zig").Beta;
-const BetaError = @import("beta.zig").BetaError;
-const Cauchy = @import("cauchy.zig").Cauchy;
-const CauchyError = @import("cauchy.zig").CauchyError;
-const ChiSquared = @import("chi_squared.zig").ChiSquared;
+const beta = @import("beta.zig").Beta(f64){};
+const cauchy = @import("cauchy.zig").Cauchy(f64){};
+const chi_squared = @import("chi_squared.zig").ChiSquared(u32, f64){};
+const exponential = @import("exponential.zig").Exponential(f64){};
+const gamma = @import("gamma.zig").Gamma(f64){};
+const normal = @import("normal.zig").Normal(f64){};
+const uniform = @import("uniform.zig").Uniform(f64){};
+
 const Dirichlet = @import("dirichlet.zig").Dirichlet;
+
+const BetaError = @import("beta.zig").BetaError;
+const CauchyError = @import("cauchy.zig").CauchyError;
 const ChiSquaredError = @import("chi_squared.zig").ChiSquaredError;
-const Exponential = @import("exponential.zig").Exponential;
 const ExponentialError = @import("exponential.zig").ExponentialError;
-const Gamma = @import("gamma.zig").Gamma;
 const GammaError = @import("gamma.zig").GammaError;
-const Normal = @import("normal.zig").Normal;
 const NormalError = @import("normal.zig").NormalError;
-const Uniform = @import("uniform.zig").Uniform;
 
 const Self = @This();
 
@@ -57,22 +63,6 @@ seed: u64,
 rng_state: *RngState,
 allocator: Allocator,
 
-bernoulli: Bernoulli(u32, f64),
-binomial: Binomial(u32, f64),
-geometric: Geometric(u32, f64),
-negative_binomial: NegativeBinomial(u32, f64),
-poisson: Poisson(u32, f64),
-uniform_int: UniformInt(i32),
-uniform_uint: UniformInt(u32),
-
-beta: Beta(f64),
-cauchy: Cauchy(f64),
-chi_squared: ChiSquared(u32, f64),
-exponential: Exponential(f64),
-gamma: Gamma(f64),
-normal: Normal(f64),
-uniform: Uniform(f64),
-
 /// Initialize a new `RandomEnvironment` struct with an `Allocator`.
 pub fn init(allocator: Allocator) (std.posix.GetRandomError || Allocator.Error)!Self {
     var seed: u64 = undefined;
@@ -84,22 +74,6 @@ pub fn init(allocator: Allocator) (std.posix.GetRandomError || Allocator.Error)!
         .seed = seed,
         .rng_state = rng_state,
         .allocator = allocator,
-
-        .bernoulli = Bernoulli(u32, f64).init(&rng_state.*.rand),
-        .binomial = Binomial(u32, f64).init(&rng_state.*.rand),
-        .geometric = Geometric(u32, f64).init(&rng_state.*.rand),
-        .negative_binomial = NegativeBinomial(u32, f64).init(&rng_state.*.rand),
-        .poisson = Poisson(u32, f64).init(&rng_state.*.rand),
-        .uniform_int = UniformInt(i32).init(&rng_state.*.rand),
-        .uniform_uint = UniformInt(u32).init(&rng_state.*.rand),
-
-        .beta = Beta(f64).init(&rng_state.*.rand),
-        .cauchy = Cauchy(f64).init(&rng_state.*.rand),
-        .chi_squared = ChiSquared(u32, f64).init(&rng_state.*.rand),
-        .exponential = Exponential(f64).init(&rng_state.*.rand),
-        .gamma = Gamma(f64).init(&rng_state.*.rand),
-        .normal = Normal(f64).init(&rng_state.*.rand),
-        .uniform = Uniform(f64).init(&rng_state.*.rand),
     };
 }
 
@@ -112,22 +86,6 @@ pub fn initWithSeed(seed: u64, allocator: Allocator) Allocator.Error!Self {
         .seed = seed,
         .rng_state = rng_state,
         .allocator = allocator,
-
-        .bernoulli = Bernoulli(u32, f64).init(&rng_state.*.rand),
-        .binomial = Binomial(u32, f64).init(&rng_state.*.rand),
-        .geometric = Geometric(u32, f64).init(&rng_state.*.rand),
-        .negative_binomial = NegativeBinomial(u32, f64).init(&rng_state.*.rand),
-        .poisson = Poisson(u32, f64).init(&rng_state.*.rand),
-        .uniform_int = UniformInt(i32).init(&rng_state.*.rand),
-        .uniform_uint = UniformInt(u32).init(&rng_state.*.rand),
-
-        .beta = Beta(f64).init(&rng_state.*.rand),
-        .cauchy = Cauchy(f64).init(&rng_state.*.rand),
-        .chi_squared = ChiSquared(u32, f64).init(&rng_state.*.rand),
-        .exponential = Exponential(f64).init(&rng_state.*.rand),
-        .gamma = Gamma(f64).init(&rng_state.*.rand),
-        .normal = Normal(f64).init(&rng_state.*.rand),
-        .uniform = Uniform(f64).init(&rng_state.*.rand),
     };
 }
 
@@ -145,7 +103,7 @@ pub fn rBernoulli(
     self: *Self,
     p: f64,
 ) BernoulliError!u32 {
-    return try self.bernoulli.sample(p);
+    return try bernoulli.sample(p, self.getRand());
 }
 
 pub fn rBernoulliSlice(
@@ -153,7 +111,7 @@ pub fn rBernoulliSlice(
     size: usize,
     p: f64,
 ) (BernoulliError || Allocator.Error)![]u32 {
-    return try self.bernoulli.sampleSlice(size, p, self.allocator);
+    return try bernoulli.sampleSlice(size, p, self.getRand(), self.allocator);
 }
 
 pub fn rBinomial(
@@ -161,7 +119,7 @@ pub fn rBinomial(
     n: u32,
     p: f64,
 ) BinomialError!u32 {
-    return try self.binomial.sample(n, p);
+    return try binomial.sample(n, p, self.getRand());
 }
 
 pub fn rBinomialSlice(
@@ -170,7 +128,7 @@ pub fn rBinomialSlice(
     n: u32,
     p: f64,
 ) (BinomialError || Allocator.Error)![]u32 {
-    return try self.binomial.sampleSlice(size, n, p, self.allocator);
+    return try binomial.sampleSlice(size, n, p, self.getRand(), self.allocator);
 }
 
 pub fn dBinomial(
@@ -180,17 +138,18 @@ pub fn dBinomial(
     p: f64,
     log: bool,
 ) !f64 {
+    _ = self;
     if (log) {
-        return try self.binomial.lnPmf(k, n, p);
+        return try binomial.lnPmf(k, n, p);
     }
-    return try self.binomial.pmf(k, n, p);
+    return try binomial.pmf(k, n, p);
 }
 
 pub fn rGeometric(
     self: *Self,
     p: f64,
 ) GeometricError!u32 {
-    return try self.geometric.sample(p);
+    return try geometric.sample(p, self.getRand());
 }
 
 pub fn rGeometricSlice(
@@ -198,7 +157,7 @@ pub fn rGeometricSlice(
     size: usize,
     p: f64,
 ) (GeometricError || Allocator.Error)![]u32 {
-    return try self.geometric.sampleSlice(size, p, self.allocator);
+    return try geometric.sampleSlice(size, p, self.getRand(), self.allocator);
 }
 
 pub fn dGeometric(
@@ -207,10 +166,11 @@ pub fn dGeometric(
     p: f64,
     log: bool,
 ) GeometricError!f64 {
+    _ = self;
     if (log) {
-        return self.geometric.lnPmf(k, p);
+        return geometric.lnPmf(k, p);
     }
-    return self.geometric.pmf(k, p);
+    return geometric.pmf(k, p);
 }
 
 pub fn rMultinomial(
@@ -219,8 +179,8 @@ pub fn rMultinomial(
     n: u32,
     p_vec: [K]f64,
 ) MultinomialError![K]u32 {
-    const multinomial = Multinomial(K, u32, f64).init(&self.rng_state.rand);
-    const out_vec = try multinomial.sample(n, p_vec);
+    const multinomial = Multinomial(K, u32, f64){};
+    const out_vec = try multinomial.sample(n, p_vec, self.getRand());
     return out_vec;
 }
 
@@ -231,8 +191,8 @@ pub fn rMultinomialSlice(
     n: u32,
     p_vec: [K]f64,
 ) ![]u32 {
-    const multinomial = Multinomial(K, u32, f64).init(&self.rng_state.rand);
-    return try multinomial.sampleSlice(size, n, p_vec, self.allocator);
+    const multinomial = Multinomial(K, u32, f64){};
+    return try multinomial.sampleSlice(size, n, p_vec, self.getRand(), self.allocator);
 }
 
 pub fn dMultinomial(
@@ -242,7 +202,8 @@ pub fn dMultinomial(
     p_vec: [K]f64,
     log: bool,
 ) !f64 {
-    const multinomial = Multinomial(K, u32, f64).init(&self.rng_state.rand);
+    _ = self;
+    const multinomial = Multinomial(K, u32, f64){};
     if (log) {
         return try multinomial.lnPmf(k_vec, p_vec);
     }
@@ -254,7 +215,7 @@ pub fn rNegativeBinomial(
     n: u32,
     p: f64,
 ) NegativeBinomialError!u32 {
-    return try self.negative_binomial.sample(n, p);
+    return try negative_binomial.sample(n, p, self.getRand());
 }
 
 pub fn rNegativeBinomialSlice(
@@ -263,7 +224,7 @@ pub fn rNegativeBinomialSlice(
     n: u32,
     p: f64,
 ) (NegativeBinomialError || Allocator.Error)![]u32 {
-    return try self.negative_binomial.sampleSlice(size, n, p, self.allocator);
+    return try negative_binomial.sampleSlice(size, n, p, self.getRand(), self.allocator);
 }
 
 pub fn dNegativeBinomial(
@@ -273,17 +234,18 @@ pub fn dNegativeBinomial(
     p: f64,
     log: bool,
 ) !f64 {
+    _ = self;
     if (log) {
-        return try self.negative_binomial.lnPmf(k, r, p);
+        return try negative_binomial.lnPmf(k, r, p);
     }
-    return try self.negative_binomial.pmf(k, r, p);
+    return try negative_binomial.pmf(k, r, p);
 }
 
 pub fn rPoisson(
     self: *Self,
     lambda: f64,
 ) PoissonError!u32 {
-    return try self.poisson.sample(lambda);
+    return try poisson.sample(lambda, self.getRand());
 }
 
 pub fn rPoissonSlice(
@@ -291,7 +253,7 @@ pub fn rPoissonSlice(
     size: usize,
     lambda: f64,
 ) (PoissonError || Allocator.Error)![]u32 {
-    return try self.poisson.sampleSlice(size, lambda, self.allocator);
+    return try poisson.sampleSlice(size, lambda, self.getRand(), self.allocator);
 }
 
 pub fn dPoisson(
@@ -300,14 +262,15 @@ pub fn dPoisson(
     lambda: f64,
     log: bool,
 ) !f64 {
+    _ = self;
     if (log) {
-        return try self.poisson.lnPmf(k, lambda);
+        return try poisson.lnPmf(k, lambda);
     }
-    return try self.poisson.pmf(k, lambda);
+    return try poisson.pmf(k, lambda);
 }
 
 pub fn rUniformInt(self: *Self, low: i32, high: i32) i32 {
-    return self.uniform_int.sample(low, high);
+    return uniform_int.sample(low, high, self.getRand());
 }
 
 pub fn rUniformIntSlice(
@@ -316,16 +279,17 @@ pub fn rUniformIntSlice(
     low: i32,
     high: i32,
 ) Allocator.Error![]i32 {
-    return try self.uniform_int.sampleSlice(
+    return try uniform_int.sampleSlice(
         size,
         low,
         high,
+        self.getRand(),
         self.allocator,
     );
 }
 
 pub fn rUniformUInt(self: *Self, low: u32, high: u32) u32 {
-    return self.uniform_uint.sample(low, high);
+    return uniform_uint.sample(low, high, self.getRand());
 }
 
 pub fn rUniformUIntSlice(
@@ -334,21 +298,21 @@ pub fn rUniformUIntSlice(
     low: u32,
     high: u32,
 ) Allocator.Error![]u32 {
-    return try self.uniform_uint.sampleSlice(
+    return try uniform_uint.sampleSlice(
         size,
         low,
         high,
+        self.getRand(),
         self.allocator,
     );
 }
 
 /// Generate a single sample from a slice of `items` with type `T`.
 pub fn rSample(self: Self, comptime T: type, items: []const T) T {
-    const idx = UniformInt(usize).init(
-        &self.rng_state.*.rand,
-    ).sample(
+    const idx = uniform_usize.sample(
         0,
         items.len - 1,
+        self.getRand(),
     );
     return items[idx];
 }
@@ -362,12 +326,11 @@ pub fn rSampleSlice(
     items: []const T,
     allocator: Allocator,
 ) Allocator.Error![]T {
-    const idxs = UniformInt(usize).init(
-        &self.rng_state.*.rand,
-    ).sampleSlice(
+    const idxs = uniform_usize.sampleSlice(
         size,
         0,
         items.len - 1,
+        self.getRand(),
         allocator,
     );
 
@@ -384,8 +347,8 @@ pub fn rWeightedSample(
     items: []const T,
     weights: []const f64,
 ) WeightedError!T {
-    var weighted = Weighted(T, f64).init(&self.rng_state.*.rand);
-    return try weighted.sample(items, weights);
+    var weighted = Weighted(T, f64){};
+    return try weighted.sample(items, weights, self.getRand());
 }
 
 pub fn rWeightedSampleSlice(
@@ -395,75 +358,77 @@ pub fn rWeightedSampleSlice(
     items: []const T,
     weights: []const f64,
 ) (WeightedError || Allocator.Error)![]T {
-    var weighted = Weighted(T, f64).init(&self.rng_state.*.rand);
-    return try weighted.sampleSlice(size, items, weights, self.allocator);
+    var weighted = Weighted(T, f64){};
+    return try weighted.sampleSlice(size, items, weights, self.getRand(), self.allocator);
 }
 
 pub fn rBeta(
     self: *Self,
-    alpha: f64,
-    beta: f64,
+    a: f64,
+    b: f64,
 ) BetaError!f64 {
-    return try self.beta.sample(alpha, beta);
+    return try beta.sample(a, b, self.getRand());
 }
 
 pub fn rBetaSlice(
     self: *Self,
     size: usize,
-    alpha: f64,
-    beta: f64,
+    a: f64,
+    b: f64,
 ) (BetaError || Allocator.Error)![]f64 {
-    return try self.beta.sampleSlice(size, alpha, beta, self.allocator);
+    return try beta.sampleSlice(size, a, b, self.getRand(), self.allocator);
 }
 
 pub fn dBeta(
     self: *Self,
     x: f64,
-    alpha: f64,
-    beta: f64,
+    a: f64,
+    b: f64,
     log: bool,
 ) !f64 {
+    _ = self;
     if (log) {
-        return try self.beta.lnPdf(x, alpha, beta);
+        return try beta.lnPdf(x, a, b);
     }
-    return try self.beta.pdf(x, alpha, beta);
+    return try beta.pdf(x, a, b);
 }
 
 pub fn rCauchy(
     self: Self,
     x0: f64,
-    gamma: f64,
+    gam: f64,
 ) CauchyError!f64 {
-    return try self.cauchy.sample(x0, gamma);
+    return try cauchy.sample(x0, gam, self.getRand());
 }
 
 pub fn rCauchySlice(
     self: Self,
     size: usize,
     x0: f64,
-    gamma: f64,
+    gam: f64,
 ) (CauchyError || Allocator.Error)![]f64 {
-    return try self.cauchy.sampleSlice(size, x0, gamma, self.allocator);
+    return try cauchy.sampleSlice(size, x0, gam, self.getRand(), self.allocator);
 }
 
 pub fn dCauchy(
     self: Self,
     x: f64,
     x0: f64,
-    gamma: f64,
+    gam: f64,
     log: bool,
 ) CauchyError!f64 {
+    _ = self;
     if (log) {
-        return try self.cauchy.lnPdf(x, x0, gamma);
+        return try cauchy.lnPdf(x, x0, gam);
     }
-    return try self.cauchy.pdf(x, x0, gamma);
+    return try cauchy.pdf(x, x0, gam);
 }
 
 pub fn rChiSquared(
     self: *Self,
     k: u32,
 ) GammaError!f64 {
-    return try self.chi_squared.sample(k);
+    return try chi_squared.sample(k, self.getRand());
 }
 
 pub fn rChiSquaredSlice(
@@ -471,7 +436,7 @@ pub fn rChiSquaredSlice(
     size: usize,
     k: u32,
 ) (GammaError || Allocator.Error)![]f64 {
-    return try self.chi_squared.sampleSlice(size, k, self.allocator);
+    return try chi_squared.sampleSlice(size, k, self.getRand(), self.allocator);
 }
 
 pub fn dChiSquared(
@@ -480,10 +445,11 @@ pub fn dChiSquared(
     k: u32,
     log: bool,
 ) !f64 {
+    _ = self;
     if (log) {
-        return try self.chi_squared.lnPdf(x, k);
+        return try chi_squared.lnPdf(x, k);
     }
-    return try self.chi_squared.pdf(x, k);
+    return try chi_squared.pdf(x, k);
 }
 
 pub fn rDirichlet(
@@ -491,8 +457,8 @@ pub fn rDirichlet(
     comptime K: usize,
     alpha_vec: [K]f64,
 ) ![K]f64 {
-    const dirichlet = Dirichlet(K, f64).init(&self.rng_state.rand);
-    const out_vec = try dirichlet.sample(alpha_vec);
+    const dirichlet = Dirichlet(K, f64){};
+    const out_vec = try dirichlet.sample(alpha_vec, self.getRand());
     return out_vec;
 }
 
@@ -502,8 +468,8 @@ pub fn rDirichletSlice(
     size: usize,
     alpha_vec: [K]f64,
 ) ![]f64 {
-    const dirichlet = Dirichlet(K, f64).init(&self.rng_state.rand);
-    return try dirichlet.sampleSlice(size, alpha_vec, self.allocator);
+    const dirichlet = Dirichlet(K, f64){};
+    return try dirichlet.sampleSlice(size, alpha_vec, self.getRand(), self.allocator);
 }
 
 pub fn dDirichlet(
@@ -513,7 +479,8 @@ pub fn dDirichlet(
     alpha_vec: [K]f64,
     log: bool,
 ) f64 {
-    const dirichlet = Dirichlet(K, f64).init(&self.rng_state.rand);
+    _ = self;
+    const dirichlet = Dirichlet(K, f64){};
     if (log) {
         return dirichlet.lnPdf(x_vec, alpha_vec);
     }
@@ -524,7 +491,7 @@ pub fn rExponential(
     self: *Self,
     lambda: f64,
 ) ExponentialError!f64 {
-    return try self.exponential.sample(lambda);
+    return try exponential.sample(lambda, self.getRand());
 }
 
 pub fn rExponentialSlice(
@@ -532,7 +499,7 @@ pub fn rExponentialSlice(
     size: usize,
     lambda: f64,
 ) (ExponentialError || Allocator.Error)![]f64 {
-    return try self.exponential.sampleSlice(size, lambda, self.allocator);
+    return try exponential.sampleSlice(size, lambda, self.getRand(), self.allocator);
 }
 
 pub fn dExponential(
@@ -541,10 +508,11 @@ pub fn dExponential(
     lambda: f64,
     log: bool,
 ) ExponentialError!f64 {
+    _ = self;
     if (log) {
-        return try self.exponential.lnPdf(x, lambda);
+        return try exponential.lnPdf(x, lambda);
     }
-    return try self.exponential.pdf(x, lambda);
+    return try exponential.pdf(x, lambda);
 }
 
 pub fn rGamma(
@@ -552,7 +520,7 @@ pub fn rGamma(
     shape: f64,
     scale: f64,
 ) GammaError!f64 {
-    return try self.gamma.sample(shape, scale);
+    return try gamma.sample(shape, scale, self.getRand());
 }
 
 pub fn rGammaSlice(
@@ -561,7 +529,7 @@ pub fn rGammaSlice(
     shape: f64,
     scale: f64,
 ) (GammaError || Allocator.Error)![]f64 {
-    return try self.gamma.sampleSlice(size, shape, scale, self.allocator);
+    return try gamma.sampleSlice(size, shape, scale, self.getRand(), self.allocator);
 }
 
 pub fn dGamma(
@@ -571,10 +539,11 @@ pub fn dGamma(
     scale: f64,
     log: bool,
 ) !f64 {
+    _ = self;
     if (log) {
-        return try self.gamma.lnPdf(x, shape, scale);
+        return try gamma.lnPdf(x, shape, scale);
     }
-    return try self.gamma.pdf(x, shape, scale);
+    return try gamma.pdf(x, shape, scale);
 }
 
 pub fn rNormal(
@@ -582,7 +551,7 @@ pub fn rNormal(
     mu: f64,
     sigma: f64,
 ) NormalError!f64 {
-    return try self.normal.sample(mu, sigma);
+    return try normal.sample(mu, sigma, self.getRand());
 }
 
 pub fn rNormalSlice(
@@ -591,7 +560,7 @@ pub fn rNormalSlice(
     mu: f64,
     sigma: f64,
 ) (NormalError || Allocator.Error)![]f64 {
-    return try self.normal.sampleSlice(size, mu, sigma, self.allocator);
+    return try normal.sampleSlice(size, mu, sigma, self.getRand(), self.allocator);
 }
 
 pub fn dNormal(
@@ -601,10 +570,11 @@ pub fn dNormal(
     sigma: f64,
     log: bool,
 ) NormalError!f64 {
+    _ = self;
     if (log) {
-        return self.normal.lnPdf(x, mu, sigma);
+        return normal.lnPdf(x, mu, sigma);
     }
-    return self.normal.pdf(x, mu, sigma);
+    return normal.pdf(x, mu, sigma);
 }
 
 pub fn rUniform(
@@ -612,7 +582,7 @@ pub fn rUniform(
     low: f64,
     high: f64,
 ) f64 {
-    return self.uniform.sample(low, high);
+    return uniform.sample(low, high, self.getRand());
 }
 
 pub fn rUniformSlice(
@@ -621,7 +591,7 @@ pub fn rUniformSlice(
     low: f64,
     high: f64,
 ) Allocator.Error![]f64 {
-    return try self.uniform.sampleSlice(size, low, high, self.allocator);
+    return try uniform.sampleSlice(size, low, high, self.getRand(), self.allocator);
 }
 
 test "Random Environment Creation" {
@@ -690,14 +660,14 @@ test "Sample Random Deviates" {
     const unif_uint = env.rUniformUInt(10, 20);
     std.debug.print("Uniform UInt: {}\n", .{unif_uint});
 
-    const beta = try env.rBeta(2.0, 5.0);
-    std.debug.print("Beta: {}\n", .{beta});
+    const b = try env.rBeta(2.0, 5.0);
+    std.debug.print("Beta: {}\n", .{b});
 
-    const cauchy = try env.rCauchy(0.0, 2.0);
-    std.debug.print("Cauchy: {}\n", .{cauchy});
+    const chy = try env.rCauchy(0.0, 2.0);
+    std.debug.print("Cauchy: {}\n", .{chy});
 
-    const chi_squared = try env.rChiSquared(6);
-    std.debug.print("Chi Squared: {}\n", .{chi_squared});
+    const chi_sq = try env.rChiSquared(6);
+    std.debug.print("Chi Squared: {}\n", .{chi_sq});
 
     const dirichlet = try env.rDirichlet(4, [_]f64{ 0.1, 0.3, 0.3, 0.1 });
     std.debug.print("Dirichlet: {any}\n", .{dirichlet});
@@ -754,17 +724,17 @@ test "Sample Random Slices" {
     defer allocator.free(unif_uint);
     std.debug.print("Uniform UInt: {any}\n", .{unif_uint});
 
-    const beta = try env.rBetaSlice(10, 2.0, 5.0);
-    defer allocator.free(beta);
-    std.debug.print("Beta: {any}\n", .{beta});
+    const b = try env.rBetaSlice(10, 2.0, 5.0);
+    defer allocator.free(b);
+    std.debug.print("Beta: {any}\n", .{b});
 
-    const cauchy = try env.rCauchySlice(10, 0.0, 2.0);
-    defer allocator.free(cauchy);
-    std.debug.print("Cauchy: {any}\n", .{cauchy});
+    const chy = try env.rCauchySlice(10, 0.0, 2.0);
+    defer allocator.free(chy);
+    std.debug.print("Cauchy: {any}\n", .{chy});
 
-    const chi_squared = try env.rChiSquaredSlice(10, 6);
-    defer allocator.free(chi_squared);
-    std.debug.print("Chi Squared: {any}\n", .{chi_squared});
+    const chi_sq = try env.rChiSquaredSlice(10, 6);
+    defer allocator.free(chi_sq);
+    std.debug.print("Chi Squared: {any}\n", .{chi_sq});
 
     const dirichlet = try env.rDirichletSlice(4, 10, [_]f64{ 0.1, 0.3, 0.3, 0.1 });
     defer allocator.free(dirichlet);
@@ -824,9 +794,9 @@ test "PMFs/PDFs" {
         1e-6,
     );
 
-    const beta = try env.dBeta(0.2, 2.0, 4.0, false);
+    const b = try env.dBeta(0.2, 2.0, 4.0, false);
     const ln_beta = try env.dBeta(0.2, 2.0, 4.0, true);
-    try std.testing.expectApproxEqAbs(beta, @exp(ln_beta), 1e-6);
+    try std.testing.expectApproxEqAbs(b, @exp(ln_beta), 1e-6);
 
     try std.testing.expectApproxEqAbs(
         try env.dCauchy(2.0, 0.0, 1.5, false),
@@ -834,9 +804,9 @@ test "PMFs/PDFs" {
         1e-6,
     );
 
-    const chi_squared = try env.dChiSquared(2.0, 4, false);
+    const chi_sq = try env.dChiSquared(2.0, 4, false);
     const ln_chi_squared = try env.dChiSquared(2.0, 4, true);
-    try std.testing.expectApproxEqAbs(chi_squared, @exp(ln_chi_squared), 1e-6);
+    try std.testing.expectApproxEqAbs(chi_sq, @exp(ln_chi_squared), 1e-6);
 
     const dirichlet = env.dDirichlet(
         3,
@@ -858,9 +828,9 @@ test "PMFs/PDFs" {
         1e-6,
     );
 
-    const gamma = try env.dGamma(2.0, 5.0, 1.0, false);
+    const gam = try env.dGamma(2.0, 5.0, 1.0, false);
     const ln_gamma = try env.dGamma(2.0, 5.0, 1.0, true);
-    try std.testing.expectApproxEqAbs(gamma, @exp(ln_gamma), 1e-6);
+    try std.testing.expectApproxEqAbs(gam, @exp(ln_gamma), 1e-6);
 
     try std.testing.expectApproxEqAbs(
         try env.dNormal(10.0, 8.0, 2.0, false),
