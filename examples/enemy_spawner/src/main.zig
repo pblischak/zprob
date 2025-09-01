@@ -3,6 +3,8 @@ const zprob = @import("zprob");
 const Allocator = std.mem.Allocator;
 const RandomEnvironment = zprob.RandomEnvironment;
 
+const uniform_u8 = zprob.UniformInt(u8){};
+
 const EnemyType = enum {
     Regular,
     Berserker,
@@ -62,30 +64,28 @@ const EnemySpawner = struct {
     }
 
     fn spawnRegularEnemy(self: *Self) Enemy {
-        var uniform_uint = zprob.UniformInt(u8).init(self.env.getRand());
-        const max_health = uniform_uint.sample(10, 15);
+        const max_health = uniform_u8.sample(10, 15, self.env.getRand());
         return Enemy{
             .enemy_type = .Regular,
             .x = self.env.rUniformUInt(0, MAX_WIDTH - 1),
             .y = self.env.rUniformUInt(0, MAX_HEIGHT - 1),
             .max_health = max_health,
             .current_health = max_health,
-            .attack = uniform_uint.sample(2, 6),
-            .defense = uniform_uint.sample(3, 5),
+            .attack = uniform_u8.sample(2, 6, self.env.getRand()),
+            .defense = uniform_u8.sample(3, 5, self.env.getRand()),
         };
     }
 
     fn spawnBerserkerEnemy(self: *Self) Enemy {
-        var uniform_uint = zprob.UniformInt(u8).init(self.env.getRand());
-        const max_health = uniform_uint.sample(25, 30);
+        const max_health = uniform_u8.sample(25, 30, self.env.getRand());
         return Enemy{
             .enemy_type = .Berserker,
             .x = self.env.rUniformUInt(0, MAX_WIDTH - 1),
             .y = self.env.rUniformUInt(0, MAX_HEIGHT - 1),
             .max_health = max_health,
             .current_health = max_health,
-            .attack = uniform_uint.sample(14, 18),
-            .defense = uniform_uint.sample(11, 15),
+            .attack = uniform_u8.sample(14, 18, self.env.getRand()),
+            .defense = uniform_u8.sample(11, 15, self.env.getRand()),
         };
     }
 };
