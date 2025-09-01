@@ -133,7 +133,7 @@ usage of `zprob` for different applications:
 To include `zprob` in your Zig project, you can add it to your `build.zig.zon` file
 using the `zig fetch` command.
 
-The `main` branch tracks the latest release of Zig (currently v0.14.0) and can be added
+The `main` branch tracks the latest release of Zig (currently v0.15.1) and can be added
 as follows:
 
 ```
