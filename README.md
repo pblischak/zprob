@@ -42,13 +42,13 @@ pub fn main() !void {
 
     // Generate random samples
     const binomial_sample = try env.rBinomial(10, 0.8);
-    const geometric_sample = try env.rGeometric(3.0);
-
+    const geometric_sample = try env.rGeometric(0.3);
+    std.debug.print("b = {};\tg = {}\n", .{ binomial_sample, geometric_sample });
 
     // Generate slices of random samples. The caller is responsible for cleaning up
     // the allocated memory for the slice.
     const binomial_slice = try env.rBinomialSlice(100, 20, 0.4);
-    defer allocator.free(binomial_samples);
+    defer allocator.free(binomial_slice);
 }
 ```
 
@@ -75,14 +75,16 @@ pub fn main() !void {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var beta = zprob.Beta(f64).init(&rand);
-    var binomial = zprob.Binomial(u8, f64).init(&rand);
+    // Same as: `const beta = zprob.Beta(f64){}`;
+    const beta = zprob.default_beta;
+    // Same as: `const binomial = zprob.Binomial(u32, f64){}`
+    const binomial = zprob.default_binomial;
 
     var b1: f64 = undefined;
-    var b2: u8 = undefined;
-    for 0..100 |_| {
-        b1 = try beta.sample(1.0, 5.0);
-        b2 = try binomial.sample(20, b1);
+    var b2: u32 = undefined;
+    for (0..100) |_| {
+        b1 = try beta.sample(1.0, 5.0, &rand);
+        b2 = try binomial.sample(20, b1, &rand);
     }
 }
 ```
