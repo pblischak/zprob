@@ -15,24 +15,16 @@ pub fn Dirichlet(comptime K: usize, comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        rand: *Random,
-        gamma: Gamma(F),
-
         const Self = @This();
         const Error = GammaError;
+        const gamma = Gamma(F){};
 
-        pub fn init(rand: *Random) Self {
-            return Self{
-                .rand = rand,
-                .gamma = Gamma(F).init(rand),
-            };
-        }
-
-        pub fn sample(self: Self, alpha_vec: [K]F) Error![K]F {
+        pub fn sample(self: Self, alpha_vec: [K]F, rand: *Random) Error![K]F {
+            _ = self;
             var sum: F = 0.0;
             var out: [K]F = [_]F{0.0} ** K;
             for (alpha_vec, 0..) |alpha, i| {
-                out[i] = try self.gamma.sample(alpha, 1.0);
+                out[i] = try gamma.sample(alpha, 1.0, rand);
                 sum += out[i];
             }
 
@@ -47,6 +39,7 @@ pub fn Dirichlet(comptime K: usize, comptime F: type) type {
             self: Self,
             size: usize,
             alpha_vec: [K]F,
+            rand: *Random,
             allocator: Allocator,
         ) (Error || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size * K);
@@ -54,7 +47,7 @@ pub fn Dirichlet(comptime K: usize, comptime F: type) type {
             var start: usize = 0;
             for (0..size) |i| {
                 start = i * K;
-                tmp = try self.sample(alpha_vec);
+                tmp = try self.sample(alpha_vec, rand);
                 @memcpy(res[start..(start + K)], tmp[0..]);
             }
             return res;
@@ -101,9 +94,9 @@ test "Sample Dirichlet" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var dirichlet = Dirichlet(4, f64).init(&rand);
+    const dirichlet = Dirichlet(4, f64){};
     const alphas = [4]f64{ 1.0, 2.0, 5.0, 10.0 };
-    const out_vec = dirichlet.sample(alphas);
+    const out_vec = dirichlet.sample(alphas, &rand);
     std.debug.print("\n{any}\n", .{out_vec});
 }
 
@@ -113,9 +106,9 @@ test "Sample Dirichlet Slice" {
     var rand = prng.random();
     const allocator = std.testing.allocator;
 
-    var dirichlet = Dirichlet(4, f64).init(&rand);
+    const dirichlet = Dirichlet(4, f64){};
     const alphas = [4]f64{ 1.0, 2.0, 5.0, 10.0 };
-    const sample = try dirichlet.sampleSlice(100, alphas, allocator);
+    const sample = try dirichlet.sampleSlice(100, alphas, &rand, allocator);
     defer allocator.free(sample);
     std.debug.print("\n", .{});
     for (0..100) |i| {
@@ -131,7 +124,7 @@ test "Dirichlet Mean" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var dirichlet = Dirichlet(3, f64).init(&rand);
+    const dirichlet = Dirichlet(3, f64){};
     const alpha_vecs = [_][3]f64{
         [_]f64{ 0.1, 0.1, 0.1 },
         [_]f64{ 1.0, 1.0, 1.0 },
@@ -146,7 +139,7 @@ test "Dirichlet Mean" {
         var tmp: [3]f64 = [3]f64{ 0.0, 0.0, 0.0 };
         var avg_vec: [3]f64 = [3]f64{ 0.0, 0.0, 0.0 };
         for (0..10_000) |_| {
-            tmp = try dirichlet.sample(alpha_vec);
+            tmp = try dirichlet.sample(alpha_vec, &rand);
             avg_vec[0] += tmp[0];
             avg_vec[1] += tmp[1];
             avg_vec[2] += tmp[2];
@@ -182,9 +175,9 @@ test "Dirichlet with Different Types" {
 
     std.debug.print("\n", .{});
     inline for (float_types) |f| {
-        var dirichlet = Dirichlet(4, f).init(&rand);
+        const dirichlet = Dirichlet(4, f){};
         const alphas = [4]f{ 1.0, 2.0, 5.0, 10.0 };
-        const out_vec = try dirichlet.sample(alphas);
+        const out_vec = try dirichlet.sample(alphas, &rand);
         std.debug.print("Dirichlet({any}): {any}\n", .{ f, out_vec });
     }
 }

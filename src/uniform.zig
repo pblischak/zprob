@@ -13,18 +13,11 @@ pub fn Uniform(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        rand: *Random,
-
         const Self = @This();
 
-        pub fn init(rand: *Random) Self {
-            return Self{
-                .rand = rand,
-            };
-        }
-
-        pub fn sample(self: Self, low: F, high: F) F {
-            const u: F = @floatCast(self.rand.float(f64));
+        pub fn sample(self: Self, low: F, high: F, rand: *Random) F {
+            _ = self;
+            const u: F = @floatCast(rand.float(f64));
             return low + (high - low) * u;
         }
 
@@ -33,11 +26,12 @@ pub fn Uniform(comptime F: type) type {
             size: usize,
             low: F,
             high: F,
+            rand: *Random,
             allocator: Allocator,
         ) Allocator.Error![]F {
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
-                res[i] = self.sample(low, high);
+                res[i] = self.sample(low, high, rand);
             }
             return res;
         }
@@ -51,18 +45,11 @@ pub fn UniformInt(comptime I: type) type {
     _ = utils.ensureIntegerType(I);
 
     return struct {
-        rand: *Random,
-
         const Self = @This();
 
-        pub fn init(rand: *Random) Self {
-            return Self{
-                .rand = rand,
-            };
-        }
-
-        pub fn sample(self: Self, low: I, high: I) I {
-            return self.rand.intRangeAtMost(I, low, high);
+        pub fn sample(self: Self, low: I, high: I, rand: *Random) I {
+            _ = self;
+            return rand.intRangeAtMost(I, low, high);
         }
 
         pub fn sampleSlice(
@@ -70,11 +57,12 @@ pub fn UniformInt(comptime I: type) type {
             size: usize,
             low: I,
             high: I,
+            rand: *Random,
             allocator: Allocator,
         ) Allocator.Error![]I {
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
-                res[i] = self.sample(low, high);
+                res[i] = self.sample(low, high, rand);
             }
             return res;
         }
@@ -86,8 +74,8 @@ test "Sample Uniform" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var uniform = Uniform(f64).init(&rand);
-    const val = uniform.sample(1.0, 10.0);
+    const uniform = Uniform(f64){};
+    const val = uniform.sample(1.0, 10.0, &rand);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -96,9 +84,9 @@ test "Sample Uniform Slice" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var uniform = Uniform(f64).init(&rand);
+    const uniform = Uniform(f64){};
     const allocator = std.testing.allocator;
-    const sample = try uniform.sampleSlice(100, 1.0, 10.0, allocator);
+    const sample = try uniform.sampleSlice(100, 1.0, 10.0, &rand, allocator);
     defer allocator.free(sample);
     std.debug.print("\n{any}\n", .{sample});
 }
@@ -107,7 +95,7 @@ test "Uniform Mean" {
     const seed: u64 = @intCast(std.time.milliTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var uniform = Uniform(f64).init(&rand);
+    const uniform = Uniform(f64){};
 
     const range_vec = [_][2]f64{
         [2]f64{ 0.0, 2.0 },
@@ -121,7 +109,7 @@ test "Uniform Mean" {
     for (range_vec) |range| {
         var sum: f64 = 0.0;
         for (0..10_000) |_| {
-            const samp = uniform.sample(range[0], range[1]);
+            const samp = uniform.sample(range[0], range[1], &rand);
             sum += samp;
         }
         const mean: f64 = (range[1] + range[0]) / 2.0;
@@ -141,8 +129,8 @@ test "Uniform with Different Types" {
 
     std.debug.print("\n", .{});
     inline for (float_types) |f| {
-        var uniform = Uniform(f).init(&rand);
-        const val = uniform.sample(1.0, 10.0);
+        const uniform = Uniform(f){};
+        const val = uniform.sample(1.0, 10.0, &rand);
         std.debug.print(
             "Uniform({any}): {}\n",
             .{ f, val },
@@ -155,8 +143,8 @@ test "Sample Uniform Int" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var uniform_int = UniformInt(i32).init(&rand);
-    const val = uniform_int.sample(1, 10);
+    const uniform_int = UniformInt(i32){};
+    const val = uniform_int.sample(1, 10, &rand);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -165,9 +153,9 @@ test "Sample Uniform Int Slice" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var uniform_int = UniformInt(i32).init(&rand);
+    const uniform_int = UniformInt(i32){};
     const allocator = std.testing.allocator;
-    const sample = try uniform_int.sampleSlice(100, 1, 10, allocator);
+    const sample = try uniform_int.sampleSlice(100, 1, 10, &rand, allocator);
     defer allocator.free(sample);
     std.debug.print("\n{any}\n", .{sample});
 }
@@ -176,7 +164,7 @@ test "Uniform Int Mean" {
     const seed: u64 = @intCast(std.time.milliTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var uniform_int = UniformInt(i32).init(&rand);
+    const uniform_int = UniformInt(i32){};
 
     const range_vec = [_][2]i32{
         [2]i32{ 0, 2 },
@@ -190,7 +178,7 @@ test "Uniform Int Mean" {
     for (range_vec) |range| {
         var sum: f64 = 0.0;
         for (0..10_000) |_| {
-            const samp = @as(f64, @floatFromInt(uniform_int.sample(range[0], range[1])));
+            const samp = @as(f64, @floatFromInt(uniform_int.sample(range[0], range[1], &rand)));
             sum += samp;
         }
         const mean: f64 = @as(f64, @floatFromInt(range[1] + range[0])) / 2.0;
@@ -211,8 +199,8 @@ test "Uniform Int with Different Types" {
 
     std.debug.print("\n", .{});
     inline for (int_types) |i| {
-        var uniform_int = UniformInt(i).init(&rand);
-        const val = uniform_int.sample(1, 10);
+        const uniform_int = UniformInt(i){};
+        const val = uniform_int.sample(1, 10, &rand);
         std.debug.print(
             "Uniform({any}): {}\n",
             .{ i, val },

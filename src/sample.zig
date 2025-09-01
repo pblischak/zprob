@@ -12,19 +12,12 @@ pub fn Weighted(comptime T: type, comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        rand: *Random,
-
         const Self = @This();
-
-        pub fn init(rand: *Random) Self {
-            return Self{
-                .rand = rand,
-            };
-        }
 
         /// Sample from `items` using a given weight for each item. Assumes
         /// that `weights` sums to one.
-        pub fn sample(self: Self, items: []const T, weights: []const F) WeightedError!T {
+        pub fn sample(self: Self, items: []const T, weights: []const F, rand: *Random) WeightedError!T {
+            _ = self;
             if (items.len != weights.len) {
                 return WeightedError.UnequalLengths;
             }
@@ -32,7 +25,7 @@ pub fn Weighted(comptime T: type, comptime F: type) type {
             if (!utils.sumToOne(F, weights, @sqrt(math.floatEps(F)))) {
                 return WeightedError.ProbSumNotOne;
             }
-            const u: F = @floatCast(self.rand.float(f64));
+            const u: F = @floatCast(rand.float(f64));
 
             var lower_bound: F = 0.0;
             for (0..(items.len - 1)) |i| {
@@ -49,6 +42,7 @@ pub fn Weighted(comptime T: type, comptime F: type) type {
             size: usize,
             items: []const T,
             weights: []const F,
+            rand: *Random,
             allocator: Allocator,
         ) (WeightedError || Allocator.Error)![]T {
             if (items.len != weights.len) {
@@ -60,7 +54,7 @@ pub fn Weighted(comptime T: type, comptime F: type) type {
             }
             var res = try allocator.alloc(T, size);
             for (0..size) |i| {
-                res[i] = try self.sample(items, weights);
+                res[i] = try self.sample(items, weights, rand);
             }
             return res;
         }
@@ -71,12 +65,12 @@ test "Sample Weighted UInts" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
-    var weighted = Weighted(u32, f64).init(&rand);
+    const weighted = Weighted(u32, f64){};
 
     const items = [_]u32{ 1, 2, 3, 4 };
     const weights = [_]f64{ 0.1, 0.5, 0.2, 0.2 };
 
-    const val = try weighted.sample(items[0..], weights[0..]);
+    const val = try weighted.sample(items[0..], weights[0..], &rand);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -86,7 +80,7 @@ test "Sample Weighted UInts Slice" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
-    var weighted = Weighted(u32, f64).init(&rand);
+    const weighted = Weighted(u32, f64){};
 
     const items = [_]u32{ 1, 2, 3, 4 };
     const weights = [_]f64{ 0.1, 0.5, 0.2, 0.2 };
@@ -95,6 +89,7 @@ test "Sample Weighted UInts Slice" {
         100,
         items[0..],
         weights[0..],
+        &rand,
         allocator,
     );
     defer allocator.free(sample);
@@ -105,7 +100,7 @@ test "Sample Weighted Uint Expectation" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
-    var weighted = Weighted(u32, f64).init(&rand);
+    const weighted = Weighted(u32, f64){};
 
     const items = [_]u32{ 1, 2, 3, 4 };
     const weights = [_]f64{ 0.1, 0.5, 0.2, 0.2 };
@@ -113,7 +108,7 @@ test "Sample Weighted Uint Expectation" {
     var expectation = [_]f64{ 0.0, 0.0, 0.0, 0.0 };
 
     for (0..10_000) |_| {
-        const val = try weighted.sample(items[0..], weights[0..]);
+        const val = try weighted.sample(items[0..], weights[0..], &rand);
         const idx: usize = @intCast(val - 1);
         expectation[idx] += 1.0;
     }
@@ -132,7 +127,7 @@ test "Sample Weighted Struct" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.Xoroshiro128.init(seed);
     var rand = prng.random();
-    var weighted = Weighted(Pair, f64).init(&rand);
+    const weighted = Weighted(Pair, f64){};
 
     const items = [_]Pair{
         .{ .v1 = 20, .v2 = 40 },
@@ -142,6 +137,6 @@ test "Sample Weighted Struct" {
     };
     const weights = [_]f64{ 0.2, 0.3, 0.4, 0.1 };
 
-    const val = try weighted.sample(items[0..], weights[0..]);
+    const val = try weighted.sample(items[0..], weights[0..], &rand);
     std.debug.print("\n{any}\n", .{val});
 }

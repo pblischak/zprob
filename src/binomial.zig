@@ -16,14 +16,7 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        rand: *Random,
         const Self = @This();
-
-        pub fn init(rand: *Random) Self {
-            return Self{
-                .rand = rand,
-            };
-        }
 
         /// Generate a single random sample from a binomial
         /// distribution whose number of trials is `n` and whose
@@ -35,7 +28,8 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
         ///   Binomial Random Variate Generation,
         ///   Communications of the ACM,
         ///   Volume 31, Number 2, February 1988, pages 216-222.
-        pub fn sample(self: Self, n: I, p: F) BinomialError!I {
+        pub fn sample(self: Self, n: I, p: F, rand: *Random) BinomialError!I {
+            _ = self;
             if (p < 0.0) {
                 return BinomialError.ParamTooSmall;
             }
@@ -89,11 +83,9 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             const p_F: F = @floatCast(p);
             p0 = @min(p_F, 1.0 - p_F);
             q = 1.0 - p0;
-            // xnp = @intToFloat(F, n) * p0;
             xnp = @as(F, @floatFromInt(n)) * p0;
 
             if (xnp < 30.0) {
-                // qn = math.pow(F, q, @as(F, @floatFromInt(n)));
                 qn = @floatCast(math.pow(
                     f64,
                     @floatCast(q),
@@ -105,8 +97,7 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
                 while (true) {
                     ix = 0;
                     f = qn;
-                    // u = @as(F, self.rand.float(f64));
-                    u = @floatCast(self.rand.float(f64));
+                    u = @floatCast(rand.float(f64));
 
                     while (true) {
                         if (u < f) {
@@ -146,11 +137,9 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             //  Generate a variate.
             //
             while (true) {
-                // u = @as(F, self.rand.float(f64)) * p4;
-                u = @floatCast(self.rand.float(f64));
+                u = @floatCast(rand.float(f64));
                 u *= p4;
-                // v = @as(F, self.rand.float(f64));
-                v = @floatCast(self.rand.float(f64));
+                v = @floatCast(rand.float(f64));
                 //
                 //  Triangle
                 //
@@ -275,16 +264,17 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             size: usize,
             n: I,
             p: F,
+            rand: *Random,
             allocator: Allocator,
         ) (BinomialError || Allocator.Error)![]I {
             var res = try allocator.alloc(I, size);
             for (0..size) |i| {
-                res[i] = try self.sample(n, p);
+                res[i] = try self.sample(n, p, rand);
             }
             return res;
         }
 
-        pub fn pmf(self: *Self, k: I, n: I, p: F) !F {
+        pub fn pmf(self: Self, k: I, n: I, p: F) !F {
             if (p < 0.0) {
                 return BinomialError.ParamTooSmall;
             }
@@ -300,7 +290,7 @@ pub fn Binomial(comptime I: type, comptime F: type) type {
             return @exp(val);
         }
 
-        pub fn lnPmf(self: *Self, k: I, n: I, p: F) !F {
+        pub fn lnPmf(self: Self, k: I, n: I, p: F) !F {
             _ = self;
             if (p < 0.0) {
                 return BinomialError.ParamTooSmall;
@@ -325,9 +315,9 @@ test "Binomial `p` < 0" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var binomial = Binomial(u32, f64).init(&rand);
+    var binomial = Binomial(u32, f64){};
 
-    const val = binomial.sample(10, -0.2);
+    const val = binomial.sample(10, -0.2, &rand);
     try std.testing.expectError(error.ParamTooSmall, val);
 
     const val2 = binomial.pmf(8, 10, -0.2);
@@ -341,9 +331,9 @@ test "Binomial `p` > 1" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var binomial = Binomial(u32, f64).init(&rand);
+    var binomial = Binomial(u32, f64){};
 
-    const val = binomial.sample(10, 1.2);
+    const val = binomial.sample(10, 1.2, &rand);
     try std.testing.expectError(error.ParamTooBig, val);
 
     const val2 = binomial.pmf(8, 10, 1.2);
@@ -353,10 +343,7 @@ test "Binomial `p` > 1" {
     try std.testing.expectError(error.ParamTooBig, val3);
 }
 test "Binomial `k` out of range" {
-    const seed: u64 = @intCast(std.time.microTimestamp());
-    var prng = std.Random.DefaultPrng.init(seed);
-    var rand = prng.random();
-    var binomial = Binomial(i32, f64).init(&rand);
+    var binomial = Binomial(i32, f64){};
 
     const val1 = binomial.pmf(10, 8, 0.1);
     try std.testing.expectError(error.KOutOfRange, val1);
@@ -369,8 +356,8 @@ test "Sample Binomial" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var binomial = Binomial(u32, f64).init(&rand);
-    const val = try binomial.sample(10, 0.2);
+    var binomial = Binomial(u32, f64){};
+    const val = try binomial.sample(10, 0.2, &rand);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -380,8 +367,8 @@ test "Sample Binomial Slice" {
     var rand = prng.random();
     const allocator = std.testing.allocator;
 
-    var binomial = Binomial(u32, f64).init(&rand);
-    const sample = try binomial.sampleSlice(100, 10, 0.2, allocator);
+    var binomial = Binomial(u32, f64){};
+    const sample = try binomial.sampleSlice(100, 10, 0.2, &rand, allocator);
     defer allocator.free(sample);
     std.debug.print("\n{any}\n", .{sample});
 }
@@ -390,7 +377,7 @@ test "Binomial Mean" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var binomial = Binomial(u32, f64).init(&rand);
+    var binomial = Binomial(u32, f64){};
 
     const n_vec = [_]u32{ 2, 5, 10, 25, 50 };
     const p_vec = [_]f64{ 0.05, 0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 0.9, 0.95 };
@@ -401,7 +388,7 @@ test "Binomial Mean" {
             var samp: f64 = undefined;
             var sum: f64 = 0.0;
             for (0..10_000) |_| {
-                samp = @as(f64, @floatFromInt(try binomial.sample(n, p)));
+                samp = @as(f64, @floatFromInt(try binomial.sample(n, p, &rand)));
                 sum += samp;
             }
 
@@ -428,8 +415,8 @@ test "Binomial with Different Types" {
     std.debug.print("\n", .{});
     inline for (int_types) |i| {
         inline for (float_types) |f| {
-            var binomial = Binomial(i, f).init(&rand);
-            const val = try binomial.sample(10, 0.25);
+            var binomial = Binomial(i, f){};
+            const val = try binomial.sample(10, 0.25, &rand);
             std.debug.print("Binomial({any}, {any}):\t{}\n", .{ i, f, val });
             const pmf = try binomial.pmf(4, 10, 0.25);
             std.debug.print("BinomialPmf({any}, {any}):\t{}\n", .{ i, f, pmf });

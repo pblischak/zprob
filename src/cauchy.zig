@@ -14,25 +14,18 @@ pub fn Cauchy(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        rand: *Random,
-
         const Self = @This();
 
-        pub fn init(rand: *Random) Self {
-            return Self{
-                .rand = rand,
-            };
-        }
-
-        pub fn sample(self: Self, x0: F, gamma: F) CauchyError!F {
+        pub fn sample(self: Self, x0: F, gamma: F, rand: *Random) CauchyError!F {
+            _ = self;
             if (gamma <= 0) {
                 return CauchyError.ScaleTooSmall;
             }
-            var u: F = @floatCast(self.rand.float(f64));
+            var u: F = @floatCast(rand.float(f64));
             // u cannot be 0.5, so if by chance it is,
             // we need to draw again
             while (u == 0.5) {
-                u = @floatCast(self.rand.float(f64));
+                u = @floatCast(rand.float(f64));
             }
 
             return x0 + gamma * @tan(math.pi * (u - 0.5));
@@ -43,6 +36,7 @@ pub fn Cauchy(comptime F: type) type {
             size: usize,
             x0: F,
             gamma: F,
+            rand: *Random,
             allocator: Allocator,
         ) (CauchyError || Allocator.Error)![]F {
             var res = try allocator.alloc(F, size);
@@ -50,7 +44,7 @@ pub fn Cauchy(comptime F: type) type {
                 return CauchyError.ScaleTooSmall;
             }
             for (0..size) |i| {
-                res[i] = try self.sample(x0, gamma);
+                res[i] = try self.sample(x0, gamma, rand);
             }
             return res;
         }
@@ -76,9 +70,9 @@ test "Cauchy gamma (scale) <= 0" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var cauchy = Cauchy(f64).init(&rand);
+    const cauchy = Cauchy(f64){};
 
-    const val1 = cauchy.sample(2.0, -1.0);
+    const val1 = cauchy.sample(2.0, -1.0, &rand);
     try std.testing.expectError(error.ScaleTooSmall, val1);
     const val2 = cauchy.pdf(1.0, 2.0, -1.0);
     try std.testing.expectError(error.ScaleTooSmall, val2);
@@ -90,9 +84,9 @@ test "Sample Cauchy" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var cauchy = Cauchy(f64).init(&rand);
+    const cauchy = Cauchy(f64){};
 
-    const val = try cauchy.sample(2.0, 1.0);
+    const val = try cauchy.sample(2.0, 1.0, &rand);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -101,9 +95,9 @@ test "Sample Cauchy Slice" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var cauchy = Cauchy(f64).init(&rand);
+    const cauchy = Cauchy(f64){};
 
-    const sample = try cauchy.sampleSlice(100, 2.0, 1.0, allocator);
+    const sample = try cauchy.sampleSlice(100, 2.0, 1.0, &rand, allocator);
     defer allocator.free(sample);
     std.debug.print("\n{any}\n", .{sample});
 }
@@ -113,7 +107,7 @@ test "Cauchy Median" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var cauchy = Cauchy(f64).init(&rand);
+    const cauchy = Cauchy(f64){};
 
     const x0_vec = [_]f64{ -5, -2, 0, 2, 5 };
     const gamma_vec = [_]f64{ 1.0, 2.0, 3.0 };
@@ -121,7 +115,7 @@ test "Cauchy Median" {
     std.debug.print("\n", .{});
     for (x0_vec) |x0| {
         for (gamma_vec) |gamma| {
-            var sample = try cauchy.sampleSlice(10_000, x0, gamma, allocator);
+            var sample = try cauchy.sampleSlice(10_000, x0, gamma, &rand, allocator);
             defer allocator.free(sample);
             std.sort.block(f64, sample[0..], {}, std.sort.asc(f64));
             const median = (sample[4999] + sample[5000]) / 2.0;
@@ -143,8 +137,8 @@ test "Cauchy with Different Types" {
 
     std.debug.print("\n", .{});
     inline for (float_types) |f| {
-        var cauchy = Cauchy(f).init(&rand);
-        const val = try cauchy.sample(10, 0.25);
+        const cauchy = Cauchy(f){};
+        const val = try cauchy.sample(10, 0.25, &rand);
         std.debug.print("Cauchy({any}):\t{}\n", .{ f, val });
     }
 }

@@ -14,16 +14,9 @@ pub fn Normal(comptime F: type) type {
     _ = utils.ensureFloatType(F);
 
     return struct {
-        rand: *Random,
         const Self = @This();
 
         const inv_sqrt_2pi: F = 1.0 / @sqrt(2.0 * math.pi);
-
-        pub fn init(rand: *Random) Self {
-            return Self{
-                .rand = rand,
-            };
-        }
 
         fn check(mu: F, sigma: F) NormalError!void {
             if (math.isNan(mu)) {
@@ -34,9 +27,10 @@ pub fn Normal(comptime F: type) type {
             }
         }
 
-        pub fn sample(self: Self, mu: F, sigma: F) NormalError!F {
+        pub fn sample(self: Self, mu: F, sigma: F, rand: *Random) NormalError!F {
+            _ = self;
             try check(mu, sigma);
-            const value: F = @floatCast(self.rand.floatNorm(f64));
+            const value: F = @floatCast(rand.floatNorm(f64));
             return value * sigma + mu;
         }
 
@@ -45,12 +39,13 @@ pub fn Normal(comptime F: type) type {
             size: usize,
             mu: F,
             sigma: F,
+            rand: *Random,
             allocator: Allocator,
         ) (NormalError || Allocator.Error)![]F {
             try check(mu, sigma);
             var res = try allocator.alloc(F, size);
             for (0..size) |i| {
-                res[i] = try self.sample(mu, sigma);
+                res[i] = try self.sample(mu, sigma, rand);
             }
             return res;
         }
@@ -77,8 +72,8 @@ test "Sample Normal" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var normal = Normal(f64).init(&rand);
-    const val = try normal.sample(2.0, 0.5);
+    const normal = Normal(f64){};
+    const val = try normal.sample(2.0, 0.5, &rand);
     std.debug.print("\n{}\n", .{val});
 }
 
@@ -87,9 +82,9 @@ test "Sample Normal Slice" {
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
 
-    var normal = Normal(f64).init(&rand);
+    const normal = Normal(f64){};
     const allocator = std.testing.allocator;
-    const sample = try normal.sampleSlice(100, 2.0, 0.5, allocator);
+    const sample = try normal.sampleSlice(100, 2.0, 0.5, &rand, allocator);
     defer allocator.free(sample);
     std.debug.print("\n{any}\n", .{sample});
 }
@@ -98,7 +93,7 @@ test "Normal Mean" {
     const seed: u64 = @intCast(std.time.microTimestamp());
     var prng = std.Random.DefaultPrng.init(seed);
     var rand = prng.random();
-    var normal = Normal(f64).init(&rand);
+    const normal = Normal(f64){};
 
     const mu_vec = [_]f64{ 0.1, 0.5, 2.0, 5.0, 10.0, 20.0, 50.0 };
     const sigma_vec = [_]f64{ 0.5, 1.0, 2.0, 5.0 };
@@ -108,7 +103,7 @@ test "Normal Mean" {
         for (sigma_vec) |sigma| {
             var sum: f64 = 0.0;
             for (0..10_000) |_| {
-                sum += try normal.sample(mu, sigma);
+                sum += try normal.sample(mu, sigma, &rand);
             }
             const avg = sum / 10_000.0;
             std.debug.print(
@@ -129,8 +124,8 @@ test "Normal with Different Types" {
 
     std.debug.print("\n", .{});
     inline for (float_types) |f| {
-        var normal = Normal(f).init(&rand);
-        const val = try normal.sample(2.0, 0.5);
+        const normal = Normal(f){};
+        const val = try normal.sample(2.0, 0.5, &rand);
         std.debug.print("Normal({any}):\t{}\n", .{ f, val });
     }
 }
